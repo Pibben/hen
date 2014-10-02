@@ -250,48 +250,16 @@ public:
         
         for(int i = 0; i < immStore.size(); i+=3) {
             //Primitive assembly
-            VertOutFragInType top = immStore.at(i+0);
-            VertOutFragInType mid = immStore.at(i+1);
-            VertOutFragInType bot = immStore.at(i+2);
-#if 0
-            sort(top, mid, bot);
-
-            Interpolator i01(immStore.at(i+0), immStore.at(i+1));
-            Interpolator i02(immStore.at(i+0), immStore.at(i+2));
-            Interpolator i12(immStore.at(i+1), immStore.at(i+2));
-#endif
             //TODO: Back face culling
             
             //Rasterization
-#if 1
+
             rasterizeTriangleLines<VertOutFragInType, FramebufferAdapter<FrameBufferType>,
                                    VertexShader::OUT_POSITION_ATTACHMENT,
-                                   VertexShader::OUT_COLOR_ATTACHMENT>(top, mid, bot,
+                                   VertexShader::OUT_COLOR_ATTACHMENT>(immStore.at(i+0), immStore.at(i+1), immStore.at(i+2),
                                 		                               FramebufferAdapter<FrameBufferType>(frameBuffer, 640));
 
             display(frameBuffer, 640);
-#else
-            Interpolator inp(i01.run(0.3), i12.run(0.7));
-            
-            VertOutFragInType fragment = inp.run(0.4);
-
-            const int x = std::get<POSITION_ATTACHMENT>(fragment)[0];
-            const int y = std::get<POSITION_ATTACHMENT>(fragment)[1];
-            
-            //Fragment stage
-            FragOutType pixel = mFragmentShader(fragment);
-
-            auto depth = std::get<DEPTH_ATTACHMENT>(pixel);
-            printf("Depth: %f\n", depth);
-
-            //Frame buffer
-            if(depth < depthBuffer.at(640*y+x)) {
-                depthBuffer.at(640*y+x) = depth;
-                auto data = std::get<COLOR_ATTACHMENT>(pixel);
-                std::cout << "Data: " << data << std::endl;
-                frameBuffer.at(640*y+x) = data;
-            }
-#endif
         }
     }
 };
