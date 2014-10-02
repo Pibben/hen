@@ -281,8 +281,8 @@ public:
                                    VertexShader::OUT_COLOR_ATTACHMENT>(immStore.at(i+0), immStore.at(i+1), immStore.at(i+2),
                                 		                               FramebufferAdapter<FrameBufferType>(frameBuffer, 640));
 
-            display(frameBuffer, 640);
         }
+		display(frameBuffer, 640);
     }
 };
 
