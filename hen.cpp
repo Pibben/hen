@@ -132,23 +132,26 @@ public:
 	const typename Array::value_type& operator()(unsigned int x, unsigned int y) const { return mArray[y*mSizeX+x]; }
 };
 
-template <class In, class Out, class Uniform, int InPositionAttachment = 0, int InColorAttachment = 1,
-                                              int OutPositionAttachment = 0, int OutColorAttachment = 1>
+template <class In, class InTraits, class Uniform>
 class MyVertexShader {
 private:
 public:
     const Uniform& mUniform;
     typedef In VertInType;
-    typedef Out VertOutFragInType;
     typedef Uniform VertUniformType;
-    static constexpr int OUT_POSITION_ATTACHMENT = OutPositionAttachment;
-    static constexpr int OUT_COLOR_ATTACHMENT = OutColorAttachment;
+
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> OutType;
+
+    struct Traits {
+    	static constexpr int POSITION_ATTACHMENT = 0;
+    	static constexpr int COLOR_ATTACHMENT = 1;
+    };
     
     MyVertexShader(const Uniform& uniform) : mUniform(uniform) {}
     
-    Out operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InPositionAttachment>(in);
-        const Eigen::Vector4f& color = std::get<InColorAttachment>(in);
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector4f& color = std::get<InTraits::COLOR_ATTACHMENT>(in);
 
         Eigen::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
 
@@ -156,23 +159,26 @@ public:
     }
 };
 
-template <class In, class Out, class Uniform, int InPositionAttachment = 0, int InColorAttachment = 1,
-                                              int OutColorAttachment = 0, int OutDepthAttachment = 1>
+template <class In, class InTraits, class Uniform>
 class MyFragmentShader {
 private:
 public:
     const Uniform& mUniform;
     typedef In VertOutFragInType;
-    typedef Out FragOutType;
     typedef Uniform FragUniformType;
-    static constexpr int OUT_COLOR_ATTACHMENT = OutColorAttachment;
-    static constexpr int OUT_DEPTH_ATTACHMENT = OutDepthAttachment;
+
+    typedef std::tuple<Eigen::Vector4f, float> OutType;
+
+    struct Traits {
+		static constexpr int COLOR_ATTACHMENT = 0;
+		static constexpr int DEPTH_ATTACHMENT = 1;
+    };
     
     MyFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
 
-    Out operator()(const In& in) const {
-        const Eigen::Vector3f& pos   = std::get<InPositionAttachment>(in);
-        const Eigen::Vector3f& color = std::get<InColorAttachment>(in);
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector4f& color = std::get<InTraits::COLOR_ATTACHMENT>(in);
 
         return std::make_tuple(color, pos[2]);
     }
@@ -197,29 +203,22 @@ static void display(const Framebuffer& framebuffer, unsigned int sizeX) {
 template <class VertexShader, class FragmentShader>
 class Renderer {
 private:
-    static constexpr int POSITION_ATTACHMENT = VertexShader::OUT_POSITION_ATTACHMENT;
-    static constexpr int COLOR_ATTACHMENT = FragmentShader::OUT_COLOR_ATTACHMENT;
-    static constexpr int DEPTH_ATTACHMENT = FragmentShader::OUT_DEPTH_ATTACHMENT;
+    static constexpr int POSITION_ATTACHMENT = VertexShader::Traits::POSITION_ATTACHMENT;
+    static constexpr int COLOR_ATTACHMENT = FragmentShader::Traits::COLOR_ATTACHMENT;
+    static constexpr int DEPTH_ATTACHMENT = FragmentShader::Traits::DEPTH_ATTACHMENT;
 
     const VertexShader& mVertexShader;
     const FragmentShader& mFragmentShader;
-    typedef typename VertexShader::VertInType VertInType;
-    typedef typename VertexShader::VertOutFragInType VertOutFragInType;
-    typedef typename FragmentShader::FragOutType FragOutType;
+    typedef typename VertexShader::OutType VertOutFragInType;
+    typedef typename FragmentShader::OutType FragOutType;
     
     typedef typename VertexShader::VertUniformType VertUniformType;
     typedef typename FragmentShader::FragUniformType FragUniformType;
     
-#if 1
     typedef typename std::tuple_element<POSITION_ATTACHMENT, VertOutFragInType>::type ScreenPosType;
     typedef typename std::tuple_element<COLOR_ATTACHMENT, FragOutType>::type DataType;
     typedef typename std::tuple_element<DEPTH_ATTACHMENT, FragOutType>::type DepthType;
-#else
-    typedef float ScreenPosType;
-    typedef float DepthType;
-    typedef float DataType;
-#endif
-    
+
     std::vector<VertOutFragInType> immStore;
     typedef std::array<DataType, 640*480> FrameBufferType;
     FrameBufferType frameBuffer;
@@ -247,6 +246,7 @@ public:
         assert(criterion(top, mid) && criterion(mid, bot) && criterion(top, bot));
     }
 
+    template <class VertInType>
     void render(const std::vector<VertInType>& in) {
         //Vertex stage
         std::transform(in.begin(), in.end(), std::back_inserter(immStore), mVertexShader);
@@ -277,8 +277,8 @@ public:
             //Rasterization
 
             rasterizeTriangleLines<VertOutFragInType, FramebufferAdapter<FrameBufferType>,
-                                   VertexShader::OUT_POSITION_ATTACHMENT,
-                                   VertexShader::OUT_COLOR_ATTACHMENT>(immStore.at(i+0), immStore.at(i+1), immStore.at(i+2),
+                                   VertexShader::Traits::POSITION_ATTACHMENT,
+                                   VertexShader::Traits::COLOR_ATTACHMENT>(immStore.at(i+0), immStore.at(i+1), immStore.at(i+2),
                                 		                               FramebufferAdapter<FrameBufferType>(frameBuffer, 640));
 
         }
@@ -321,11 +321,15 @@ static Eigen::Matrix4f proj(float left, float right,
 
 
 int main(int argc, char** argv) {
-
+	//Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertInType;
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertOutFragInType;
-    typedef std::tuple<Eigen::Vector4f, float> MyFragOutType;
 
+    struct InTraits {
+    	enum { POSITION_ATTACHMENT = 0 };
+    	enum { COLOR_ATTACHMENT = 1 };
+    };
+
+    //Vertex shader
     struct MyVertUniformType {
     	Eigen::Matrix4f projMatrix;
     	Eigen::Matrix4f modelViewMatrix;
@@ -334,16 +338,20 @@ int main(int argc, char** argv) {
     vertUniform.projMatrix = Eigen::Matrix4f::Identity();
     vertUniform.modelViewMatrix = proj(-250, 250, -250, 250, 10, 50);
 
-    struct MyFragUniformType {
+    typedef MyVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
 
+    //Fragment shader
+    struct MyFragUniformType {
     } fragUniform;
 
-    typedef MyVertexShader<MyVertInType, MyVertOutFragInType, MyVertUniformType> MyVertexShaderType;
-    typedef MyFragmentShader<MyVertOutFragInType, MyFragOutType, MyFragUniformType> MyFragmentShaderType;
-
-    MyVertexShaderType vertexShader(vertUniform);
+    typedef MyFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
     MyFragmentShaderType fragmentShader(fragUniform);
 
+    //Renderer
+    Renderer<MyVertexShaderType, MyFragmentShaderType> renderer(vertexShader, fragmentShader);
+
+    //Draw
     std::vector<Eigen::Vector4f> vertices = {Eigen::Vector4f(  0,   0, 12, 1),
     										 Eigen::Vector4f(200,   0, 12, 1),
     										 Eigen::Vector4f(  0, 200, 20, 1),
@@ -354,12 +362,11 @@ int main(int argc, char** argv) {
     		                               Eigen::Vector4f(0,0,255,1), //Blue
     		                               Eigen::Vector4f(255,0,255,1)}; //Purple
 
-    Renderer<MyVertexShaderType, MyFragmentShaderType> renderer(vertexShader, fragmentShader);
-    renderer.render({{vertices[0], colors[0]},
-    	             {vertices[1], colors[1]},
-    	             {vertices[2], colors[2]},
+    renderer.render<MyVertInType>({{vertices[0], colors[0]},
+    	             	           {vertices[1], colors[1]},
+    	             	           {vertices[2], colors[2]},
 
-    	             {vertices[1], colors[1]},
-					 {vertices[2], colors[2]},
-    	             {vertices[3], colors[3]}});
+    	             	           {vertices[1], colors[1]},
+    	             	           {vertices[2], colors[2]},
+    	             	           {vertices[3], colors[3]}});
 }
