@@ -301,6 +301,24 @@ static Eigen::Matrix4f ortho(float left, float right,
 	return m;
 }
 
+static Eigen::Matrix4f proj(float left, float right,
+							 float bottom, float top,
+							 float near, float far) {
+	Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
+	m(0,0) = 2.0f*near/(right - left);
+	m(1,1) = 2.0f*near/(top - bottom);
+	m(2,2) = 2.0f/(near - far);
+
+	m(0,2) = (right+left)/(right-left);
+	m(1,2) = (top+bottom)/(top-bottom);
+	m(2,2) = (near+far)/(near-far);
+	m(3,2) = 1.0f;
+
+	m(2,3) = 2*near*far / (near-far);
+
+	return m;
+}
+
 
 int main(int argc, char** argv) {
 
@@ -314,7 +332,7 @@ int main(int argc, char** argv) {
     } vertUniform;
 
     vertUniform.projMatrix = Eigen::Matrix4f::Identity();
-    vertUniform.modelViewMatrix = ortho(-250, 250, -250, 250, -10, 10);
+    vertUniform.modelViewMatrix = proj(-250, 250, -250, 250, 10, 50);
 
     struct MyFragUniformType {
 
@@ -326,8 +344,22 @@ int main(int argc, char** argv) {
     MyVertexShaderType vertexShader(vertUniform);
     MyFragmentShaderType fragmentShader(fragUniform);
 
+    std::vector<Eigen::Vector4f> vertices = {Eigen::Vector4f(  0,   0, 12, 1),
+    										 Eigen::Vector4f(200,   0, 12, 1),
+    										 Eigen::Vector4f(  0, 200, 20, 1),
+    										 Eigen::Vector4f(200, 200, 20, 1)};
+
+    std::vector<Eigen::Vector4f> colors = {Eigen::Vector4f(255,0,0,1), //Red
+    		                               Eigen::Vector4f(0,255,0,1), //Green
+    		                               Eigen::Vector4f(0,0,255,1), //Blue
+    		                               Eigen::Vector4f(255,0,255,1)}; //Purple
+
     Renderer<MyVertexShaderType, MyFragmentShaderType> renderer(vertexShader, fragmentShader);
-    renderer.render({{Eigen::Vector4f(  0,   0, 5, 1), Eigen::Vector4f(255,0,0,1)},
-                     {Eigen::Vector4f(100,   0, 5, 1), Eigen::Vector4f(0,255,0,1)},
-                     {Eigen::Vector4f(  0, 100, 5, 1), Eigen::Vector4f(0,0,255,1)}});
+    renderer.render({{vertices[0], colors[0]},
+    	             {vertices[1], colors[1]},
+    	             {vertices[2], colors[2]},
+
+    	             {vertices[1], colors[1]},
+					 {vertices[2], colors[2]},
+    	             {vertices[3], colors[3]}});
 }
