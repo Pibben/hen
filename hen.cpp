@@ -251,8 +251,27 @@ public:
         //Vertex stage
         std::transform(in.begin(), in.end(), std::back_inserter(immStore), mVertexShader);
         
+        //Now in clip space
+        //Perspective divide
+        std::for_each(immStore.begin(), immStore.end(), [](VertOutFragInType& vert) {
+        	auto& pos = std::get<POSITION_ATTACHMENT>(vert);
+        	pos /= pos[3];
+        });
+
+        //Now in NDC
+
+        std::for_each(immStore.begin(), immStore.end(), [](VertOutFragInType& vert) {
+        	auto& pos = std::get<POSITION_ATTACHMENT>(vert);
+        	pos = pos + Eigen::Vector4f::Ones();
+        	pos /= 2.0f;
+        	pos[0] *= 640;
+        	pos[1] *= 480;
+        });
+
+        //Now in screen space
+
+		//Primitive assembly
         for(int i = 0; i < immStore.size(); i+=3) {
-            //Primitive assembly
             //TODO: Back face culling
             
             //Rasterization
@@ -267,6 +286,20 @@ public:
     }
 };
 
+static Eigen::Matrix4f ortho(float left, float right,
+							 float bottom, float top,
+							 float near, float far) {
+	Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
+	m(0,0) = 2.0/(right - left);
+	m(1,1) = 2.0/(top - bottom);
+	m(2,2) = 2.0/(near - far);
+
+	m(0,3) = (left+right)/(left-right);
+	m(1,3) = (bottom+top)/(bottom-top);
+	m(2,3) = (far+near)/(far-near);
+
+	return m;
+}
 
 
 int main(int argc, char** argv) {
@@ -281,7 +314,7 @@ int main(int argc, char** argv) {
     } vertUniform;
 
     vertUniform.projMatrix = Eigen::Matrix4f::Identity();
-    vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
+    vertUniform.modelViewMatrix = ortho(-250, 250, -250, 250, -10, 10);
 
     struct MyFragUniformType {
 
@@ -294,7 +327,7 @@ int main(int argc, char** argv) {
     MyFragmentShaderType fragmentShader(fragUniform);
 
     Renderer<MyVertexShaderType, MyFragmentShaderType> renderer(vertexShader, fragmentShader);
-    renderer.render({{Eigen::Vector4f( 10, 10, 5, 1), Eigen::Vector4f(255,0,0,1)},
-                     {Eigen::Vector4f(300, 20, 5, 1), Eigen::Vector4f(0,255,0,1)},
-                     {Eigen::Vector4f(300,300, 5, 1), Eigen::Vector4f(0,0,255,1)}});
+    renderer.render({{Eigen::Vector4f(  0,   0, 5, 1), Eigen::Vector4f(255,0,0,1)},
+                     {Eigen::Vector4f(100,   0, 5, 1), Eigen::Vector4f(0,255,0,1)},
+                     {Eigen::Vector4f(  0, 100, 5, 1), Eigen::Vector4f(0,0,255,1)}});
 }
