@@ -65,8 +65,6 @@ static void rasterizeLine(Vertex v1, Vertex v2, Framebuffer framebuffer) {
 	float x1 = std::get<PositionAttachment>(v2)[0];
 	float y1 = std::get<PositionAttachment>(v2)[1];
 
-	printf("%f %f %f %f\n", x0, y0, x1, y1);
-
 	TupleInterpolator<Vertex> inp(v1, v2);
 
 	const bool steep = (std::abs(y1 - y0) > std::abs(x1 - x0));
@@ -100,10 +98,8 @@ static void rasterizeLine(Vertex v1, Vertex v2, Framebuffer framebuffer) {
 		auto color = std::get<ColorAttachment>(inp.run(inpPos));
 		inpPos += inpStep;
 		if (steep) {
-			//std::cout << x << ", " << y << " = " << color << std::endl;
 			framebuffer(y, x) = color;
 		} else {
-			//std::cout << y << ", " << x << " = " << color << std::endl;
 			framebuffer(x, y) = color;
 		}
 
