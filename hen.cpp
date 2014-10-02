@@ -65,7 +65,6 @@ static void rasterizeLine(Vertex v1, Vertex v2, Framebuffer framebuffer) {
 	float x1 = std::get<PositionAttachment>(v2)[0];
 	float y1 = std::get<PositionAttachment>(v2)[1];
 
-	TupleInterpolator<Vertex> inp(v1, v2);
 
 	const bool steep = (std::abs(y1 - y0) > std::abs(x1 - x0));
 
@@ -79,6 +78,8 @@ static void rasterizeLine(Vertex v1, Vertex v2, Framebuffer framebuffer) {
 		std::swap(y0, y1);
 		std::swap(v1, v2);
 	}
+
+	TupleInterpolator<Vertex> inp(v1, v2);
 
 	const float dx = x1-x0;
 	const float dy = std::abs(y1-y0);
