@@ -40,12 +40,12 @@ Tuple tupleAddScaled(const Tuple& a, const Tuple& b, float s) {
 }
 
 template <class VertOutFragIn>
-class MyInterpolator {
+class TupleInterpolator {
     typedef VertOutFragIn VertOutFragInType;
     VertOutFragIn mStart;
     VertOutFragIn mDelta;
 public:
-    MyInterpolator(const VertOutFragIn& in1, const VertOutFragIn& in2) {
+    TupleInterpolator(const VertOutFragIn& in1, const VertOutFragIn& in2) {
         mStart = in1;
         mDelta = tupleDiff(in2, in1);
     }
@@ -67,7 +67,7 @@ static void rasterizeLine(Vertex v1, Vertex v2, Framebuffer framebuffer) {
 
 	printf("%f %f %f %f\n", x0, y0, x1, y1);
 
-	MyInterpolator<Vertex> inp(v1, v2);
+	TupleInterpolator<Vertex> inp(v1, v2);
 
 	const bool steep = (std::abs(y1 - y0) > std::abs(x1 - x0));
 
@@ -195,7 +195,7 @@ static void display(const Framebuffer& framebuffer, unsigned int sizeX) {
 	}
 }
 
-template <class VertexShader, class FragmentShader, class Interpolator>
+template <class VertexShader, class FragmentShader>
 class Renderer {
 private:
     static constexpr int POSITION_ATTACHMENT = VertexShader::OUT_POSITION_ATTACHMENT;
@@ -313,12 +313,11 @@ int main(int argc, char** argv) {
 
     typedef MyVertexShader<MyVertInType, MyVertOutFragInType, MyVertUniformType> MyVertexShaderType;
     typedef MyFragmentShader<MyVertOutFragInType, MyFragOutType, MyFragUniformType> MyFragmentShaderType;
-    typedef MyInterpolator<MyVertOutFragInType> MyInterpolatorType;
 
     MyVertexShaderType vertexShader(0);
     MyFragmentShaderType fragmentShader(0);
 
-    Renderer<MyVertexShaderType, MyFragmentShaderType, MyInterpolatorType> renderer(vertexShader, fragmentShader);
+    Renderer<MyVertexShaderType, MyFragmentShaderType> renderer(vertexShader, fragmentShader);
     renderer.render({{Eigen::Vector3f( 10, 10, 5), Eigen::Vector3f(255,0,0)},
                      {Eigen::Vector3f(300, 20, 5), Eigen::Vector3f(0,255,0)},
                      {Eigen::Vector3f(300,300, 5), Eigen::Vector3f(0,0,255)}});
