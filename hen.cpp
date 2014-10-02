@@ -7,6 +7,9 @@
 #include <utility>
 #include <vector>
 
+#include "CImg.h"
+#undef Success
+
 #include <Eigen/Dense>
 
 template<std::size_t I = 0, typename FuncT, typename ... Tp>
@@ -176,6 +179,22 @@ public:
     }
 };
 
+template <class Framebuffer>
+static void display(const Framebuffer& framebuffer, unsigned int sizeX) {
+	cimg_library::CImg<unsigned char> img(sizeX, 480, 1, 3);
+
+	for(int i = 0; i < framebuffer.size(); ++i) {
+		for(int j = 0; j < 3; ++j) {
+			img(i%sizeX, i/sizeX, j) = framebuffer.at(i)[j];
+		}
+	}
+
+	cimg_library::CImgDisplay disp(img);
+	while(!disp.is_closed()) {
+		disp.wait();
+	}
+}
+
 template <class VertexShader, class FragmentShader, class Interpolator>
 class Renderer {
 private:
@@ -253,6 +272,8 @@ public:
                                    VertexShader::OUT_POSITION_ATTACHMENT,
                                    VertexShader::OUT_COLOR_ATTACHMENT>(top, mid, bot,
                                 		                               FramebufferAdapter<FrameBufferType>(frameBuffer, 640));
+
+            display(frameBuffer, 640);
 #else
             Interpolator inp(i01.run(0.3), i12.run(0.7));
             
