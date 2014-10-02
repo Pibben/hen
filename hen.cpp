@@ -55,6 +55,83 @@ public:
     }
 };
 
+template <class Vertex, class Framebuffer, int PositionAttachment, int ColorAttachment>
+static void rasterizeLine(Vertex v1, Vertex v2, Framebuffer framebuffer) {
+	float x0 = std::get<PositionAttachment>(v1)[0];
+	float y0 = std::get<PositionAttachment>(v1)[1];
+	float x1 = std::get<PositionAttachment>(v2)[0];
+	float y1 = std::get<PositionAttachment>(v2)[1];
+
+	printf("%f %f %f %f\n", x0, y0, x1, y1);
+
+	MyInterpolator<Vertex> inp(v1, v2);
+
+	const bool steep = (std::abs(y1 - y0) > std::abs(x1 - x0));
+
+	if(steep) {
+		std::swap(x0, y0);
+		std::swap(x1, y1);
+	}
+
+	if(x0 > x1) {
+		std::swap(x0, x1);
+		std::swap(y0, y1);
+		std::swap(v1, v2);
+	}
+
+	const float dx = x1-x0;
+	const float dy = std::abs(y1-y0);
+
+	const float inpDist = std::sqrt(dx*dx+dy*dy);
+	const float inpStep = 1.0 / inpDist;
+	float inpPos = 0.0f;
+
+	float error = dx / 2.0f;
+	const int ystep = (y0 < y1) ? 1 : -1;
+	int y = (int)y0;
+
+	const int maxX = (int)x1;
+
+
+	for (int x = (int) x0; x < maxX; x++) {
+		auto color = std::get<ColorAttachment>(inp.run(inpPos));
+		inpPos += inpStep;
+		if (steep) {
+			//std::cout << x << ", " << y << " = " << color << std::endl;
+			framebuffer(y, x) = color;
+		} else {
+			//std::cout << y << ", " << x << " = " << color << std::endl;
+			framebuffer(y, x) = color;
+		}
+
+		error -= dy;
+		if (error < 0) {
+			y += ystep;
+			error += dx;
+		}
+	}
+}
+
+template <class Vertex, class Framebuffer, int PositionAttachment, int ColorAttachment>
+static void rasterizeTriangleLines(Vertex v1, Vertex v2, Vertex v3,
+		                           Framebuffer framebuffer) {
+	rasterizeLine<Vertex, Framebuffer, PositionAttachment, ColorAttachment>(v1, v2, framebuffer);
+	rasterizeLine<Vertex, Framebuffer, PositionAttachment, ColorAttachment>(v1, v3, framebuffer);
+	rasterizeLine<Vertex, Framebuffer, PositionAttachment, ColorAttachment>(v2, v3, framebuffer);
+}
+
+template <class Array>
+class FramebufferAdapter {
+private:
+	Array& mArray;
+	unsigned int mSizeX;
+public:
+	FramebufferAdapter(Array& array, unsigned int sizeX) : mArray(array), mSizeX(sizeX) {}
+
+	typename Array::value_type& operator()(unsigned int x, unsigned int y) { return mArray[y*mSizeX+x]; }
+	const typename Array::value_type& operator()(unsigned int x, unsigned int y) const { return mArray[y*mSizeX+x]; }
+};
+
 template <class In, class Out, class Uniform, int InPositionAttachment = 0, int InColorAttachment = 1,
                                               int OutPositionAttachment = 0, int OutColorAttachment = 1>
 class MyVertexShader {
@@ -65,6 +142,7 @@ public:
     typedef Out VertOutFragInType;
     typedef Uniform VertUniformType;
     static constexpr int OUT_POSITION_ATTACHMENT = OutPositionAttachment;
+    static constexpr int OUT_COLOR_ATTACHMENT = OutColorAttachment;
     
     MyVertexShader(const Uniform& uniform) : mUniform(uniform) {}
     
@@ -125,8 +203,10 @@ private:
 #endif
     
     std::vector<VertOutFragInType> immStore;
-    std::array<DataType, 640*480> frameBuffer;
-    std::array<DepthType, 640*480> depthBuffer;
+    typedef std::array<DataType, 640*480> FrameBufferType;
+    FrameBufferType frameBuffer;
+    typedef std::array<DepthType, 640*480> DepthBufferType;
+    DepthBufferType depthBuffer;
     
 public:
     Renderer(const VertexShader& vertexShader, const FragmentShader& fragmentShader) :
@@ -158,16 +238,22 @@ public:
             VertOutFragInType top = immStore.at(i+0);
             VertOutFragInType mid = immStore.at(i+1);
             VertOutFragInType bot = immStore.at(i+2);
-
+#if 0
             sort(top, mid, bot);
 
             Interpolator i01(immStore.at(i+0), immStore.at(i+1));
             Interpolator i02(immStore.at(i+0), immStore.at(i+2));
             Interpolator i12(immStore.at(i+1), immStore.at(i+2));
-            
+#endif
             //TODO: Back face culling
             
             //Rasterization
+#if 1
+            rasterizeTriangleLines<VertOutFragInType, FramebufferAdapter<FrameBufferType>,
+                                   VertexShader::OUT_POSITION_ATTACHMENT,
+                                   VertexShader::OUT_COLOR_ATTACHMENT>(top, mid, bot,
+                                		                               FramebufferAdapter<FrameBufferType>(frameBuffer, 640));
+#else
             Interpolator inp(i01.run(0.3), i12.run(0.7));
             
             VertOutFragInType fragment = inp.run(0.4);
@@ -188,6 +274,7 @@ public:
                 std::cout << "Data: " << data << std::endl;
                 frameBuffer.at(640*y+x) = data;
             }
+#endif
         }
     }
 };
@@ -211,7 +298,7 @@ int main(int argc, char** argv) {
     MyFragmentShaderType fragmentShader(0);
 
     Renderer<MyVertexShaderType, MyFragmentShaderType, MyInterpolatorType> renderer(vertexShader, fragmentShader);
-    renderer.render({{Eigen::Vector3f(1,1,1), Eigen::Vector3f(100,100,100)},
-                     {Eigen::Vector3f(2,2,2), Eigen::Vector3f(200,200,200)},
-                     {Eigen::Vector3f(3,3,3), Eigen::Vector3f(300,300,300)}});
+    renderer.render({{Eigen::Vector3f( 10, 10, 5), Eigen::Vector3f(255,0,0)},
+                     {Eigen::Vector3f(200,200, 5), Eigen::Vector3f(0,255,0)},
+                     {Eigen::Vector3f(300,300, 5), Eigen::Vector3f(0,0,255)}});
 }
