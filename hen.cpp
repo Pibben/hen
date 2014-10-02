@@ -104,7 +104,7 @@ static void rasterizeLine(Vertex v1, Vertex v2, Framebuffer framebuffer) {
 			framebuffer(y, x) = color;
 		} else {
 			//std::cout << y << ", " << x << " = " << color << std::endl;
-			framebuffer(y, x) = color;
+			framebuffer(x, y) = color;
 		}
 
 		error -= dy;
@@ -320,6 +320,6 @@ int main(int argc, char** argv) {
 
     Renderer<MyVertexShaderType, MyFragmentShaderType, MyInterpolatorType> renderer(vertexShader, fragmentShader);
     renderer.render({{Eigen::Vector3f( 10, 10, 5), Eigen::Vector3f(255,0,0)},
-                     {Eigen::Vector3f(200,200, 5), Eigen::Vector3f(0,255,0)},
+                     {Eigen::Vector3f(300, 20, 5), Eigen::Vector3f(0,255,0)},
                      {Eigen::Vector3f(300,300, 5), Eigen::Vector3f(0,0,255)}});
 }
