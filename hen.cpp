@@ -146,10 +146,12 @@ public:
     MyVertexShader(const Uniform& uniform) : mUniform(uniform) {}
     
     Out operator()(const In& in) const {
-        const Eigen::Vector3f& pos   = std::get<InPositionAttachment>(in);
-        const Eigen::Vector3f& color = std::get<InColorAttachment>(in);
+        const Eigen::Vector4f& pos   = std::get<InPositionAttachment>(in);
+        const Eigen::Vector4f& color = std::get<InColorAttachment>(in);
 
-        return std::make_tuple(pos, color);
+        Eigen::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
+
+        return std::make_tuple(outPos, color);
     }
 };
 
@@ -268,21 +270,30 @@ public:
 
 int main(int argc, char** argv) {
 
-    typedef std::tuple<Eigen::Vector3f, Eigen::Vector3f> MyVertInType;
-    typedef std::tuple<Eigen::Vector3f, Eigen::Vector3f> MyVertOutFragInType;
-    typedef std::tuple<Eigen::Vector3f, float> MyFragOutType;
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertInType;
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertOutFragInType;
+    typedef std::tuple<Eigen::Vector4f, float> MyFragOutType;
 
-    typedef int MyVertUniformType;
-    typedef int MyFragUniformType;
+    struct MyVertUniformType {
+    	Eigen::Matrix4f projMatrix;
+    	Eigen::Matrix4f modelViewMatrix;
+    } vertUniform;
+
+    vertUniform.projMatrix = Eigen::Matrix4f::Identity();
+    vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
+
+    struct MyFragUniformType {
+
+    } fragUniform;
 
     typedef MyVertexShader<MyVertInType, MyVertOutFragInType, MyVertUniformType> MyVertexShaderType;
     typedef MyFragmentShader<MyVertOutFragInType, MyFragOutType, MyFragUniformType> MyFragmentShaderType;
 
-    MyVertexShaderType vertexShader(0);
-    MyFragmentShaderType fragmentShader(0);
+    MyVertexShaderType vertexShader(vertUniform);
+    MyFragmentShaderType fragmentShader(fragUniform);
 
     Renderer<MyVertexShaderType, MyFragmentShaderType> renderer(vertexShader, fragmentShader);
-    renderer.render({{Eigen::Vector3f( 10, 10, 5), Eigen::Vector3f(255,0,0)},
-                     {Eigen::Vector3f(300, 20, 5), Eigen::Vector3f(0,255,0)},
-                     {Eigen::Vector3f(300,300, 5), Eigen::Vector3f(0,0,255)}});
+    renderer.render({{Eigen::Vector4f( 10, 10, 5, 1), Eigen::Vector4f(255,0,0,1)},
+                     {Eigen::Vector4f(300, 20, 5, 1), Eigen::Vector4f(0,255,0,1)},
+                     {Eigen::Vector4f(300,300, 5, 1), Eigen::Vector4f(0,0,255,1)}});
 }
