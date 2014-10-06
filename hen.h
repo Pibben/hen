@@ -62,8 +62,10 @@ public:
     }
 };
 
-template <class Vertex, class Framebuffer, int PositionAttachment, int ColorAttachment>
-static void rasterizeLine(Vertex v1, Vertex v2, Framebuffer framebuffer) {
+template <class Vertex, class FragmentShader, class Framebuffer, int PositionAttachment>
+static void rasterizeLine(Vertex v1, Vertex v2, const FragmentShader& fragmentShader, Framebuffer framebuffer) {
+    static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
+
     float x0 = std::get<PositionAttachment>(v1)[0];
     float y0 = std::get<PositionAttachment>(v1)[1];
     float x1 = std::get<PositionAttachment>(v2)[0];
@@ -100,7 +102,7 @@ static void rasterizeLine(Vertex v1, Vertex v2, Framebuffer framebuffer) {
 
 
     for (int x = (int) x0; x < maxX; x++) {
-        auto color = std::get<ColorAttachment>(inp.run(inpPos));
+        auto color = std::get<ColorAttachment>(fragmentShader(inp.run(inpPos)));
         inpPos += inpStep;
         if (steep) {
             framebuffer(y, x) = color;
@@ -116,13 +118,39 @@ static void rasterizeLine(Vertex v1, Vertex v2, Framebuffer framebuffer) {
     }
 }
 
-template <class Vertex, class Framebuffer, int PositionAttachment, int ColorAttachment>
+template <class Vertex, class Framebuffer, int PositionAttachment, class FragmentShader>
 static void rasterizeTriangleLines(Vertex v1, Vertex v2, Vertex v3,
+                                   const FragmentShader& fragmentShader,
                                    Framebuffer framebuffer) {
-    rasterizeLine<Vertex, Framebuffer, PositionAttachment, ColorAttachment>(v1, v2, framebuffer);
-    rasterizeLine<Vertex, Framebuffer, PositionAttachment, ColorAttachment>(v1, v3, framebuffer);
-    rasterizeLine<Vertex, Framebuffer, PositionAttachment, ColorAttachment>(v2, v3, framebuffer);
+    rasterizeLine<Vertex, FragmentShader, Framebuffer, PositionAttachment>(v1, v2, fragmentShader, framebuffer);
+    rasterizeLine<Vertex, FragmentShader, Framebuffer, PositionAttachment>(v1, v3, fragmentShader, framebuffer);
+    rasterizeLine<Vertex, FragmentShader, Framebuffer, PositionAttachment>(v2, v3, fragmentShader, framebuffer);
 }
+
+template <class OutType>
+class TextureSampler {
+    cimg_library::CImg<unsigned char>& mImg;
+    unsigned int mSizeX;
+    unsigned int mSizeY;
+
+public:
+    TextureSampler(cimg_library::CImg<unsigned char>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
+
+    OutType get(float u, float v) const {
+        const int x = u * (mSizeX-1) + 0.5;
+        const int y = mSizeY - (v * (mSizeY-1) + 0.5);
+
+        assert(x >= 0 && x < mSizeX);
+        assert(y >= 0 && y < mSizeY);
+
+        const float r = mImg(x, y, 0);
+        const float g = mImg(x, y, 1);
+        const float b = mImg(x, y, 2);
+        const float a = 255.0;
+
+        return OutType(r, g, b, a);
+    }
+};
 
 template <class Array>
 class FramebufferAdapter {
@@ -236,8 +264,9 @@ public:
 
             rasterizeTriangleLines<VertOutFragInType, FramebufferAdapter<FrameBufferType>,
                                    VertexShader::Traits::POSITION_ATTACHMENT,
-                                   VertexShader::Traits::COLOR_ATTACHMENT>(immStore.at(i+0), immStore.at(i+1), immStore.at(i+2),
-                                                                       FramebufferAdapter<FrameBufferType>(frameBuffer, 640));
+                                   FragmentShader>(immStore.at(i+0), immStore.at(i+1), immStore.at(i+2),
+                                                   fragmentShader,
+                                                   FramebufferAdapter<FrameBufferType>(frameBuffer, 640));
 
         }
         display(frameBuffer, 640);

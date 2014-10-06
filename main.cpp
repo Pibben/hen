@@ -9,7 +9,7 @@
 #include "utils.h"
 
 template <class In, class InTraits, class Uniform>
-class MyVertexShader {
+class ColorVertexShader {
 private:
 public:
     const Uniform& mUniform;
@@ -23,7 +23,7 @@ public:
         static constexpr int COLOR_ATTACHMENT = 1;
     };
 
-    MyVertexShader(const Uniform& uniform) : mUniform(uniform) {}
+    ColorVertexShader(const Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -36,7 +36,7 @@ public:
 };
 
 template <class In, class InTraits, class Uniform>
-class MyFragmentShader {
+class ColorFragmentShader {
 private:
 public:
     const Uniform& mUniform;
@@ -50,7 +50,7 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    MyFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+    ColorFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -60,13 +60,67 @@ public:
     }
 };
 
+template <class In, class InTraits, class Uniform>
+class TextureVertexShader {
+private:
+public:
+    const Uniform& mUniform;
+    typedef In VertInType;
+    typedef Uniform VertUniformType;
+
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> OutType;
+
+    struct Traits {
+        static constexpr int POSITION_ATTACHMENT = 0;
+        static constexpr int TEXTURE_ATTACHMENT = 1;
+    };
+
+    TextureVertexShader(const Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
+
+        Eigen::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
+
+        return std::make_tuple(outPos, tex);
+    }
+};
+
+template <class In, class InTraits, class Uniform>
+class TextureFragmentShader {
+private:
+public:
+    const Uniform& mUniform;
+    typedef In VertOutFragInType;
+    typedef Uniform FragUniformType;
+
+    typedef std::tuple<Eigen::Vector4f, float> OutType;
+
+    struct Traits {
+        static constexpr int COLOR_ATTACHMENT = 0;
+        static constexpr int DEPTH_ATTACHMENT = 1;
+    };
+
+    TextureFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
+
+        auto color = mUniform.textureSampler.get(tex[0], tex[1]);
+
+        return std::make_tuple(color, pos[2]);
+    }
+};
+
 int main(int argc, char** argv) {
     //Input types
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertInType;
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
 
     struct InTraits {
         enum { POSITION_ATTACHMENT = 0 };
-        enum { COLOR_ATTACHMENT = 1 };
+        enum { TEXTURE_ATTACHMENT = 1 };
     };
 
     //Vertex shader
@@ -78,14 +132,17 @@ int main(int argc, char** argv) {
     vertUniform.projMatrix = Eigen::Matrix4f::Identity();
     vertUniform.modelViewMatrix = proj(-250, 250, -250, 250, 10, 50);
 
-    typedef MyVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
     MyVertexShaderType vertexShader(vertUniform);
 
     //Fragment shader
+    cimg_library::CImg<unsigned char> texImg("/home/per/gradient.jpg");
     struct MyFragUniformType {
-    } fragUniform;
+        TextureSampler<Eigen::Vector4f> textureSampler;
+        MyFragUniformType(cimg_library::CImg<unsigned char>& img) : textureSampler(img) {}
+    } fragUniform(texImg);
 
-    typedef MyFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    typedef TextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
     MyFragmentShaderType fragmentShader(fragUniform);
 
     //Renderer
@@ -102,13 +159,18 @@ int main(int argc, char** argv) {
                                            Eigen::Vector4f(0,0,255,1), //Blue
                                            Eigen::Vector4f(255,0,255,1)}; //Purple
 
-    renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>({{vertices[0], colors[0]},
-                                                                             {vertices[1], colors[1]},
-                                                                             {vertices[2], colors[2]},
+    std::vector<Eigen::Vector2f> uvs = {Eigen::Vector2f(0,0),
+                                        Eigen::Vector2f(1,0),
+                                        Eigen::Vector2f(0,1),
+                                        Eigen::Vector2f(1,1)};
 
-                                                                             {vertices[1], colors[1]},
-                                                                             {vertices[2], colors[2]},
-                                                                             {vertices[3], colors[3]}},
+    renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>({{vertices[0], uvs[0]},
+                                                                             {vertices[1], uvs[1]},
+                                                                             {vertices[2], uvs[2]},
+
+                                                                             {vertices[1], uvs[1]},
+                                                                             {vertices[2], uvs[2]},
+                                                                             {vertices[3], uvs[3]}},
                                                                              vertexShader, fragmentShader);
 }
 
