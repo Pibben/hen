@@ -9,6 +9,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <type_traits>
 
 #include "CImg.h"
 #undef Success
@@ -152,40 +153,28 @@ static void display(const Framebuffer& framebuffer, unsigned int sizeX) {
     }
 }
 
-template <class VertexShader, class FragmentShader>
+template <class FragOutType, class Traits>
 class Renderer {
 private:
-    static constexpr int POSITION_ATTACHMENT = VertexShader::Traits::POSITION_ATTACHMENT;
-    static constexpr int COLOR_ATTACHMENT = FragmentShader::Traits::COLOR_ATTACHMENT;
-    static constexpr int DEPTH_ATTACHMENT = FragmentShader::Traits::DEPTH_ATTACHMENT;
+    static constexpr int COLOR_ATTACHMENT = Traits::COLOR_ATTACHMENT;
+    static constexpr int DEPTH_ATTACHMENT = Traits::DEPTH_ATTACHMENT;
 
-    const VertexShader& mVertexShader;
-    const FragmentShader& mFragmentShader;
-    typedef typename VertexShader::OutType VertOutFragInType;
-    typedef typename FragmentShader::OutType FragOutType;
-    
-    typedef typename VertexShader::VertUniformType VertUniformType;
-    typedef typename FragmentShader::FragUniformType FragUniformType;
-    
-    typedef typename std::tuple_element<POSITION_ATTACHMENT, VertOutFragInType>::type ScreenPosType;
     typedef typename std::tuple_element<COLOR_ATTACHMENT, FragOutType>::type DataType;
     typedef typename std::tuple_element<DEPTH_ATTACHMENT, FragOutType>::type DepthType;
 
-    std::vector<VertOutFragInType> immStore;
     typedef std::array<DataType, 640*480> FrameBufferType;
     FrameBufferType frameBuffer;
     typedef std::array<DepthType, 640*480> DepthBufferType;
     DepthBufferType depthBuffer;
     
 public:
-    Renderer(const VertexShader& vertexShader, const FragmentShader& fragmentShader) :
-        mVertexShader(vertexShader), mFragmentShader(fragmentShader) {
-
+    Renderer() {
         for(auto& d: depthBuffer) {
             d = std::numeric_limits<DepthType>::max();
         }
     }
 
+    /*
     static void sort(VertOutFragInType& top, VertOutFragInType& mid, VertOutFragInType& bot) {
         auto criterion = [](VertOutFragInType& a, VertOutFragInType& b) {
             return std::get<POSITION_ATTACHMENT>(a)[1] < std::get<POSITION_ATTACHMENT>(b)[1];
@@ -197,11 +186,28 @@ public:
 
         assert(criterion(top, mid) && criterion(mid, bot) && criterion(top, bot));
     }
+    */
 
-    template <class VertInType>
-    void render(const std::vector<VertInType>& in) {
+    template <class VertInType, class VertexShader, class FragmentShader>
+    void render(const std::vector<VertInType>& in, const VertexShader& vertexShader,
+                                                   const FragmentShader& fragmentShader) {
+
+        static constexpr int POSITION_ATTACHMENT = VertexShader::Traits::POSITION_ATTACHMENT;
+        //static constexpr int COLOR_ATTACHMENT = FragmentShader::Traits::COLOR_ATTACHMENT;
+        //static constexpr int DEPTH_ATTACHMENT = FragmentShader::Traits::DEPTH_ATTACHMENT;
+
+        typedef typename VertexShader::OutType VertOutFragInType;
+        static_assert(std::is_same<FragOutType, typename FragmentShader::OutType>::value, "Error");
+
+        typedef typename VertexShader::VertUniformType VertUniformType;
+        typedef typename FragmentShader::FragUniformType FragUniformType;
+
+        typedef typename std::tuple_element<POSITION_ATTACHMENT, VertOutFragInType>::type ScreenPosType;
+
+        std::vector<VertOutFragInType> immStore;
+
         //Vertex stage
-        std::transform(in.begin(), in.end(), std::back_inserter(immStore), mVertexShader);
+        std::transform(in.begin(), in.end(), std::back_inserter(immStore), vertexShader);
         
         //Now in clip space
         //Perspective divide

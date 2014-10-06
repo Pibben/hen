@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
     MyFragmentShaderType fragmentShader(fragUniform);
 
     //Renderer
-    Renderer<MyVertexShaderType, MyFragmentShaderType> renderer(vertexShader, fragmentShader);
+    Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits> renderer;
 
     //Draw
     std::vector<Eigen::Vector4f> vertices = {Eigen::Vector4f(  0,   0, 12, 1),
@@ -102,13 +102,14 @@ int main(int argc, char** argv) {
                                            Eigen::Vector4f(0,0,255,1), //Blue
                                            Eigen::Vector4f(255,0,255,1)}; //Purple
 
-    renderer.render<MyVertInType>({{vertices[0], colors[0]},
-                                   {vertices[1], colors[1]},
-                                   {vertices[2], colors[2]},
+    renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>({{vertices[0], colors[0]},
+                                                                             {vertices[1], colors[1]},
+                                                                             {vertices[2], colors[2]},
 
-                                   {vertices[1], colors[1]},
-                                   {vertices[2], colors[2]},
-                                   {vertices[3], colors[3]}});
+                                                                             {vertices[1], colors[1]},
+                                                                             {vertices[2], colors[2]},
+                                                                             {vertices[3], colors[3]}},
+                                                                             vertexShader, fragmentShader);
 }
 
 
