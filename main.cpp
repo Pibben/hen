@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
     } vertUniform;
 
     vertUniform.projMatrix = Eigen::Matrix4f::Identity();
-    vertUniform.modelViewMatrix = proj(-250, 250, -250, 250, 10, 50);
+    vertUniform.modelViewMatrix = proj(-250, 250, -250, 250, 12, 50);
 
     typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
     MyVertexShaderType vertexShader(vertUniform);
@@ -149,9 +149,9 @@ int main(int argc, char** argv) {
     Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits> renderer;
 
     //Draw
-    std::vector<Eigen::Vector4f> vertices = {Eigen::Vector4f(  0,   0, 12, 1),
-                                             Eigen::Vector4f(200,   0, 12, 1),
-                                             Eigen::Vector4f(  0, 200, 20, 1),
+    std::vector<Eigen::Vector4f> vertices = {Eigen::Vector4f(-100, -100, 12, 1),
+                                             Eigen::Vector4f(200, -100, 12, 1),
+                                             Eigen::Vector4f(-100, 200, 20, 1),
                                              Eigen::Vector4f(200, 200, 20, 1)};
 
     std::vector<Eigen::Vector4f> colors = {Eigen::Vector4f(255,0,0,1), //Red

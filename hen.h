@@ -127,6 +127,98 @@ static void rasterizeTriangleLines(Vertex v1, Vertex v2, Vertex v3,
     rasterizeLine<Vertex, FragmentShader, Framebuffer, PositionAttachment>(v2, v3, fragmentShader, framebuffer);
 }
 
+inline int round(float f) {
+    return f + 0.5f;
+}
+
+template <class Vertex, class Framebuffer, int PositionAttachment, class FragmentShader, int yStep>
+static void rasterizeTrianglePart(Vertex v1, Vertex v2, Vertex v3,
+                                  const FragmentShader& fragmentShader,
+                                  Framebuffer framebuffer) {
+    static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
+
+    auto p1 = std::get<PositionAttachment>(v1);
+    auto p2 = std::get<PositionAttachment>(v2);
+    auto p3 = std::get<PositionAttachment>(v3);
+
+    if(p1[0] > p2[0]) {
+        std::swap(p1, p2);
+        std::swap(v1, v2);
+    }
+
+    assert(round(p1[1]) == round(p2[1]));
+
+    const int y0 = round(p1[1]);
+    const int y1 = round(p3[1]);
+
+    const float ystep = (float)yStep / (y1 - y0);
+    float ypos = 0.0f;
+
+    TupleInterpolator<Vertex> inpl(v1, v3);
+    TupleInterpolator<Vertex> inpr(v2, v3);
+
+    for(int y = y0; yStep*(y - y1) < 0; y+=yStep) {
+        Vertex vx0 = inpl.run(ypos);
+        Vertex vx1 = inpr.run(ypos);
+        TupleInterpolator<Vertex> inpx(vx0, vx1);
+        int x0 = round(std::get<PositionAttachment>(vx0)[0]);
+        int x1 = round(std::get<PositionAttachment>(vx1)[0]);
+
+        const float xstep = 1.0 / (x1 - x0);
+        float xpos = 0.0f;
+
+        for(int x = x0; x < x1; ++x) {
+            auto color = std::get<ColorAttachment>(fragmentShader(inpx.run(xpos)));
+            framebuffer(x, y) = color;
+            xpos += xstep;
+        }
+        ypos += ystep;
+    }
+
+}
+
+template <class Vertex, class Framebuffer, int PositionAttachment, class FragmentShader>
+static void rasterizeTriangle(Vertex v1, Vertex v2, Vertex v3,
+                              const FragmentShader& fragmentShader,
+                              Framebuffer framebuffer) {
+
+    Vertex& top = v1;
+    Vertex& mid = v2;
+    Vertex& bot = v3;
+
+    auto criterion = [](Vertex& a, Vertex& b) {
+        return std::get<PositionAttachment>(a)[1] <= std::get<PositionAttachment>(b)[1];
+    };
+
+    if(!criterion(top, bot)) std::swap(top, bot);
+    if(!criterion(top, mid)) std::swap(top, mid);
+    if(!criterion(mid, bot)) std::swap(mid, bot);
+
+    assert(criterion(top, mid));
+    assert(criterion(mid, bot));
+    assert(criterion(top, bot));
+
+    auto t = std::get<PositionAttachment>(top);
+    auto m = std::get<PositionAttachment>(mid);
+    auto b = std::get<PositionAttachment>(bot);
+
+    if(round(t[1]) == round(m[1])) {
+        //Flat top
+        rasterizeTrianglePart<Vertex, Framebuffer, PositionAttachment, FragmentShader, 1>(top, mid, bot, fragmentShader, framebuffer);
+    } else if(round(m[1]) == round(b[1])) {
+        //Flat bottom
+        rasterizeTrianglePart<Vertex, Framebuffer, PositionAttachment, FragmentShader, -1>(bot, mid, top, fragmentShader, framebuffer);
+    } else {
+
+        TupleInterpolator<Vertex> inptb(top, bot);
+        Vertex split = inptb.run((m[1] - t[1]) / (b[1] - t[1]));
+
+        rasterizeTrianglePart<Vertex, Framebuffer, PositionAttachment, FragmentShader, -1>(mid, split, top, fragmentShader, framebuffer);
+        rasterizeTrianglePart<Vertex, Framebuffer, PositionAttachment, FragmentShader,  1>(mid, split, bot, fragmentShader, framebuffer);
+    }
+}
+
+
 template <class OutType>
 class TextureSampler {
     cimg_library::CImg<unsigned char>& mImg;
@@ -202,20 +294,6 @@ public:
         }
     }
 
-    /*
-    static void sort(VertOutFragInType& top, VertOutFragInType& mid, VertOutFragInType& bot) {
-        auto criterion = [](VertOutFragInType& a, VertOutFragInType& b) {
-            return std::get<POSITION_ATTACHMENT>(a)[1] < std::get<POSITION_ATTACHMENT>(b)[1];
-        };
-
-        if(!criterion(top, bot)) std::swap(top, bot);
-        if(!criterion(top, mid)) std::swap(top, mid);
-        if(!criterion(mid, bot)) std::swap(mid, bot);
-
-        assert(criterion(top, mid) && criterion(mid, bot) && criterion(top, bot));
-    }
-    */
-
     template <class VertInType, class VertexShader, class FragmentShader>
     void render(const std::vector<VertInType>& in, const VertexShader& vertexShader,
                                                    const FragmentShader& fragmentShader) {
@@ -262,7 +340,7 @@ public:
             
             //Rasterization
 
-            rasterizeTriangleLines<VertOutFragInType, FramebufferAdapter<FrameBufferType>,
+            rasterizeTriangle<VertOutFragInType, FramebufferAdapter<FrameBufferType>,
                                    VertexShader::Traits::POSITION_ATTACHMENT,
                                    FragmentShader>(immStore.at(i+0), immStore.at(i+1), immStore.at(i+2),
                                                    fragmentShader,
