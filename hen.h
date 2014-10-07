@@ -348,6 +348,14 @@ public:
 
         }
         display(frameBuffer, 640);
+
+    void clear() {
+        for(auto& d: depthBuffer) {
+            d = std::numeric_limits<DepthType>::max();
+        }
+        for(auto& d: frameBuffer) {
+            d = DataType();
+        }
     }
 };
 
