@@ -62,161 +62,7 @@ public:
     }
 };
 
-template <class Vertex, class FragmentShader, class Framebuffer, int PositionAttachment>
-static void rasterizeLine(Vertex v1, Vertex v2, const FragmentShader& fragmentShader, Framebuffer framebuffer) {
-    static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
 
-    float x0 = std::get<PositionAttachment>(v1)[0];
-    float y0 = std::get<PositionAttachment>(v1)[1];
-    float x1 = std::get<PositionAttachment>(v2)[0];
-    float y1 = std::get<PositionAttachment>(v2)[1];
-
-
-    const bool steep = (std::abs(y1 - y0) > std::abs(x1 - x0));
-
-    if(steep) {
-        std::swap(x0, y0);
-        std::swap(x1, y1);
-    }
-
-    if(x0 > x1) {
-        std::swap(x0, x1);
-        std::swap(y0, y1);
-        std::swap(v1, v2);
-    }
-
-    TupleInterpolator<Vertex> inp(v1, v2);
-
-    const float dx = x1-x0;
-    const float dy = std::abs(y1-y0);
-
-    const float inpDist = std::sqrt(dx*dx+dy*dy);
-    const float inpStep = 1.0 / inpDist;
-    float inpPos = 0.0f;
-
-    float error = dx / 2.0f;
-    const int ystep = (y0 < y1) ? 1 : -1;
-    int y = (int)y0;
-
-    const int maxX = (int)x1;
-
-
-    for (int x = (int) x0; x < maxX; x++) {
-        auto color = std::get<ColorAttachment>(fragmentShader(inp.run(inpPos)));
-        inpPos += inpStep;
-        if (steep) {
-            framebuffer(y, x) = color;
-        } else {
-            framebuffer(x, y) = color;
-        }
-
-        error -= dy;
-        if (error < 0) {
-            y += ystep;
-            error += dx;
-        }
-    }
-}
-
-template <class Vertex, class Framebuffer, int PositionAttachment, class FragmentShader>
-static void rasterizeTriangleLines(Vertex v1, Vertex v2, Vertex v3,
-                                   const FragmentShader& fragmentShader,
-                                   Framebuffer framebuffer) {
-    rasterizeLine<Vertex, FragmentShader, Framebuffer, PositionAttachment>(v1, v2, fragmentShader, framebuffer);
-    rasterizeLine<Vertex, FragmentShader, Framebuffer, PositionAttachment>(v1, v3, fragmentShader, framebuffer);
-    rasterizeLine<Vertex, FragmentShader, Framebuffer, PositionAttachment>(v2, v3, fragmentShader, framebuffer);
-}
-
-inline int round(float f) {
-    return f + 0.5f;
-}
-
-template <class Vertex, class Framebuffer, int PositionAttachment, class FragmentShader, int yStep>
-static void rasterizeTrianglePart(Vertex v1, Vertex v2, Vertex v3,
-                                  const FragmentShader& fragmentShader,
-                                  Framebuffer framebuffer) {
-    static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
-
-    auto p1 = std::get<PositionAttachment>(v1);
-    auto p2 = std::get<PositionAttachment>(v2);
-    auto p3 = std::get<PositionAttachment>(v3);
-
-    if(p1[0] > p2[0]) {
-        std::swap(p1, p2);
-        std::swap(v1, v2);
-    }
-
-    assert(round(p1[1]) == round(p2[1]));
-
-    const int y0 = round(p1[1]);
-    const int y1 = round(p3[1]);
-
-    const float ystep = (float)yStep / (y1 - y0 + yStep);
-    float ypos = 0.0f;
-
-    TupleInterpolator<Vertex> inpl(v1, v3);
-    TupleInterpolator<Vertex> inpr(v2, v3);
-
-    for(int y = y0; yStep*(y - y1) <= 0; y+=yStep) {
-        Vertex vx0 = inpl.run(ypos);
-        Vertex vx1 = inpr.run(ypos);
-        TupleInterpolator<Vertex> inpx(vx0, vx1);
-        int x0 = round(std::get<PositionAttachment>(vx0)[0]);
-        int x1 = round(std::get<PositionAttachment>(vx1)[0]);
-
-        const float xstep = 1.0 / (x1 - x0 + 1);
-        float xpos = 0.0f;
-
-        for(int x = x0; x <= x1; ++x) {
-            auto color = std::get<ColorAttachment>(fragmentShader(inpx.run(xpos)));
-            framebuffer(x, y) = color;
-            xpos += xstep;
-        }
-        ypos += ystep;
-    }
-
-}
-
-template <class Vertex, class Framebuffer, int PositionAttachment, class FragmentShader>
-static void rasterizeTriangle(Vertex v1, Vertex v2, Vertex v3,
-                              const FragmentShader& fragmentShader,
-                              Framebuffer framebuffer) {
-
-    Vertex& top = v1;
-    Vertex& mid = v2;
-    Vertex& bot = v3;
-
-    auto criterion = [](Vertex& a, Vertex& b) {
-        return std::get<PositionAttachment>(a)[1] <= std::get<PositionAttachment>(b)[1];
-    };
-
-    if(!criterion(top, bot)) std::swap(top, bot);
-    if(!criterion(top, mid)) std::swap(top, mid);
-    if(!criterion(mid, bot)) std::swap(mid, bot);
-
-    assert(criterion(top, mid));
-    assert(criterion(mid, bot));
-    assert(criterion(top, bot));
-
-    auto t = std::get<PositionAttachment>(top);
-    auto m = std::get<PositionAttachment>(mid);
-    auto b = std::get<PositionAttachment>(bot);
-
-    if(round(t[1]) == round(m[1])) {
-        //Flat top
-        rasterizeTrianglePart<Vertex, Framebuffer, PositionAttachment, FragmentShader, 1>(top, mid, bot, fragmentShader, framebuffer);
-    } else if(round(m[1]) == round(b[1])) {
-        //Flat bottom
-        rasterizeTrianglePart<Vertex, Framebuffer, PositionAttachment, FragmentShader, -1>(bot, mid, top, fragmentShader, framebuffer);
-    } else {
-
-        TupleInterpolator<Vertex> inptb(top, bot);
-        Vertex split = inptb.run((m[1] - t[1]) / (b[1] - t[1]));
-
-        rasterizeTrianglePart<Vertex, Framebuffer, PositionAttachment, FragmentShader, -1>(mid, split, top, fragmentShader, framebuffer);
-        rasterizeTrianglePart<Vertex, Framebuffer, PositionAttachment, FragmentShader,  1>(mid, split, bot, fragmentShader, framebuffer);
-    }
-}
 
 
 template <class OutType>
@@ -291,10 +137,169 @@ private:
     typedef std::array<DepthType, 640*480> DepthBufferType;
     DepthBufferType depthBuffer;
     
+    template <class Vertex, class FragmentShader, int PositionAttachment>
+    void rasterizeLine(Vertex v1, Vertex v2, const FragmentShader& fragmentShader) {
+        static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
+
+        auto framebuffer = FramebufferAdapter<FrameBufferType>(frameBuffer, 640);
+
+        float x0 = std::get<PositionAttachment>(v1)[0];
+        float y0 = std::get<PositionAttachment>(v1)[1];
+        float x1 = std::get<PositionAttachment>(v2)[0];
+        float y1 = std::get<PositionAttachment>(v2)[1];
+
+
+        const bool steep = (std::abs(y1 - y0) > std::abs(x1 - x0));
+
+        if(steep) {
+            std::swap(x0, y0);
+            std::swap(x1, y1);
+        }
+
+        if(x0 > x1) {
+            std::swap(x0, x1);
+            std::swap(y0, y1);
+            std::swap(v1, v2);
+        }
+
+        TupleInterpolator<Vertex> inp(v1, v2);
+
+        const float dx = x1-x0;
+        const float dy = std::abs(y1-y0);
+
+        const float inpDist = std::sqrt(dx*dx+dy*dy);
+        const float inpStep = 1.0 / inpDist;
+        float inpPos = 0.0f;
+
+        float error = dx / 2.0f;
+        const int ystep = (y0 < y1) ? 1 : -1;
+        int y = (int)y0;
+
+        const int maxX = (int)x1;
+
+
+        for (int x = (int) x0; x < maxX; x++) {
+            auto color = std::get<ColorAttachment>(fragmentShader(inp.run(inpPos)));
+            inpPos += inpStep;
+            if (steep) {
+                framebuffer(y, x) = color;
+            } else {
+                framebuffer(x, y) = color;
+            }
+
+            error -= dy;
+            if (error < 0) {
+                y += ystep;
+                error += dx;
+            }
+        }
+    }
+
+    template <class Vertex, int PositionAttachment, class FragmentShader, int yStep>
+    void rasterizeTrianglePart(Vertex v1, Vertex v2, Vertex v3,
+                                      const FragmentShader& fragmentShader) {
+        static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
+
+        auto framebuffer = FramebufferAdapter<FrameBufferType>(frameBuffer, 640);
+
+        auto p1 = std::get<PositionAttachment>(v1);
+        auto p2 = std::get<PositionAttachment>(v2);
+        auto p3 = std::get<PositionAttachment>(v3);
+
+        if(p1[0] > p2[0]) {
+            std::swap(p1, p2);
+            std::swap(v1, v2);
+        }
+
+        assert(round(p1[1]) == round(p2[1]));
+
+        const int y0 = round(p1[1]);
+        const int y1 = round(p3[1]);
+
+        const float ystep = (float)yStep / (y1 - y0 + yStep);
+        float ypos = 0.0f;
+
+        TupleInterpolator<Vertex> inpl(v1, v3);
+        TupleInterpolator<Vertex> inpr(v2, v3);
+
+        for(int y = y0; yStep*(y - y1) <= 0; y+=yStep) {
+            Vertex vx0 = inpl.run(ypos);
+            Vertex vx1 = inpr.run(ypos);
+            TupleInterpolator<Vertex> inpx(vx0, vx1);
+            int x0 = round(std::get<PositionAttachment>(vx0)[0]);
+            int x1 = round(std::get<PositionAttachment>(vx1)[0]);
+
+            const float xstep = 1.0 / (x1 - x0 + 1);
+            float xpos = 0.0f;
+
+            for(int x = x0; x <= x1; ++x) {
+                auto color = std::get<ColorAttachment>(fragmentShader(inpx.run(xpos)));
+                framebuffer(x, y) = color;
+                xpos += xstep;
+            }
+            ypos += ystep;
+        }
+
+    }
+
+    inline int round(float f) {
+        return f + 0.5f;
+    }
+
+
 public:
     Renderer() {
         for(auto& d: depthBuffer) {
             d = std::numeric_limits<DepthType>::max();
+        }
+    }
+
+    template <class Vertex, int PositionAttachment, class FragmentShader>
+    void rasterizeTriangleLines(Vertex v1, Vertex v2, Vertex v3,
+                                       const FragmentShader& fragmentShader) {
+        rasterizeLine<Vertex, FragmentShader, PositionAttachment>(v1, v2, fragmentShader);
+        rasterizeLine<Vertex, FragmentShader, PositionAttachment>(v1, v3, fragmentShader);
+        rasterizeLine<Vertex, FragmentShader, PositionAttachment>(v2, v3, fragmentShader);
+    }
+
+
+    template <class Vertex, int PositionAttachment, class FragmentShader>
+    void rasterizeTriangle(Vertex v1, Vertex v2, Vertex v3,
+                                  const FragmentShader& fragmentShader) {
+
+        Vertex& top = v1;
+        Vertex& mid = v2;
+        Vertex& bot = v3;
+
+        auto criterion = [](Vertex& a, Vertex& b) {
+            return std::get<PositionAttachment>(a)[1] <= std::get<PositionAttachment>(b)[1];
+        };
+
+        if(!criterion(top, bot)) std::swap(top, bot);
+        if(!criterion(top, mid)) std::swap(top, mid);
+        if(!criterion(mid, bot)) std::swap(mid, bot);
+
+        assert(criterion(top, mid));
+        assert(criterion(mid, bot));
+        assert(criterion(top, bot));
+
+        auto t = std::get<PositionAttachment>(top);
+        auto m = std::get<PositionAttachment>(mid);
+        auto b = std::get<PositionAttachment>(bot);
+
+        if(round(t[1]) == round(m[1])) {
+            //Flat top
+            rasterizeTrianglePart<Vertex, PositionAttachment, FragmentShader, 1>(top, mid, bot, fragmentShader);
+        } else if(round(m[1]) == round(b[1])) {
+            //Flat bottom
+            rasterizeTrianglePart<Vertex, PositionAttachment, FragmentShader, -1>(bot, mid, top, fragmentShader);
+        } else {
+
+            TupleInterpolator<Vertex> inptb(top, bot);
+            Vertex split = inptb.run((m[1] - t[1]) / (b[1] - t[1]));
+
+            rasterizeTrianglePart<Vertex, PositionAttachment, FragmentShader, -1>(mid, split, top, fragmentShader);
+            rasterizeTrianglePart<Vertex, PositionAttachment, FragmentShader,  1>(mid, split, bot, fragmentShader);
         }
     }
 
@@ -344,11 +349,8 @@ public:
             
             //Rasterization
 
-            rasterizeTriangle<VertOutFragInType, FramebufferAdapter<FrameBufferType>,
-                                   VertexShader::Traits::POSITION_ATTACHMENT,
-                                   FragmentShader>(immStore.at(i+0), immStore.at(i+1), immStore.at(i+2),
-                                                   fragmentShader,
-                                                   FramebufferAdapter<FrameBufferType>(frameBuffer, 640));
+            rasterizeTriangle<VertOutFragInType, VertexShader::Traits::POSITION_ATTACHMENT, FragmentShader>(
+                    immStore.at(i+0), immStore.at(i+1), immStore.at(i+2), fragmentShader);
 
         }
         display(frameBuffer, 640);
