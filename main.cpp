@@ -4,6 +4,8 @@
  *  Created on: Oct 6, 2014
  *      Author: per
  */
+#include <chrono>
+#include <thread>
 
 #include "hen.h"
 #include "utils.h"
@@ -109,6 +111,7 @@ public:
         const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
 
         auto color = mUniform.textureSampler.get(tex[0], tex[1]);
+        //auto color = Eigen::Vector4f(255, 0, 255, 255);
 
         return std::make_tuple(color, pos[2]);
     }
@@ -129,8 +132,8 @@ int main(int argc, char** argv) {
         Eigen::Matrix4f modelViewMatrix;
     } vertUniform;
 
-    vertUniform.projMatrix = Eigen::Matrix4f::Identity();
-    vertUniform.modelViewMatrix = proj(-250, 250, -250, 250, 12, 50);
+    vertUniform.projMatrix = proj(-250, 250, -250, 250, 12, 50);
+    vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
 
     typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
     MyVertexShaderType vertexShader(vertUniform);
@@ -164,14 +167,23 @@ int main(int argc, char** argv) {
                                         Eigen::Vector2f(0,1),
                                         Eigen::Vector2f(1,1)};
 
-    renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>({{vertices[0], uvs[0]},
-                                                                             {vertices[1], uvs[1]},
-                                                                             {vertices[2], uvs[2]},
+    for(int i = 0; i < 360; ++i) {
 
-                                                                             {vertices[1], uvs[1]},
-                                                                             {vertices[2], uvs[2]},
-                                                                             {vertices[3], uvs[3]}},
-                                                                             vertexShader, fragmentShader);
+        renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>({{vertices[0], uvs[0]},
+                                                                                 {vertices[1], uvs[1]},
+                                                                                 {vertices[2], uvs[2]},
+
+                                                                                 {vertices[1], uvs[1]},
+                                                                                 {vertices[2], uvs[2]},
+                                                                                 {vertices[3], uvs[3]}},
+                                                                                 vertexShader, fragmentShader);
+        Eigen::AngleAxisf aa((i/180.0)*M_PI, Eigen::Vector3f::UnitZ());
+        Eigen::Matrix3f rotMatrix = aa.matrix();
+
+        vertUniform.modelViewMatrix.block<3,3>(0,0) *= rotMatrix;
+        //std::this_thread::sleep_for (std::chrono::seconds(1));
+    }
 }
+
 
 

@@ -268,9 +268,13 @@ static void display(const Framebuffer& framebuffer, unsigned int sizeX) {
     }
 
     cimg_library::CImgDisplay disp(img);
+#if 0
     while(!disp.is_closed()) {
         disp.wait();
     }
+#else
+    disp.wait(1000);
+#endif
 }
 
 template <class FragOutType, class Traits>
@@ -348,6 +352,8 @@ public:
 
         }
         display(frameBuffer, 640);
+        clear();
+    }
 
     void clear() {
         for(auto& d: depthBuffer) {
