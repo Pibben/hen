@@ -151,23 +151,23 @@ static void rasterizeTrianglePart(Vertex v1, Vertex v2, Vertex v3,
     const int y0 = round(p1[1]);
     const int y1 = round(p3[1]);
 
-    const float ystep = (float)yStep / (y1 - y0);
+    const float ystep = (float)yStep / (y1 - y0 + yStep);
     float ypos = 0.0f;
 
     TupleInterpolator<Vertex> inpl(v1, v3);
     TupleInterpolator<Vertex> inpr(v2, v3);
 
-    for(int y = y0; yStep*(y - y1) < 0; y+=yStep) {
+    for(int y = y0; yStep*(y - y1) <= 0; y+=yStep) {
         Vertex vx0 = inpl.run(ypos);
         Vertex vx1 = inpr.run(ypos);
         TupleInterpolator<Vertex> inpx(vx0, vx1);
         int x0 = round(std::get<PositionAttachment>(vx0)[0]);
         int x1 = round(std::get<PositionAttachment>(vx1)[0]);
 
-        const float xstep = 1.0 / (x1 - x0);
+        const float xstep = 1.0 / (x1 - x0 + 1);
         float xpos = 0.0f;
 
-        for(int x = x0; x < x1; ++x) {
+        for(int x = x0; x <= x1; ++x) {
             auto color = std::get<ColorAttachment>(fragmentShader(inpx.run(xpos)));
             framebuffer(x, y) = color;
             xpos += xstep;
