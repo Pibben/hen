@@ -7,6 +7,8 @@
 #include <chrono>
 #include <thread>
 
+#include <Eigen/Dense>
+
 #include "hen.h"
 #include "utils.h"
 

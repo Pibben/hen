@@ -14,8 +14,6 @@
 #include "CImg.h"
 #undef Success
 
-#include <Eigen/Dense>
-
 template<std::size_t I = 0, typename FuncT, typename ... Tp>
 inline typename std::enable_if<I == sizeof...(Tp), void>::type
 mytransform(const std::tuple<Tp...> &, const std::tuple<Tp...> &, std::tuple<Tp...> &, FuncT) // Unused arguments are given no names.
@@ -335,7 +333,7 @@ public:
 
         std::for_each(immStore.begin(), immStore.end(), [](VertOutFragInType& vert) {
             auto& pos = std::get<POSITION_ATTACHMENT>(vert);
-            pos = pos + Eigen::Vector4f::Ones();
+            pos = pos + ScreenPosType(1.0, 1.0, 1.0, 1.0); //TODO: Fix
             pos /= 2.0f;
             pos[0] *= 640;
             pos[1] *= 480;
