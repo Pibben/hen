@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
     MyFragmentShaderType fragmentShader(fragUniform);
 
     //Renderer
-    Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits> renderer;
+    Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
 
     //Draw
     std::vector<Eigen::Vector4f> vertices = {Eigen::Vector4f(-100, -100, 12, 1),

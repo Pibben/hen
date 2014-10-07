@@ -88,26 +88,39 @@ public:
     }
 };
 
-template <class Array>
+template <class Type, int RES_X, int RES_Y>
 class FramebufferAdapter {
 private:
-    Array& mArray;
+    typedef std::array<Type, RES_X*RES_Y> ArrayType;
+    ArrayType mArray;
     unsigned int mSizeX;
+    unsigned int mSizeY;
 public:
-    FramebufferAdapter(Array& array, unsigned int sizeX) : mArray(array), mSizeX(sizeX) {}
+    FramebufferAdapter() : mSizeX(RES_X), mSizeY(RES_Y) {}
 
-    typename Array::value_type& operator()(unsigned int x, unsigned int y) { return mArray[y*mSizeX+x]; }
-    const typename Array::value_type& operator()(unsigned int x, unsigned int y) const { return mArray[y*mSizeX+x]; }
+    Type& operator()(unsigned int x, unsigned int y) { return mArray[y*mSizeX+x]; }
+    const Type& operator()(unsigned int x, unsigned int y) const { return mArray[y*mSizeX+x]; }
+
+    unsigned int sizeX() const { return mSizeX; }
+    unsigned int sizeY() const { return mSizeY; }
+
+    typename ArrayType::iterator begin() { return mArray.begin(); }
+    typename ArrayType::iterator end() { return mArray.end(); }
+
+    size_t size() const { return mArray.size(); }
+
+    Type& at(int idx) { return mArray.at(idx); }
+    const Type& at(int idx) const { return mArray.at(idx); }
 };
 
 
 template <class Framebuffer>
-static void display(const Framebuffer& framebuffer, unsigned int sizeX) {
-    cimg_library::CImg<unsigned char> img(sizeX, 480, 1, 3);
+static void display(const Framebuffer& framebuffer) {
+    cimg_library::CImg<unsigned char> img(framebuffer.sizeX(), framebuffer.sizeY(), 1, 3);
 
     for(int i = 0; i < framebuffer.size(); ++i) {
         for(int j = 0; j < 3; ++j) {
-            img(i%sizeX, i/sizeX, j) = framebuffer.at(i)[j];
+            img(i%framebuffer.sizeX(), i/framebuffer.sizeX(), j) = framebuffer.at(i)[j];
         }
     }
 
@@ -121,7 +134,7 @@ static void display(const Framebuffer& framebuffer, unsigned int sizeX) {
 #endif
 }
 
-template <class FragOutType, class Traits>
+template <class FragOutType, class Traits, int RES_X, int RES_Y>
 class Renderer {
 private:
     static constexpr int COLOR_ATTACHMENT = Traits::COLOR_ATTACHMENT;
@@ -130,16 +143,14 @@ private:
     typedef typename std::tuple_element<COLOR_ATTACHMENT, FragOutType>::type DataType;
     typedef typename std::tuple_element<DEPTH_ATTACHMENT, FragOutType>::type DepthType;
 
-    typedef std::array<DataType, 640*480> FrameBufferType;
+    typedef FramebufferAdapter<DataType, RES_X, RES_Y> FrameBufferType;
     FrameBufferType frameBuffer;
-    typedef std::array<DepthType, 640*480> DepthBufferType;
+    typedef FramebufferAdapter<DepthType, RES_X, RES_Y> DepthBufferType;
     DepthBufferType depthBuffer;
     
     template <class Vertex, class FragmentShader, int PositionAttachment>
     void rasterizeLine(Vertex v1, Vertex v2, const FragmentShader& fragmentShader) {
         static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
-
-        auto framebuffer = FramebufferAdapter<FrameBufferType>(frameBuffer, 640);
 
         float x0 = std::get<PositionAttachment>(v1)[0];
         float y0 = std::get<PositionAttachment>(v1)[1];
@@ -180,9 +191,9 @@ private:
             auto color = std::get<ColorAttachment>(fragmentShader(inp.run(inpPos)));
             inpPos += inpStep;
             if (steep) {
-                framebuffer(y, x) = color;
+                frameBuffer(y, x) = color;
             } else {
-                framebuffer(x, y) = color;
+                frameBuffer(x, y) = color;
             }
 
             error -= dy;
@@ -197,8 +208,6 @@ private:
     void rasterizeTrianglePart(Vertex v1, Vertex v2, Vertex v3,
                                       const FragmentShader& fragmentShader) {
         static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
-
-        auto framebuffer = FramebufferAdapter<FrameBufferType>(frameBuffer, 640);
 
         auto p1 = std::get<PositionAttachment>(v1);
         auto p2 = std::get<PositionAttachment>(v2);
@@ -232,7 +241,7 @@ private:
 
             for(int x = x0; x <= x1; ++x) {
                 auto color = std::get<ColorAttachment>(fragmentShader(inpx.run(xpos)));
-                framebuffer(x, y) = color;
+                frameBuffer(x, y) = color;
                 xpos += xstep;
             }
             ypos += ystep;
@@ -331,12 +340,12 @@ public:
 
         //Now in NDC
 
-        std::for_each(immStore.begin(), immStore.end(), [](VertOutFragInType& vert) {
+        std::for_each(immStore.begin(), immStore.end(), [this](VertOutFragInType& vert) {
             auto& pos = std::get<POSITION_ATTACHMENT>(vert);
             pos = pos + ScreenPosType(1.0, 1.0, 1.0, 1.0); //TODO: Fix
             pos /= 2.0f;
-            pos[0] *= 640;
-            pos[1] *= 480;
+            pos[0] *= this->frameBuffer.sizeX();
+            pos[1] *= this->frameBuffer.sizeY();
         });
 
         //Now in screen space
@@ -351,7 +360,7 @@ public:
                     immStore.at(i+0), immStore.at(i+1), immStore.at(i+2), fragmentShader);
 
         }
-        display(frameBuffer, 640);
+        display(frameBuffer);
         clear();
     }
 
