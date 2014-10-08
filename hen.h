@@ -387,7 +387,7 @@ public:
             d = std::numeric_limits<DepthType>::lowest();
         }
         for(auto& d: frameBuffer) {
-            d = DataType();
+            d = DataType(0,0,0,0);
         }
     }
 
