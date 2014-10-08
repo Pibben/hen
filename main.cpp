@@ -265,7 +265,7 @@ int main(int argc, char** argv) {
 
     loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, faces);
     //loadObj("models/box.obj", vertices, uvs, faces);
-    printf("Loaded %d faces\n", faces.size());
+    printf("Loaded %lu faces\n", faces.size());
 
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;

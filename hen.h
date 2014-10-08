@@ -380,20 +380,23 @@ public:
 
         //Now in screen space
 
-        //Primitive assembly
         for(int i = 0; i < immStore.size(); i+=3) {
-            const auto& v1 = std::get<POSITION_ATTACHMENT>(immStore.at(i+0));
-            const auto& v2 = std::get<POSITION_ATTACHMENT>(immStore.at(i+1));
-            const auto& v3 = std::get<POSITION_ATTACHMENT>(immStore.at(i+2));
-            
-            if(isBackface(v1, v2, v3)) {
+            //Primitive assembly
+            const auto& v1 = immStore.at(i+0);
+            const auto& v2 = immStore.at(i+1);
+            const auto& v3 = immStore.at(i+2);
+
+            const auto& p1 = std::get<POSITION_ATTACHMENT>(v1);
+            const auto& p2 = std::get<POSITION_ATTACHMENT>(v2);
+            const auto& p3 = std::get<POSITION_ATTACHMENT>(v3);
+
+            //Backface culling
+            if(isBackface(p1, p2, p3)) {
                 continue;
             }
 
             //Rasterization
-
-            rasterizeTriangle<VertOutFragInType, POSITION_ATTACHMENT, FragmentShader>(
-                    immStore.at(i+0), immStore.at(i+1), immStore.at(i+2), fragmentShader);
+            rasterizeTriangle<VertOutFragInType, POSITION_ATTACHMENT, FragmentShader>(v1, v2, v3, fragmentShader);
 
         }
         display(frameBuffer);
