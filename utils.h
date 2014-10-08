@@ -35,7 +35,7 @@ inline Eigen::Matrix4f proj(float left, float right,
     m(0,2) = (right+left)/(right-left);
     m(1,2) = (top+bottom)/(top-bottom);
     m(2,2) = (near+far)/(near-far);
-    m(3,2) = -1.0f;
+    m(3,2) = 1.0f;
 
     m(2,3) = 2*near*far / (near-far);
 
