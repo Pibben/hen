@@ -267,6 +267,18 @@ private:
         return f + 0.5f;
     }
 
+    template <class Vertex>
+    Eigen::Vector3f cross3(const Vertex& v1, const Vertex& v2) {
+        Eigen::Vector3f p1 = v1.template block<3,1>(0,0);
+        Eigen::Vector3f p2 = v2.template block<3,1>(0,0);
+        return p1.cross(p2);
+    }
+
+    template <class Vertex>
+    bool isBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3) {
+        auto c = cross3(v2-v1, v3-v1);
+        return c[2] < 0.0;
+    }
 
 public:
     Renderer() {
@@ -366,11 +378,17 @@ public:
 
         //Primitive assembly
         for(int i = 0; i < immStore.size(); i+=3) {
-            //TODO: Back face culling
+            const auto& v1 = std::get<POSITION_ATTACHMENT>(immStore.at(i+0));
+            const auto& v2 = std::get<POSITION_ATTACHMENT>(immStore.at(i+1));
+            const auto& v3 = std::get<POSITION_ATTACHMENT>(immStore.at(i+2));
             
+            if(isBackface(v1, v2, v3)) {
+                continue;
+            }
+
             //Rasterization
 
-            rasterizeTriangleLines<VertOutFragInType, VertexShader::Traits::POSITION_ATTACHMENT, FragmentShader>(
+            rasterizeTriangleLines<VertOutFragInType, POSITION_ATTACHMENT, FragmentShader>(
                     immStore.at(i+0), immStore.at(i+1), immStore.at(i+2), fragmentShader);
 
         }
