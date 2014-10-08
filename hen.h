@@ -222,6 +222,7 @@ private:
     void rasterizeTrianglePart(Vertex v1, Vertex v2, Vertex v3,
                                       const FragmentShader& fragmentShader) {
         static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
+        static constexpr int DepthAttachment = FragmentShader::Traits::DEPTH_ATTACHMENT;
 
         auto p1 = std::get<PositionAttachment>(v1);
         auto p2 = std::get<PositionAttachment>(v2);
@@ -254,8 +255,13 @@ private:
             float xpos = 0.0f;
 
             for(int x = x0; x <= x1; ++x) {
-                auto color = std::get<ColorAttachment>(fragmentShader(inpx.run(xpos)));
-                frameBuffer(x, y) = color;
+                const auto fragment = fragmentShader(inpx.run(xpos));
+                const float depth = std::get<DepthAttachment>(fragment);
+                if(depth > depthBuffer(x, y)) {
+                    const auto color = std::get<ColorAttachment>(fragment);
+                    frameBuffer(x, y) = color;
+                    depthBuffer(x, y) = depth;
+                }
                 xpos += xstep;
             }
             ypos += ystep;
@@ -282,9 +288,7 @@ private:
 
 public:
     Renderer() {
-        for(auto& d: depthBuffer) {
-            d = std::numeric_limits<DepthType>::max();
-        }
+        clear();
     }
 
     template <class Vertex, int PositionAttachment, class FragmentShader>
@@ -398,7 +402,7 @@ public:
 
     void clear() {
         for(auto& d: depthBuffer) {
-            d = std::numeric_limits<DepthType>::max();
+            d = std::numeric_limits<DepthType>::lowest();
         }
         for(auto& d: frameBuffer) {
             d = DataType();
