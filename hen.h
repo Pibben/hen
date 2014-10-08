@@ -139,7 +139,7 @@ static void display(const Framebuffer& framebuffer) {
     }
 
     cimg_library::CImgDisplay disp(img);
-#if 0
+#if 1
     while(!disp.is_closed()) {
         disp.wait();
     }
@@ -370,7 +370,7 @@ public:
             
             //Rasterization
 
-            rasterizeTriangle<VertOutFragInType, VertexShader::Traits::POSITION_ATTACHMENT, FragmentShader>(
+            rasterizeTriangleLines<VertOutFragInType, VertexShader::Traits::POSITION_ATTACHMENT, FragmentShader>(
                     immStore.at(i+0), immStore.at(i+1), immStore.at(i+2), fragmentShader);
 
         }

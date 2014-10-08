@@ -10,6 +10,7 @@
 #include <Eigen/Dense>
 
 #include "hen.h"
+#include "io.h"
 #include "utils.h"
 
 template <class In, class InTraits, class Uniform>
@@ -59,6 +60,7 @@ public:
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
         const Eigen::Vector4f& color = std::get<InTraits::COLOR_ATTACHMENT>(in);
+        assert(pos[2] < 0.0);
 
         return std::make_tuple(color, pos[2]);
     }
@@ -118,8 +120,8 @@ public:
         return std::make_tuple(color, pos[2]);
     }
 };
-
-int main(int argc, char** argv) {
+#if 0
+static void textureTest() {
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
 
@@ -169,7 +171,13 @@ int main(int argc, char** argv) {
                                         Eigen::Vector2f(0,1),
                                         Eigen::Vector2f(1,1)};
 
-    for(int i = 0; i < 360; ++i) {
+    for(int i = 0; i < 360; i+=5) {
+    //int i = 95;
+        printf("%d\n", i);
+
+        Eigen::AngleAxisf aa((i/180.0)*M_PI, Eigen::Vector3f::UnitZ());
+        Eigen::Matrix3f rotMatrix = aa.matrix();
+        vertUniform.modelViewMatrix.block<3,3>(0,0) = rotMatrix;
 
         renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>({{vertices[0], uvs[0]},
                                                                                  {vertices[1], uvs[1]},
@@ -179,12 +187,74 @@ int main(int argc, char** argv) {
                                                                                  {vertices[2], uvs[2]},
                                                                                  {vertices[3], uvs[3]}},
                                                                                  vertexShader, fragmentShader);
-        Eigen::AngleAxisf aa((i/180.0)*M_PI, Eigen::Vector3f::UnitZ());
-        Eigen::Matrix3f rotMatrix = aa.matrix();
 
-        vertUniform.modelViewMatrix.block<3,3>(0,0) *= rotMatrix;
         //std::this_thread::sleep_for (std::chrono::seconds(1));
     }
+}
+#endif
+
+int main(int argc, char** argv) {
+    std::vector<Eigen::Vector3f> vertices;
+    std::vector<Eigen::Vector2f> uvs;
+    std::vector<Face> faces;
+
+    loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, faces);
+    //loadObj("models/box.obj", vertices, uvs, faces);
+    printf("Loaded %d faces\n", faces.size());
+
+    //Input types
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertInType;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { COLOR_ATTACHMENT = 1 };
+    };
+
+    //Vertex shader
+    struct MyVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    } vertUniform;
+
+    vertUniform.projMatrix = proj(-5, 5, -5, 5, 5, 30);
+
+    vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
+
+    Eigen::AngleAxisf aa((180/180.0)*M_PI, Eigen::Vector3f::UnitZ());
+    Eigen::AngleAxisf bb((90/180.0)*M_PI, Eigen::Vector3f::UnitY());
+    Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
+    rotMatrix.block<3,3>(0,0) = aa.matrix()*bb.matrix();
+
+    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-5));
+    vertUniform.modelViewMatrix = transform.matrix()*rotMatrix;
+
+
+    typedef ColorVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
+
+    struct MyFragUniformType {} fragUniform;
+
+    typedef ColorFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    MyFragmentShaderType fragmentShader(fragUniform);
+
+    //Renderer
+    Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
+
+    std::vector<MyVertInType> m;
+
+    for(int j = 0; j < faces.size(); ++j) {
+        const auto& f = faces[j];
+        for(int i = 0; i < 3; ++i) {
+            Eigen::Vector4f v = Eigen::Vector4f::Ones();
+            v.block<3,1>(0,0) = vertices[f.first[i]];
+            //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
+            m.push_back({v, Eigen::Vector4f(255,255,255,255)});
+        }
+        //printf("\n");
+        //break;
+    }
+
+    renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>(m, vertexShader, fragmentShader);
 }
 
 
