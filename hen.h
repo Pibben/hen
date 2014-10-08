@@ -399,6 +399,12 @@ public:
             }
         }
     }
+
+    void readbackDepth(cimg_library::CImg<float>& img) {
+        for(int i = 0; i < depthBuffer.size(); ++i) {
+            img(i%frameBuffer.sizeX(), i/frameBuffer.sizeX(), 0) = depthBuffer.at(i);
+        }
+    }
 };
 
 #endif

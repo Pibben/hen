@@ -321,6 +321,7 @@ int main(int argc, char** argv) {
 
     cimg_library::CImgDisplay disp;
     cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
+    //cimg_library::CImg<float> depth(640, 480);
 
     while(true) {
         Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
@@ -332,6 +333,10 @@ int main(int argc, char** argv) {
 
         renderer.readback(img);
         disp.display(img);
+
+        //renderer.readbackDepth(depth);
+        //disp.display(normalizeDepth(depth));
+
         renderer.clear();
         //disp.wait(100);
         if(disp.is_closed()) {

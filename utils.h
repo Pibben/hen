@@ -42,6 +42,26 @@ inline Eigen::Matrix4f proj(float left, float right,
     return m;
 }
 
+inline cimg_library::CImg<unsigned char> normalizeDepth(cimg_library::CImg<float>& depth) {
+    const int width = depth.width();
+    const int height = depth.height();
+
+    cimg_library::CImg<unsigned char> ret(width, height);
+
+    for(int y = 0; y < height; ++y) {
+        for(int x = 0; x < width; ++x) {
+            const float dval = depth(x,y);
+            if(dval == std::numeric_limits<float>::lowest()) {
+                ret(x,y) = 0;
+            } else {
+                ret(x,y) = -(dval-10)*64;
+            }
+        }
+    }
+
+    return ret;
+}
+
 template <int enable>
 struct Timer {
     void report(const std::string& msg) {}
