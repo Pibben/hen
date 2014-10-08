@@ -95,11 +95,25 @@ private:
     ArrayType mArray;
     unsigned int mSizeX;
     unsigned int mSizeY;
+    Type mTrash;
 public:
-    FramebufferAdapter() : mSizeX(RES_X), mSizeY(RES_Y) {}
+    FramebufferAdapter() : mSizeX(RES_X), mSizeY(RES_Y), mTrash() {}
 
-    Type& operator()(unsigned int x, unsigned int y) { return mArray[y*mSizeX+x]; }
-    const Type& operator()(unsigned int x, unsigned int y) const { return mArray[y*mSizeX+x]; }
+    Type& operator()(unsigned int x, unsigned int y) {
+        if(x >= 0 && x < mSizeX && y >= 0 && y < mSizeY) {
+            return mArray[y*mSizeX+x];
+        } else {
+            return mTrash;
+        }
+    }
+
+    const Type& operator()(unsigned int x, unsigned int y) const {
+        if(x >= 0 && x < mSizeX && y >= 0 && y < mSizeY) {
+            return mArray[y*mSizeX+x];
+        } else {
+            return mTrash;
+        }
+    }
 
     unsigned int sizeX() const { return mSizeX; }
     unsigned int sizeY() const { return mSizeY; }
