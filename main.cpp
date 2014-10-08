@@ -285,12 +285,8 @@ int main(int argc, char** argv) {
 
     vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
 
-    Eigen::AngleAxisf aa((90/180.0)*M_PI, Eigen::Vector3f::UnitY());
-    Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
-    rotMatrix.block<3,3>(0,0) = aa.matrix();
-
-    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-7));
-    vertUniform.modelViewMatrix = transform.matrix()*rotMatrix;
+    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-10));
+    vertUniform.modelViewMatrix = transform.matrix();
 
 
     typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
@@ -322,7 +318,26 @@ int main(int argc, char** argv) {
         //break;
     }
 
-    renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>(m, vertexShader, fragmentShader);
+
+    cimg_library::CImgDisplay disp;
+    cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
+
+    while(true) {
+        Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
+        Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
+        rotMatrix.block<3,3>(0,0) = aa.matrix();
+        vertUniform.modelViewMatrix *= rotMatrix;
+
+        renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>(m, vertexShader, fragmentShader);
+
+        renderer.readback(img);
+        disp.display(img);
+        renderer.clear();
+        //disp.wait(100);
+        if(disp.is_closed()) {
+            break;
+        }
+    }
 }
 
 

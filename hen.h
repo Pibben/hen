@@ -128,25 +128,7 @@ public:
 };
 
 
-template <class Framebuffer>
-static void display(const Framebuffer& framebuffer) {
-    cimg_library::CImg<unsigned char> img(framebuffer.sizeX(), framebuffer.sizeY(), 1, 3);
 
-    for(int i = 0; i < framebuffer.size(); ++i) {
-        for(int j = 0; j < 3; ++j) {
-            img(i%framebuffer.sizeX(), i/framebuffer.sizeX(), j) = framebuffer.at(i)[j];
-        }
-    }
-
-    cimg_library::CImgDisplay disp(img);
-#if 1
-    while(!disp.is_closed()) {
-        disp.wait();
-    }
-#else
-    disp.wait(1000);
-#endif
-}
 
 template <class FragOutType, class Traits, int RES_X, int RES_Y>
 class Renderer {
@@ -397,10 +379,7 @@ public:
 
             //Rasterization
             rasterizeTriangle<VertOutFragInType, POSITION_ATTACHMENT, FragmentShader>(v1, v2, v3, fragmentShader);
-
         }
-        display(frameBuffer);
-        clear();
     }
 
     void clear() {
@@ -409,6 +388,15 @@ public:
         }
         for(auto& d: frameBuffer) {
             d = DataType();
+        }
+    }
+
+    void readback(cimg_library::CImg<unsigned char>& img) {
+
+        for(int i = 0; i < frameBuffer.size(); ++i) {
+            for(int j = 0; j < 3; ++j) {
+                img(i%frameBuffer.sizeX(), i/frameBuffer.sizeX(), j) = frameBuffer.at(i)[j];
+            }
         }
     }
 };
