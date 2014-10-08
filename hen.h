@@ -392,7 +392,7 @@ public:
 
             //Rasterization
 
-            rasterizeTriangleLines<VertOutFragInType, POSITION_ATTACHMENT, FragmentShader>(
+            rasterizeTriangle<VertOutFragInType, POSITION_ATTACHMENT, FragmentShader>(
                     immStore.at(i+0), immStore.at(i+1), immStore.at(i+2), fragmentShader);
 
         }

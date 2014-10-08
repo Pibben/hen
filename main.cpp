@@ -191,9 +191,8 @@ static void textureTest() {
         //std::this_thread::sleep_for (std::chrono::seconds(1));
     }
 }
-#endif
 
-int main(int argc, char** argv) {
+void wireframe() {
     std::vector<Eigen::Vector3f> vertices;
     std::vector<Eigen::Vector2f> uvs;
     std::vector<Face> faces;
@@ -249,6 +248,75 @@ int main(int argc, char** argv) {
             v.block<3,1>(0,0) = vertices[f.first[i]];
             //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
             m.push_back({v, Eigen::Vector4f(255,255,255,255)});
+        }
+        //printf("\n");
+        //break;
+    }
+
+    renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>(m, vertexShader, fragmentShader);
+}
+
+#endif
+
+int main(int argc, char** argv) {
+    std::vector<Eigen::Vector3f> vertices;
+    std::vector<Eigen::Vector2f> uvs;
+    std::vector<Face> faces;
+
+    loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, faces);
+    //loadObj("models/box.obj", vertices, uvs, faces);
+    printf("Loaded %d faces\n", faces.size());
+
+    //Input types
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { TEXTURE_ATTACHMENT = 1 };
+    };
+
+    //Vertex shader
+    struct MyVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    } vertUniform;
+
+    vertUniform.projMatrix = proj(-5, 5, -5, 5, 5, 30);
+
+    vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
+
+    Eigen::AngleAxisf aa((90/180.0)*M_PI, Eigen::Vector3f::UnitY());
+    Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
+    rotMatrix.block<3,3>(0,0) = aa.matrix();
+
+    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-7));
+    vertUniform.modelViewMatrix = transform.matrix()*rotMatrix;
+
+
+    typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
+
+    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCow.png");
+    struct MyFragUniformType {
+        TextureSampler<Eigen::Vector4f> textureSampler;
+        MyFragUniformType(cimg_library::CImg<unsigned char>& img) : textureSampler(img) {}
+    } fragUniform(texImg);
+
+    typedef TextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    MyFragmentShaderType fragmentShader(fragUniform);
+
+    //Renderer
+    Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
+
+    std::vector<MyVertInType> m;
+
+    for(int j = 0; j < faces.size(); ++j) {
+        const auto& f = faces[j];
+        for(int i = 0; i < 3; ++i) {
+            Eigen::Vector4f v = Eigen::Vector4f::Ones();
+            v.block<3,1>(0,0) = vertices[f.first[i]];
+            //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
+            m.push_back({v, uvs[f.second[i]]});
         }
         //printf("\n");
         //break;
