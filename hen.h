@@ -215,28 +215,31 @@ private:
             std::swap(v1, v2);
         }
 
-        assert(round(p1[1]) == round(p2[1]));
+        assert(roundAwayFromZero(p1[1]) == roundAwayFromZero(p2[1]));
 
-        const int y0 = round(p1[1]);
-        const int y1 = round(p3[1]);
+        const int y0 = yStep == 1 ? roundTowardsZero(p1[1]) : roundAwayFromZero(p1[1]-1.0f);
+        const int y2 = yStep == 1 ? roundTowardsZero(p3[1]) : roundAwayFromZero(p3[1]-1.0f);
 
-        const float ystep = (float)yStep / (y1 - y0 + yStep);
-        float ypos = 0.0f;
+        const float yDistF = p3[1] - p1[1];
 
         TupleInterpolator<Vertex> inpl(v1, v3);
         TupleInterpolator<Vertex> inpr(v2, v3);
 
-        for(int y = y0; yStep*(y - y1) <= 0; y+=yStep) {
+        float ypos = (y0 - p1[1] + 0.5) / yDistF;
+        float ystep = yStep / yDistF;
+
+        for(int y = y0; yStep*(y - y2) < 0; y+=yStep) {
             Vertex vx0 = inpl.run(ypos);
             Vertex vx1 = inpr.run(ypos);
-            TupleInterpolator<Vertex> inpx(vx0, vx1);
-            int x0 = round(std::get<PositionAttachment>(vx0)[0]);
-            int x1 = round(std::get<PositionAttachment>(vx1)[0]);
 
-            const float xstep = 1.0 / (x1 - x0 + 1);
+            TupleInterpolator<Vertex> inpx(vx0, vx1);
+            int xBegin = roundTowardsZero(std::get<PositionAttachment>(vx0)[0]);
+            int xEnd =   roundTowardsZero(std::get<PositionAttachment>(vx1)[0]);
+
+            const float xstep = 1.0 / (xEnd - xBegin + 1);
             float xpos = 0.0f;
 
-            for(int x = x0; x <= x1; ++x) {
+            for(int x = xBegin; x < xEnd; ++x) {
                 const auto fragment = fragmentShader(inpx.run(xpos));
                 const float depth = std::get<DepthAttachment>(fragment);
                 if(depth > depthBuffer(x, y)) {
@@ -248,11 +251,14 @@ private:
             }
             ypos += ystep;
         }
-
     }
 
-    inline int round(float f) {
-        return f + 0.5f;
+    inline int roundAwayFromZero(float f) {
+        return std::floor(f + 0.5f);
+    }
+
+    inline int roundTowardsZero(float f) {
+        return std::ceil(f - 0.5f);
     }
 
     template <class Vertex>
@@ -306,14 +312,13 @@ public:
         auto m = std::get<PositionAttachment>(mid);
         auto b = std::get<PositionAttachment>(bot);
 
-        if(round(t[1]) == round(m[1])) {
+        if(t[1] == m[1]) {
             //Flat top
             rasterizeTrianglePart<Vertex, PositionAttachment, FragmentShader, 1>(top, mid, bot, fragmentShader);
-        } else if(round(m[1]) == round(b[1])) {
+        } else if(m[1] == b[1]) {
             //Flat bottom
             rasterizeTrianglePart<Vertex, PositionAttachment, FragmentShader, -1>(bot, mid, top, fragmentShader);
         } else {
-
             TupleInterpolator<Vertex> inptb(top, bot);
             Vertex split = inptb.run((m[1] - t[1]) / (b[1] - t[1]));
 

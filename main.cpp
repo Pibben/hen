@@ -258,7 +258,7 @@ void wireframe() {
 
 #endif
 
-int main(int argc, char** argv) {
+void textureAnimation() {
     std::vector<Eigen::Vector3f> vertices;
     std::vector<Eigen::Vector2f> uvs;
     std::vector<Face> faces;
@@ -293,6 +293,7 @@ int main(int argc, char** argv) {
     MyVertexShaderType vertexShader(vertUniform);
 
     cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCow.png");
+    //cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
     struct MyFragUniformType {
         TextureSampler<Eigen::Vector4f> textureSampler;
         MyFragUniformType(cimg_library::CImg<unsigned char>& img) : textureSampler(img) {}
@@ -343,6 +344,99 @@ int main(int argc, char** argv) {
             break;
         }
     }
+}
+
+void whiteAnimation() {
+    std::vector<Eigen::Vector3f> vertices;
+    std::vector<Eigen::Vector2f> uvs;
+    std::vector<Face> faces;
+
+    loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, faces);
+    //loadObj("models/sphere2.obj", vertices, uvs, faces);
+    printf("Loaded %lu faces\n", faces.size());
+
+    //Input types
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertInType;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { COLOR_ATTACHMENT = 1 };
+    };
+
+    //Vertex shader
+    struct MyVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    } vertUniform;
+
+    vertUniform.projMatrix = proj(-5, 5, -5, 5, 5, 30);
+
+    vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
+
+    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-10));
+    vertUniform.modelViewMatrix = transform.matrix();
+
+
+    typedef ColorVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
+
+    struct MyFragUniformType {} fragUniform;
+
+    typedef ColorFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    MyFragmentShaderType fragmentShader(fragUniform);
+
+    //Renderer
+    Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
+
+    std::vector<MyVertInType> m;
+
+    for(int j = 0; j < faces.size(); ++j) {
+        //if(j != 105 && j != 217) continue;
+        const auto& f = faces[j];
+        for(int i = 0; i < 3; ++i) {
+            Eigen::Vector4f v = Eigen::Vector4f::Ones();
+            v.block<3,1>(0,0) = vertices[f.first[i]];
+            //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
+            m.push_back({v, Eigen::Vector4f(255,255,255,255)});
+        }
+        //printf("\n");
+        //break;
+    }
+
+
+    cimg_library::CImgDisplay disp;
+    cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
+    //cimg_library::CImg<float> depth(640, 480);
+
+    auto orig = vertUniform.modelViewMatrix;
+
+    int count = 0;
+    while(true) {
+        //printf("%d\n", count);
+        Eigen::AngleAxisf aa((count++/180.0)*M_PI, Eigen::Vector3f::UnitY());
+        Eigen::Matrix4f rotMatrix = orig;
+        rotMatrix.block<3,3>(0,0) = aa.matrix();
+        vertUniform.modelViewMatrix = rotMatrix;
+
+        renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>(m, vertexShader, fragmentShader);
+
+        renderer.readback(img);
+        disp.display(img);
+
+        //renderer.readbackDepth(depth);
+        //disp.display(normalizeDepth(depth));
+
+        renderer.clear();
+        //while(1)
+            disp.wait(100);
+        if(disp.is_closed()) {
+            break;
+        }
+    }
+}
+
+int main(int argc, char** argv) {
+    whiteAnimation();
 }
 
 
