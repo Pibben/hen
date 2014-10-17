@@ -276,7 +276,7 @@ void wireframe() {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.block<3,1>(0,0) = vertices[f.first[i]];
+            v.block<3,1>(0,0) = vertices[f.coords[i]];
             //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
             m.push_back({v, Eigen::Vector4f(255,255,255,255)});
         }
@@ -342,9 +342,9 @@ void textureAnimation() {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.block<3,1>(0,0) = vertices[f.first[i]];
+            v.block<3,1>(0,0) = vertices[f.coords[i]];
             //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
-            m.push_back({v, uvs[f.second[i]]});
+            m.push_back({v, uvs[f.uvs[i]]});
         }
         //printf("\n");
         //break;
@@ -426,7 +426,7 @@ void whiteAnimation() {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.block<3,1>(0,0) = vertices[f.first[i]];
+            v.block<3,1>(0,0) = vertices[f.coords[i]];
             //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
             m.push_back({v, Eigen::Vector4f(255,255,255,255)});
         }
@@ -520,9 +520,9 @@ void multiTextureAnimation() {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.block<3,1>(0,0) = vertices[f.first[i]];
+            v.block<3,1>(0,0) = vertices[f.coords[i]];
             //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
-            m.push_back({v, uvs[f.second[i]]});
+            m.push_back({v, uvs[f.uvs[i]]});
         }
         //printf("\n");
         //break;

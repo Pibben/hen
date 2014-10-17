@@ -38,28 +38,43 @@ inline Eigen::Vector2f parseTexcoord(const std::string& str) {
     return v;
 }
 
-typedef std::pair<std::array<unsigned int, 3>, std::array<unsigned int, 3>> Face;
+struct Face {
+    std::array<unsigned int, 3> coords;
+    std::array<unsigned int, 3> uvs;
+    std::array<unsigned int, 3> normals;
+};
 
 inline Face parseFace(const std::string& str) {
     Face f;
-    std::istringstream ss(str);
-#if 1
-    for(int i = 0; i < 3; ++i) {
-        ss >> f.first[i];
-        ss.ignore();
-        ss >> f.second[i];
 
-        --f.first[i];
-        --f.second[i];
+    const int numberOfSlashes = std::count_if(str.begin(), str.end(), [](const auto& c) {
+        return c == '/';
+    });
+
+    assert((numberOfSlashes % 3) == 0);
+
+    const int numberOfComponents = (numberOfSlashes / 3) + 1;
+
+    assert(numberOfComponents > 0 || numberOfComponents <= 3);
+
+    std::istringstream ss(str);
+
+    for(int i = 0; i < 3; ++i) {
+        ss >> f.coords[i];
+        --f.coords[i];
+
+        if(numberOfComponents > 1) {
+            ss.ignore();
+            ss >> f.uvs[i];
+            --f.uvs[i];
+
+            if(numberOfComponents > 2) {
+                ss.ignore();
+                ss >> f.normals[i];
+                --f.normals[i];
+            }
+        }
     }
-#else
-    ss >> f.first[0];
-    --f.first[0];
-    ss >> f.first[1];
-    --f.first[1];
-    ss >> f.first[2];
-    --f.first[2];
-#endif
 
     return f;
 
@@ -92,13 +107,17 @@ inline void loadObj(const std::string& filename,
     std::string line;
 
     while(std::getline(file, line)) {
-        if(boost::starts_with(line, "#")) {
+        if(line == "") {
+            //Newline
+        }
+        else if(boost::starts_with(line, "#")) {
             //Comment
         }
 
         else if(boost::starts_with(line, "v ")) {
             vertices.push_back(parseVertex(line.substr(2)));
         }
+
         else if(boost::starts_with(line, "vt ")) {
             uvs.push_back(parseTexcoord(line.substr(3)));
         }
@@ -124,7 +143,7 @@ inline void loadObj(const std::string& filename,
         }
 
         else {
-            //std::cout << "Unknown line: " << line << std::endl;
+            std::cout << "Unknown line: " << line << std::endl;
         }
     }
 }
