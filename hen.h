@@ -364,8 +364,8 @@ public:
 
         std::for_each(immStore.begin(), immStore.end(), [this](VertOutFragInType& vert) {
             auto& pos = std::get<POSITION_ATTACHMENT>(vert);
-            pos = pos + ScreenPosType(1.0, 1.0, 0.0, 0.0); //TODO: Fix
-            pos = pos.cwiseQuotient(ScreenPosType(2.0, 2.0, 1.0, 1.0));
+            pos = pos + ScreenPosType(1.0, 1.0, 1.0, 0.0); //TODO: Fix
+            pos = pos.cwiseQuotient(ScreenPosType(2.0, 2.0, 2.0, 1.0));
             pos[0] *= this->frameBuffer.sizeX();
             pos[1] *= this->frameBuffer.sizeY();
         });
