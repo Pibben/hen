@@ -120,6 +120,37 @@ public:
         return std::make_tuple(color, pos[2]);
     }
 };
+
+template <class In, class InTraits, class Uniform>
+class MultiTextureFragmentShader {
+private:
+public:
+    const Uniform& mUniform;
+    typedef In VertOutFragInType;
+    typedef Uniform FragUniformType;
+
+    typedef std::tuple<Eigen::Vector4f, float> OutType;
+
+    struct Traits {
+        static constexpr int COLOR_ATTACHMENT = 0;
+        static constexpr int DEPTH_ATTACHMENT = 1;
+    };
+
+    MultiTextureFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
+
+        auto color = mUniform.textureSampler.get(tex[0], tex[1]);
+        auto ao = mUniform.aoSampler.get(tex[0], tex[1]);
+
+        color = color.cwiseProduct(ao) / 255.0;
+
+        return std::make_tuple(color, pos[2]);
+    }
+};
+
 #if 0
 static void textureTest() {
     //Input types
@@ -429,6 +460,95 @@ void whiteAnimation() {
         renderer.clear();
         //while(1)
             disp.wait(100);
+        if(disp.is_closed()) {
+            break;
+        }
+    }
+}
+
+void multiTextureAnimation() {
+    std::vector<Eigen::Vector3f> vertices;
+    std::vector<Eigen::Vector2f> uvs;
+    std::vector<Face> faces;
+
+    loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, faces);
+    //loadObj("models/box.obj", vertices, uvs, faces);
+    printf("Loaded %lu faces\n", faces.size());
+
+    //Input types
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { TEXTURE_ATTACHMENT = 1 };
+    };
+
+    //Vertex shader
+    struct MyVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    } vertUniform;
+
+    vertUniform.projMatrix = proj(-5, 5, -5, 5, 5, 30);
+
+    vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
+
+    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-10));
+    vertUniform.modelViewMatrix = transform.matrix();
+
+
+    typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
+
+    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCow.png");
+    cimg_library::CImg<unsigned char> aoImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
+    struct MyFragUniformType {
+        TextureSampler<Eigen::Vector4f> textureSampler;
+        TextureSampler<Eigen::Vector4f> aoSampler;
+        MyFragUniformType(cimg_library::CImg<unsigned char>& img, cimg_library::CImg<unsigned char>& ao) : textureSampler(img), aoSampler(ao) {}
+    } fragUniform(texImg, aoImg);
+
+    typedef MultiTextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    MyFragmentShaderType fragmentShader(fragUniform);
+
+    //Renderer
+    Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
+
+    std::vector<MyVertInType> m;
+
+    for(int j = 0; j < faces.size(); ++j) {
+        const auto& f = faces[j];
+        for(int i = 0; i < 3; ++i) {
+            Eigen::Vector4f v = Eigen::Vector4f::Ones();
+            v.block<3,1>(0,0) = vertices[f.first[i]];
+            //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
+            m.push_back({v, uvs[f.second[i]]});
+        }
+        //printf("\n");
+        //break;
+    }
+
+
+    cimg_library::CImgDisplay disp;
+    cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
+    //cimg_library::CImg<float> depth(640, 480);
+
+    while(true) {
+        Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
+        Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
+        rotMatrix.block<3,3>(0,0) = aa.matrix();
+        vertUniform.modelViewMatrix *= rotMatrix;
+
+        renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>(m, vertexShader, fragmentShader);
+
+        renderer.readback(img);
+        disp.display(img);
+
+        //renderer.readbackDepth(depth);
+        //disp.display(normalizeDepth(depth));
+
+        renderer.clear();
+        //disp.wait(100);
         if(disp.is_closed()) {
             break;
         }
