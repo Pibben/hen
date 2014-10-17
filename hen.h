@@ -144,9 +144,22 @@ private:
     typedef FramebufferAdapter<DepthType, RES_X, RES_Y> DepthBufferType;
     DepthBufferType depthBuffer;
     
+    template <class Vertex, class FragmentShader>
+    void rasterizeFragment(const Vertex& v, const FragmentShader& fragmentShader, unsigned int x, unsigned int y) {
+        static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
+        static constexpr int DepthAttachment = FragmentShader::Traits::DEPTH_ATTACHMENT;
+
+        const auto fragment = fragmentShader(v);
+        const float depth = std::get<DepthAttachment>(fragment);
+        if(depth > 0.0 && depth < 1.0 && depth < depthBuffer(x, y)) {
+            const auto color = std::get<ColorAttachment>(fragment);
+            frameBuffer(x, y) = color;
+            depthBuffer(x, y) = depth;
+        }
+    }
+
     template <class Vertex, class FragmentShader, int PositionAttachment>
     void rasterizeLine(Vertex v1, Vertex v2, const FragmentShader& fragmentShader) {
-        static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
 
         float x0 = std::get<PositionAttachment>(v1)[0];
         float y0 = std::get<PositionAttachment>(v1)[1];
@@ -184,12 +197,12 @@ private:
 
 
         for (int x = (int) x0; x < maxX; x++) {
-            auto color = std::get<ColorAttachment>(fragmentShader(inp.run(inpPos)));
+
             inpPos += inpStep;
             if (steep) {
-                frameBuffer(y, x) = color;
+                rasterizeFragment(inp.run(inpPos), fragmentShader, y, x);
             } else {
-                frameBuffer(x, y) = color;
+                rasterizeFragment(inp.run(inpPos), fragmentShader, x, y);
             }
 
             error -= dy;
@@ -203,8 +216,6 @@ private:
     template <class Vertex, int PositionAttachment, class FragmentShader, int yStep>
     void rasterizeTrianglePart(Vertex v1, Vertex v2, Vertex v3,
                                       const FragmentShader& fragmentShader) {
-        static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
-        static constexpr int DepthAttachment = FragmentShader::Traits::DEPTH_ATTACHMENT;
 
         auto p1 = std::get<PositionAttachment>(v1);
         auto p2 = std::get<PositionAttachment>(v2);
@@ -240,13 +251,7 @@ private:
             float xpos = 0.0f;
 
             for(int x = xBegin; x < xEnd; ++x) {
-                const auto fragment = fragmentShader(inpx.run(xpos));
-                const float depth = std::get<DepthAttachment>(fragment);
-                if(depth > depthBuffer(x, y)) {
-                    const auto color = std::get<ColorAttachment>(fragment);
-                    frameBuffer(x, y) = color;
-                    depthBuffer(x, y) = depth;
-                }
+                rasterizeFragment(inpx.run(xpos), fragmentShader, x, y);
                 xpos += xstep;
             }
             ypos += ystep;
