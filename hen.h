@@ -406,14 +406,14 @@ public:
 
         for(int i = 0; i < frameBuffer.size(); ++i) {
             for(int j = 0; j < 3; ++j) {
-                img(i%frameBuffer.sizeX(), i/frameBuffer.sizeX(), j) = frameBuffer.at(i)[j];
+                img(i%frameBuffer.sizeX(), frameBuffer.sizeY() - 1 - i/frameBuffer.sizeX(), j) = frameBuffer.at(i)[j];
             }
         }
     }
 
     void readbackDepth(cimg_library::CImg<float>& img) {
         for(int i = 0; i < depthBuffer.size(); ++i) {
-            img(i%frameBuffer.sizeX(), i/frameBuffer.sizeX(), 0) = depthBuffer.at(i);
+            img(i%frameBuffer.sizeX(), frameBuffer.sizeY() - 1 - i/frameBuffer.sizeX(), 0) = depthBuffer.at(i);
         }
     }
 };
