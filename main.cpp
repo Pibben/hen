@@ -292,9 +292,10 @@ void wireframe() {
 void textureAnimation() {
     std::vector<Eigen::Vector3f> vertices;
     std::vector<Eigen::Vector2f> uvs;
+    std::vector<Eigen::Vector3f> normals;
     std::vector<Face> faces;
 
-    loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, faces);
+    loadObj("models/cow/cowTM08New00RTime02-tri-norm.obj", vertices, uvs, normals, faces);
     //loadObj("models/box.obj", vertices, uvs, faces);
     printf("Loaded %lu faces\n", faces.size());
 
@@ -380,10 +381,11 @@ void textureAnimation() {
 void whiteAnimation() {
     std::vector<Eigen::Vector3f> vertices;
     std::vector<Eigen::Vector2f> uvs;
+    std::vector<Eigen::Vector3f> normals;
     std::vector<Face> faces;
 
-    loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, faces);
-    //loadObj("models/sphere2.obj", vertices, uvs, faces);
+    //loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, faces);
+    loadObj("models/sphere2.obj", vertices, uvs, normals, faces);
     printf("Loaded %lu faces\n", faces.size());
 
     //Input types
@@ -469,9 +471,10 @@ void whiteAnimation() {
 void multiTextureAnimation() {
     std::vector<Eigen::Vector3f> vertices;
     std::vector<Eigen::Vector2f> uvs;
+    std::vector<Eigen::Vector3f> normals;
     std::vector<Face> faces;
 
-    loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, faces);
+    loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, normals, faces);
     //loadObj("models/box.obj", vertices, uvs, faces);
     printf("Loaded %lu faces\n", faces.size());
 

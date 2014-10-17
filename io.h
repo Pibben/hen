@@ -100,6 +100,7 @@ inline void parseSmooth(const std::string& str) {
 inline void loadObj(const std::string& filename,
                     std::vector<Eigen::Vector3f>& vertices,
                     std::vector<Eigen::Vector2f>& uvs,
+                    std::vector<Eigen::Vector3f>& normals,
                     std::vector<Face>& faces) {
     std::ifstream file(filename);
 
@@ -116,6 +117,10 @@ inline void loadObj(const std::string& filename,
 
         else if(boost::starts_with(line, "v ")) {
             vertices.push_back(parseVertex(line.substr(2)));
+        }
+
+        else if(boost::starts_with(line, "vn ")) {
+            normals.push_back(parseVertex(line.substr(3)));
         }
 
         else if(boost::starts_with(line, "vt ")) {
