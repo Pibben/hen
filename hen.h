@@ -394,7 +394,8 @@ public:
 
     void clear() {
         for(auto& d: depthBuffer) {
-            d = std::numeric_limits<DepthType>::lowest();
+            //d = std::numeric_limits<DepthType>::lowest();
+            d = std::numeric_limits<DepthType>::max();
         }
         for(auto& d: frameBuffer) {
             d = DataType(0,0,0,0);
