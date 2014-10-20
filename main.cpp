@@ -289,16 +289,55 @@ void wireframe() {
 
 #endif
 
-void textureAnimation() {
+template <class In>
+std::vector<In> loadMeshColor(const std::string& filename, const Eigen::Vector4f& color) {
     std::vector<Eigen::Vector3f> vertices;
     std::vector<Eigen::Vector2f> uvs;
     std::vector<Eigen::Vector3f> normals;
     std::vector<Face> faces;
 
-    loadObj("models/cow/cowTM08New00RTime02-tri-norm.obj", vertices, uvs, normals, faces);
-    //loadObj("models/box.obj", vertices, uvs, faces);
+    loadObj(filename, vertices, uvs, normals, faces);
     printf("Loaded %lu faces\n", faces.size());
 
+    std::vector<In> m;
+
+    for(int j = 0; j < faces.size(); ++j) {
+        const auto& f = faces[j];
+        for(int i = 0; i < 3; ++i) {
+            Eigen::Vector4f v = Eigen::Vector4f::Ones();
+            v.block<3,1>(0,0) = vertices[f.coords[i]];
+            m.push_back({v, color});
+        }
+    }
+
+    return m;
+}
+
+template <class In>
+std::vector<In> loadMesh(const std::string& filename) {
+    std::vector<Eigen::Vector3f> vertices;
+    std::vector<Eigen::Vector2f> uvs;
+    std::vector<Eigen::Vector3f> normals;
+    std::vector<Face> faces;
+
+    loadObj(filename, vertices, uvs, normals, faces);
+    printf("Loaded %lu faces\n", faces.size());
+
+    std::vector<In> m;
+
+    for(int j = 0; j < faces.size(); ++j) {
+        const auto& f = faces[j];
+        for(int i = 0; i < 3; ++i) {
+            Eigen::Vector4f v = Eigen::Vector4f::Ones();
+            v.block<3,1>(0,0) = vertices[f.coords[i]];
+            m.push_back({v, uvs[f.uvs[i]]});
+        }
+    }
+
+    return m;
+}
+
+void textureAnimation() {
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
 
@@ -337,20 +376,7 @@ void textureAnimation() {
     //Renderer
     Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
 
-    std::vector<MyVertInType> m;
-
-    for(int j = 0; j < faces.size(); ++j) {
-        const auto& f = faces[j];
-        for(int i = 0; i < 3; ++i) {
-            Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.block<3,1>(0,0) = vertices[f.coords[i]];
-            //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
-            m.push_back({v, uvs[f.uvs[i]]});
-        }
-        //printf("\n");
-        //break;
-    }
-
+    auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     cimg_library::CImgDisplay disp;
     cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
@@ -379,15 +405,6 @@ void textureAnimation() {
 }
 
 void whiteAnimation() {
-    std::vector<Eigen::Vector3f> vertices;
-    std::vector<Eigen::Vector2f> uvs;
-    std::vector<Eigen::Vector3f> normals;
-    std::vector<Face> faces;
-
-    //loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, faces);
-    loadObj("models/sphere2.obj", vertices, uvs, normals, faces);
-    printf("Loaded %lu faces\n", faces.size());
-
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertInType;
 
@@ -421,21 +438,7 @@ void whiteAnimation() {
     //Renderer
     Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
 
-    std::vector<MyVertInType> m;
-
-    for(int j = 0; j < faces.size(); ++j) {
-        //if(j != 105 && j != 217) continue;
-        const auto& f = faces[j];
-        for(int i = 0; i < 3; ++i) {
-            Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.block<3,1>(0,0) = vertices[f.coords[i]];
-            //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
-            m.push_back({v, Eigen::Vector4f(255,255,255,255)});
-        }
-        //printf("\n");
-        //break;
-    }
-
+    auto m = loadMeshColor<MyVertInType>("models/sphere2.obj", Eigen::Vector4f(255,255,255,255));
 
     cimg_library::CImgDisplay disp;
     cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
@@ -469,15 +472,6 @@ void whiteAnimation() {
 }
 
 void multiTextureAnimation() {
-    std::vector<Eigen::Vector3f> vertices;
-    std::vector<Eigen::Vector2f> uvs;
-    std::vector<Eigen::Vector3f> normals;
-    std::vector<Face> faces;
-
-    loadObj("models/cow/cowTM08New00RTime02-tri.obj", vertices, uvs, normals, faces);
-    //loadObj("models/box.obj", vertices, uvs, faces);
-    printf("Loaded %lu faces\n", faces.size());
-
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
 
@@ -517,20 +511,7 @@ void multiTextureAnimation() {
     //Renderer
     Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
 
-    std::vector<MyVertInType> m;
-
-    for(int j = 0; j < faces.size(); ++j) {
-        const auto& f = faces[j];
-        for(int i = 0; i < 3; ++i) {
-            Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.block<3,1>(0,0) = vertices[f.coords[i]];
-            //printf("%d (%f %f %f) ", f.first[i], v[0], v[1], v[2]);
-            m.push_back({v, uvs[f.uvs[i]]});
-        }
-        //printf("\n");
-        //break;
-    }
-
+    auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     cimg_library::CImgDisplay disp;
     cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
