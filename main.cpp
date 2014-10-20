@@ -188,7 +188,7 @@ public:
 
         const Eigen::Vector4f P = mUniform.modelViewMatrix * pos;
 
-        Eigen::Vector3f N = mUniform.modelViewMatrix.template block<3,3>(0,0) * normal;
+        Eigen::Vector3f N = mUniform.modelViewMatrix.template topLeftCorner<3,3>() * normal;
         Eigen::Vector3f L = lightPos - P.topRows<3>();
         Eigen::Vector3f V = -P.topRows<3>();
 
@@ -225,7 +225,7 @@ std::vector<In> loadMeshColor(const std::string& filename, const Eigen::Vector4f
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.block<3,1>(0,0) = vertices[f.coords[i]];
+            v.topRows<3>() = vertices[f.coords[i]];
             m.push_back({v, color});
         }
     }
@@ -249,7 +249,7 @@ std::vector<In> loadMesh(const std::string& filename) {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.block<3,1>(0,0) = vertices[f.coords[i]];
+            v.topRows<3>() = vertices[f.coords[i]];
             m.push_back({v, uvs[f.uvs[i]]});
         }
     }
@@ -282,7 +282,7 @@ std::vector<In> loadMeshNormal(const std::string& filename) {
 
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.block<3,1>(0,0) = vs[i];
+            v.topRows<3>() = vs[i];
             m.push_back({v, norm});
         }
     }
@@ -310,7 +310,7 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     while(true) {
         Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
         Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
-        rotMatrix.block<3,3>(0,0) = aa.matrix();
+        rotMatrix.topLeftCorner<3,3>() = aa.matrix();
         vertexShader.uniform().modelViewMatrix *= rotMatrix;
 
         renderer.template render<typename Mesh::value_type, VertexShader, FragmentShader>(mesh, vertexShader, fragmentShader);
