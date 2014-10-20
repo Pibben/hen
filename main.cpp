@@ -155,6 +155,59 @@ public:
     }
 };
 
+static Eigen::Vector3f reflect(const Eigen::Vector3f& R, const Eigen::Vector3f& N) {
+    Eigen::Vector3f Rout = R - 2.0*N.dot(R)*N;
+
+    //std::cout << R << ", " << N << " --> " << Rout << std::endl;
+
+    return Rout;
+}
+
+template <class In, class InTraits, class Uniform>
+class FlatVertexShader {
+private:
+public:
+    Uniform& mUniform;
+    typedef In VertInType;
+    typedef Uniform VertUniformType;
+
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> OutType;
+
+    struct Traits {
+        static constexpr int POSITION_ATTACHMENT = 0;
+        static constexpr int COLOR_ATTACHMENT = 1;
+    };
+
+    FlatVertexShader(Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos    = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector3f& normal = std::get<InTraits::NORMAL_ATTACHMENT>(in);
+
+        const Eigen::Vector3f& lightPos = mUniform.lightPos;
+
+        const Eigen::Vector4f P = mUniform.modelViewMatrix * pos;
+
+        Eigen::Vector3f N = mUniform.modelViewMatrix.template block<3,3>(0,0) * normal;
+        Eigen::Vector3f L = lightPos - P.topRows<3>();
+        Eigen::Vector3f V = -P.topRows<3>();
+
+        N.normalize();
+        L.normalize();
+        V.normalize();
+
+        const auto R = reflect(-L, N);
+
+        const float intensity = std::max(0.0f, R.dot(V));
+
+        const Eigen::Vector4f color(255,255,255,255);
+
+        const Eigen::Vector4f outPos = mUniform.projMatrix * P;
+        return std::make_tuple(outPos, color*intensity);
+    }
+
+    Uniform& uniform() { return mUniform; }
+};
 
 template <class In>
 std::vector<In> loadMeshColor(const std::string& filename, const Eigen::Vector4f& color) {
@@ -198,6 +251,39 @@ std::vector<In> loadMesh(const std::string& filename) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
             v.block<3,1>(0,0) = vertices[f.coords[i]];
             m.push_back({v, uvs[f.uvs[i]]});
+        }
+    }
+
+    return m;
+}
+
+template <class In>
+std::vector<In> loadMeshNormal(const std::string& filename) {
+    std::vector<Eigen::Vector3f> vertices;
+    std::vector<Eigen::Vector2f> uvs;
+    std::vector<Eigen::Vector3f> normals;
+    std::vector<Face> faces;
+
+    loadObj(filename, vertices, uvs, normals, faces);
+    printf("Loaded %lu faces\n", faces.size());
+
+    std::vector<In> m;
+
+    for(int j = 0; j < faces.size(); ++j) {
+        const auto& f = faces[j];
+
+        Eigen::Vector3f vs[3];
+
+        for(int i = 0; i < 3; ++i) {
+            vs[i] = vertices[f.coords[i]];
+        }
+
+        const Eigen::Vector3f norm = (vs[1]-vs[0]).cross(vs[2]-vs[0]);
+
+        for(int i = 0; i < 3; ++i) {
+            Eigen::Vector4f v = Eigen::Vector4f::Ones();
+            v.block<3,1>(0,0) = vs[i];
+            m.push_back({v, norm});
         }
     }
 
@@ -340,8 +426,39 @@ void multiTextureAnimation() {
     animate(m, vertexShader, fragmentShader);
 }
 
+void flatShading() {
+    //Input types
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { NORMAL_ATTACHMENT = 1 };
+    };
+
+    //Vertex shader
+    struct MyVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+        Eigen::Vector3f lightPos;
+    } vertUniform;
+
+    vertUniform.lightPos = Eigen::Vector3f(100,100,100);
+
+    typedef FlatVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
+
+    struct MyFragUniformType {} fragUniform;
+
+    typedef ColorFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    MyFragmentShaderType fragmentShader(fragUniform);
+
+    auto m = loadMeshNormal<MyVertInType>("models/cow/cowTM08New00RTime02-tri.obj");
+
+    animate(m, vertexShader, fragmentShader);
+}
+
 int main(int argc, char** argv) {
-    whiteAnimation();
+    flatShading();
 }
 
 
