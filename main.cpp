@@ -17,7 +17,7 @@ template <class In, class InTraits, class Uniform>
 class ColorVertexShader {
 private:
 public:
-    const Uniform& mUniform;
+    Uniform& mUniform;
     typedef In VertInType;
     typedef Uniform VertUniformType;
 
@@ -28,7 +28,7 @@ public:
         static constexpr int COLOR_ATTACHMENT = 1;
     };
 
-    ColorVertexShader(const Uniform& uniform) : mUniform(uniform) {}
+    ColorVertexShader(Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -38,6 +38,8 @@ public:
 
         return std::make_tuple(outPos, color);
     }
+
+    Uniform& uniform() { return mUniform; }
 };
 
 template <class In, class InTraits, class Uniform>
@@ -70,7 +72,7 @@ template <class In, class InTraits, class Uniform>
 class TextureVertexShader {
 private:
 public:
-    const Uniform& mUniform;
+    Uniform& mUniform;
     typedef In VertInType;
     typedef Uniform VertUniformType;
 
@@ -81,7 +83,7 @@ public:
         static constexpr int TEXTURE_ATTACHMENT = 1;
     };
 
-    TextureVertexShader(const Uniform& uniform) : mUniform(uniform) {}
+    TextureVertexShader(Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -91,6 +93,8 @@ public:
 
         return std::make_tuple(outPos, tex);
     }
+
+    Uniform& uniform() { return mUniform; }
 };
 
 template <class In, class InTraits, class Uniform>
@@ -337,6 +341,37 @@ std::vector<In> loadMesh(const std::string& filename) {
     return m;
 }
 
+template <class Mesh, class VertexShader, class FragmentShader>
+void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
+    //Renderer
+    Renderer<typename FragmentShader::OutType, typename FragmentShader::Traits, 640, 480> renderer;
+
+    cimg_library::CImgDisplay disp;
+    cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
+    //cimg_library::CImg<float> depth(640, 480);
+
+    while(true) {
+        Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
+        Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
+        rotMatrix.block<3,3>(0,0) = aa.matrix();
+        vertexShader.uniform().modelViewMatrix *= rotMatrix;
+
+        renderer.template render<typename Mesh::value_type, VertexShader, FragmentShader>(mesh, vertexShader, fragmentShader);
+
+        renderer.readback(img);
+        disp.display(img);
+
+        //renderer.readbackDepth(depth);
+        //disp.display(normalizeDepth(depth));
+
+        renderer.clear();
+        //disp.wait(100);
+        if(disp.is_closed()) {
+            break;
+        }
+    }
+}
+
 void textureAnimation() {
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
@@ -373,38 +408,12 @@ void textureAnimation() {
     typedef TextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
     MyFragmentShaderType fragmentShader(fragUniform);
 
-    //Renderer
-    Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
-
     auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
-    cimg_library::CImgDisplay disp;
-    cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
-    //cimg_library::CImg<float> depth(640, 480);
-
-    while(true) {
-        Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
-        Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
-        rotMatrix.block<3,3>(0,0) = aa.matrix();
-        vertUniform.modelViewMatrix *= rotMatrix;
-
-        renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>(m, vertexShader, fragmentShader);
-
-        renderer.readback(img);
-        disp.display(img);
-
-        //renderer.readbackDepth(depth);
-        //disp.display(normalizeDepth(depth));
-
-        renderer.clear();
-        //disp.wait(100);
-        if(disp.is_closed()) {
-            break;
-        }
-    }
+    animate(m, vertexShader, fragmentShader);
 }
 
-void whiteAnimation() {
+void colorAnimation(const Eigen::Vector4f& color) {
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertInType;
 
@@ -435,41 +444,12 @@ void whiteAnimation() {
     typedef ColorFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
     MyFragmentShaderType fragmentShader(fragUniform);
 
-    //Renderer
-    Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
+    auto m = loadMeshColor<MyVertInType>("models/sphere2.obj", color);
 
-    auto m = loadMeshColor<MyVertInType>("models/sphere2.obj", Eigen::Vector4f(255,255,255,255));
-
-    cimg_library::CImgDisplay disp;
-    cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
-    //cimg_library::CImg<float> depth(640, 480);
-
-    auto orig = vertUniform.modelViewMatrix;
-
-    int count = 0;
-    while(true) {
-        //printf("%d\n", count);
-        Eigen::AngleAxisf aa((count++/180.0)*M_PI, Eigen::Vector3f::UnitY());
-        Eigen::Matrix4f rotMatrix = orig;
-        rotMatrix.block<3,3>(0,0) = aa.matrix();
-        vertUniform.modelViewMatrix = rotMatrix;
-
-        renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>(m, vertexShader, fragmentShader);
-
-        renderer.readback(img);
-        disp.display(img);
-
-        //renderer.readbackDepth(depth);
-        //disp.display(normalizeDepth(depth));
-
-        renderer.clear();
-        //while(1)
-            disp.wait(100);
-        if(disp.is_closed()) {
-            break;
-        }
-    }
+    animate(m, vertexShader, fragmentShader);
 }
+
+
 
 void multiTextureAnimation() {
     //Input types
@@ -508,35 +488,9 @@ void multiTextureAnimation() {
     typedef MultiTextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
     MyFragmentShaderType fragmentShader(fragUniform);
 
-    //Renderer
-    Renderer<typename MyFragmentShaderType::OutType, typename MyFragmentShaderType::Traits, 640, 480> renderer;
-
     auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
-    cimg_library::CImgDisplay disp;
-    cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
-    //cimg_library::CImg<float> depth(640, 480);
-
-    while(true) {
-        Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
-        Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
-        rotMatrix.block<3,3>(0,0) = aa.matrix();
-        vertUniform.modelViewMatrix *= rotMatrix;
-
-        renderer.render<MyVertInType, MyVertexShaderType, MyFragmentShaderType>(m, vertexShader, fragmentShader);
-
-        renderer.readback(img);
-        disp.display(img);
-
-        //renderer.readbackDepth(depth);
-        //disp.display(normalizeDepth(depth));
-
-        renderer.clear();
-        //disp.wait(100);
-        if(disp.is_closed()) {
-            break;
-        }
-    }
+    animate(m, vertexShader, fragmentShader);
 }
 
 int main(int argc, char** argv) {
