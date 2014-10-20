@@ -206,6 +206,14 @@ std::vector<In> loadMesh(const std::string& filename) {
 
 template <class Mesh, class VertexShader, class FragmentShader>
 void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
+    vertexShader.uniform().projMatrix = proj(-5, 5, -5, 5, 5, 30);
+
+    vertexShader.uniform().modelViewMatrix = Eigen::Matrix4f::Identity();
+
+    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-10));
+    vertexShader.uniform().modelViewMatrix = transform.matrix();
+
+
     //Renderer
     Renderer<typename FragmentShader::OutType, typename FragmentShader::Traits, 640, 480> renderer;
 
@@ -250,14 +258,6 @@ void textureAnimation() {
         Eigen::Matrix4f modelViewMatrix;
     } vertUniform;
 
-    vertUniform.projMatrix = proj(-5, 5, -5, 5, 5, 30);
-
-    vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
-
-    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-10));
-    vertUniform.modelViewMatrix = transform.matrix();
-
-
     typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
     MyVertexShaderType vertexShader(vertUniform);
 
@@ -291,14 +291,6 @@ void colorAnimation(const Eigen::Vector4f& color) {
         Eigen::Matrix4f modelViewMatrix;
     } vertUniform;
 
-    vertUniform.projMatrix = proj(-5, 5, -5, 5, 5, 30);
-
-    vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
-
-    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-10));
-    vertUniform.modelViewMatrix = transform.matrix();
-
-
     typedef ColorVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
     MyVertexShaderType vertexShader(vertUniform);
 
@@ -328,14 +320,6 @@ void multiTextureAnimation() {
         Eigen::Matrix4f projMatrix;
         Eigen::Matrix4f modelViewMatrix;
     } vertUniform;
-
-    vertUniform.projMatrix = proj(-5, 5, -5, 5, 5, 30);
-
-    vertUniform.modelViewMatrix = Eigen::Matrix4f::Identity();
-
-    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-10));
-    vertUniform.modelViewMatrix = transform.matrix();
-
 
     typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
     MyVertexShaderType vertexShader(vertUniform);
