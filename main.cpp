@@ -157,8 +157,8 @@ void textureAnimation() {
     //cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
     struct MyFragUniformType {
         TextureSampler<Eigen::Vector4f> textureSampler;
-        MyFragUniformType(cimg_library::CImg<unsigned char>& img) : textureSampler(img) {}
-    } fragUniform(texImg);
+    };
+    MyFragUniformType fragUniform = {TextureSampler<Eigen::Vector4f>(texImg)};
 
     typedef TextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
     MyFragmentShaderType fragmentShader(fragUniform);
@@ -196,8 +196,6 @@ void colorAnimation(const Eigen::Vector4f& color) {
     animate(m, vertexShader, fragmentShader);
 }
 
-
-
 void multiTextureAnimation() {
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
@@ -218,11 +216,15 @@ void multiTextureAnimation() {
 
     cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCow.png");
     cimg_library::CImg<unsigned char> aoImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
+
+    typedef TextureSampler<Eigen::Vector4f> SamplerType;
+
     struct MyFragUniformType {
-        TextureSampler<Eigen::Vector4f> textureSampler;
-        TextureSampler<Eigen::Vector4f> aoSampler;
-        MyFragUniformType(cimg_library::CImg<unsigned char>& img, cimg_library::CImg<unsigned char>& ao) : textureSampler(img), aoSampler(ao) {}
-    } fragUniform(texImg, aoImg);
+        SamplerType textureSampler;
+        SamplerType aoSampler;
+    };
+
+    MyFragUniformType fragUniform = {SamplerType(texImg), SamplerType(aoImg)};
 
     typedef MultiTextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
     MyFragmentShaderType fragmentShader(fragUniform);
