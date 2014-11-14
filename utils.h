@@ -8,6 +8,14 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <Eigen/Dense>
+
+inline Eigen::Vector3f reflect(const Eigen::Vector3f& R, const Eigen::Vector3f& N) {
+    Eigen::Vector3f Rout = R - 2.0*N.dot(R)*N;
+
+    return Rout;
+}
+
 
 inline Eigen::Matrix4f ortho(float left, float right,
                              float bottom, float top,
