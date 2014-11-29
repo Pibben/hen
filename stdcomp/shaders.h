@@ -75,22 +75,26 @@ public:
     typedef In VertInType;
     typedef Uniform VertUniformType;
 
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> OutType;
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> OutType;
 
     struct Traits {
         static constexpr int POSITION_ATTACHMENT = 0;
         static constexpr int TEXTURE_ATTACHMENT = 1;
+        static constexpr int INV_DEPTH_ATTACHMENT = 2;
     };
 
     TextureVertexShader(Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
+        const Eigen::Vector2f tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
 
-        Eigen::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
+        const Eigen::Vector4f mvPos = mUniform.modelViewMatrix * pos;
+        const Eigen::Vector4f outPos = mUniform.projMatrix * mvPos;
 
-        return std::make_tuple(outPos, tex);
+        const float invDepth = 1.0 / mvPos[2];
+
+        return std::make_tuple(outPos, tex * invDepth, invDepth);
     }
 
     Uniform& uniform() { return mUniform; }
@@ -116,9 +120,11 @@ public:
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
         const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
+        const float invDepth = std::get<InTraits::INV_DEPTH_ATTACHMENT>(in);
 
-        auto color = mUniform.textureSampler.get(tex[0], tex[1]);
-        //auto color = Eigen::Vector4f(255, 0, 255, 255);
+        const auto realTex = tex / invDepth;
+
+        auto color = mUniform.textureSampler.get(realTex[0], realTex[1]);
 
         return std::make_tuple(color, pos[2]);
     }

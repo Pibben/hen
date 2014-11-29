@@ -265,6 +265,52 @@ void flatShading() {
     animate(m, vertexShader, fragmentShader);
 }
 
+void textureTest() {
+    //Input types
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { TEXTURE_ATTACHMENT = 1 };
+    };
+
+    //Vertex shader
+    struct MyVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    } vertUniform;
+
+    typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
+
+    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/checkerboard.jpg");
+    //cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
+    struct MyFragUniformType {
+        TextureSampler<Eigen::Vector4f> textureSampler;
+    };
+    MyFragUniformType fragUniform = {TextureSampler<Eigen::Vector4f>(texImg)};
+
+    typedef TextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    MyFragmentShaderType fragmentShader(fragUniform);
+
+    //auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    std::vector<MyVertInType> mesh;
+
+    static const float size = 3.5;
+
+    Eigen::Vector4f corners[] = {{size, 0, size, 1}, {-size, 0, size, 1}, {-size, 0, -size, 1}, {size, 0, -size, 1}};
+    Eigen::Vector2f uvs[] = {{1, 1}, {0, 1}, {0, 0}, {1, 0}};
+
+    mesh.emplace_back(corners[0], uvs[0]);
+    mesh.emplace_back(corners[1], uvs[1]);
+    mesh.emplace_back(corners[2], uvs[2]);
+
+    mesh.emplace_back(corners[0], uvs[0]);
+    mesh.emplace_back(corners[2], uvs[2]);
+    mesh.emplace_back(corners[3], uvs[3]);
+
+    animate(mesh, vertexShader, fragmentShader);
+}
 int main(int argc, char** argv) {
     flatShading();
 }
