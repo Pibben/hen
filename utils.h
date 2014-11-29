@@ -10,6 +10,8 @@
 
 #include <Eigen/Dense>
 
+#include "CImg.h"
+
 inline Eigen::Vector3f reflect(const Eigen::Vector3f& R, const Eigen::Vector3f& N) {
     Eigen::Vector3f Rout = R - 2.0*N.dot(R)*N;
 

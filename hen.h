@@ -11,9 +11,6 @@
 #include <vector>
 #include <type_traits>
 
-#include "CImg.h"
-#undef Success
-
 template<std::size_t I = 0, typename FuncT, typename ... Tp>
 inline typename std::enable_if<I == sizeof...(Tp), void>::type
 mytransform(const std::tuple<Tp...> &, const std::tuple<Tp...> &, std::tuple<Tp...> &, FuncT) // Unused arguments are given no names.
@@ -105,13 +102,16 @@ public:
 
 template <class FragOutType, class Traits, int RES_X, int RES_Y>
 class Renderer {
+
 private:
     static constexpr int COLOR_ATTACHMENT = Traits::COLOR_ATTACHMENT;
     static constexpr int DEPTH_ATTACHMENT = Traits::DEPTH_ATTACHMENT;
 
+public:
     typedef typename std::tuple_element<COLOR_ATTACHMENT, FragOutType>::type DataType;
     typedef typename std::tuple_element<DEPTH_ATTACHMENT, FragOutType>::type DepthType;
 
+private:
     typedef FramebufferAdapter<DataType, RES_X, RES_Y> FrameBufferType;
     FrameBufferType frameBuffer;
     typedef FramebufferAdapter<DepthType, RES_X, RES_Y> DepthBufferType;
@@ -375,18 +375,17 @@ public:
         }
     }
 
-    void readback(cimg_library::CImg<unsigned char>& img) {
-
-        for(int i = 0; i < frameBuffer.size(); ++i) {
-            for(int j = 0; j < 3; ++j) {
-                img(i%frameBuffer.sizeX(), frameBuffer.sizeY() - 1 - i/frameBuffer.sizeX(), j) = frameBuffer.at(i)[j];
-            }
+    template <class Func>
+    void visitFramebuffer(Func func) {
+        for(const auto& p: frameBuffer) {
+            func(p);
         }
     }
 
-    void readbackDepth(cimg_library::CImg<float>& img) {
-        for(int i = 0; i < depthBuffer.size(); ++i) {
-            img(i%frameBuffer.sizeX(), frameBuffer.sizeY() - 1 - i/frameBuffer.sizeX(), 0) = depthBuffer.at(i);
+    template <class Func>
+    void visitDepthbuffer(Func func) {
+        for(const auto& p: depthBuffer) {
+            func(p);
         }
     }
 };

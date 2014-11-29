@@ -14,6 +14,8 @@
 #include "stdcomp/shaders.h"
 #include "utils.h"
 
+#include "CImg.h"
+
 template <class OutType>
 class TextureSampler {
     cimg_library::CImg<unsigned char>& mImg;
@@ -124,6 +126,22 @@ std::vector<In> loadMeshNormal(const std::string& filename) {
     return m;
 }
 
+template <class PixelType>
+class Visitor {
+private:
+    cimg_library::CImg<unsigned char>& mImg;
+    int mCount;
+public:
+    Visitor(cimg_library::CImg<unsigned char>& img) : mImg(img), mCount(0) {}
+
+    void operator()(const PixelType& p) {
+        for(int j = 0; j < 3; ++j) {
+            mImg(mCount % mImg.width(), mImg.height() - 1 - mCount/mImg.width(), j) = p[j];
+        }
+        mCount++;
+    }
+};
+
 template <class Mesh, class VertexShader, class FragmentShader>
 void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.uniform().projMatrix = proj(-5, 5, -5, 5, 5, 30);
@@ -137,7 +155,8 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     const int height = 480*2;
 
     //Renderer
-    Renderer<typename FragmentShader::OutType, typename FragmentShader::Traits, width, height> renderer;
+    typedef Renderer<typename FragmentShader::OutType, typename FragmentShader::Traits, width, height> RendererType;
+    RendererType renderer;
 
     cimg_library::CImgDisplay disp;
     cimg_library::CImg<unsigned char> img(width, height, 1, 3);
@@ -151,7 +170,9 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
 
         renderer.template render<typename Mesh::value_type, VertexShader, FragmentShader>(mesh, vertexShader, fragmentShader);
 
-        renderer.readback(img);
+        Visitor<typename RendererType::DataType> visitor(img);
+        renderer.visitFramebuffer(visitor);
+
         disp.display(img);
 
         //renderer.readbackDepth(depth);
