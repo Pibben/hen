@@ -76,9 +76,6 @@ public:
         int x = u * (mSizeX-1) + 0.5;
         int y = mSizeY - (v * (mSizeY-1) + 0.5);
 
-        x %= mSizeX;
-        y %= mSizeY;
-
         assert(x >= 0 && x < mSizeX);
         assert(y >= 0 && y < mSizeY);
 

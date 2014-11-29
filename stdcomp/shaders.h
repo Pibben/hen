@@ -360,22 +360,18 @@ public:
 
         Eigen::Vector2f tex;
 
-        tex[1] = R[1];
+        tex[1] = R[1]; // -1 .. 1
         R[1] = 0.0;
-        tex[0] = normalize(R)[0] * 0.5;
-#if 1
-        float s = sgn(R[2]) * 0.5;
+        tex[0] = normalize(R)[2] * 0.25; // -0.25 .. 0.25
 
-        tex[0] = 0.75 - s * (0.5 - tex[0]);
-        tex[1] = 0.5 + 0.5 * tex[1];
-#else
-        if(R[2] >= 0) {
-            tex = (tex + Eigen::Vector2f::Ones(2)) * 0.5;
+        tex[1] = (tex[1] + 1.0) * 0.5; // 0 .. 1
+
+        if(R[0] >= 0) {
+            tex[0] = 0.25 + tex[0]; // 0 .. 0.5
         } else {
-            tex[1] = (tex[1] + 1.0) * 0.5;
-            tex[0] = (-tex[0] * 0.5) + 1.0;
+            tex[0] = 0.75 - tex[0]; // 0.5 .. 1.0
         }
-#endif
+
         auto color = mUniform.textureSampler.get(tex[0], tex[1]);
 
         return std::make_tuple(color, pos[2]);
