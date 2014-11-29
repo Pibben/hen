@@ -282,4 +282,104 @@ public:
     }
 };
 
+template <class In, class InTraits, class Uniform>
+class NormalViewVertexShader {
+private:
+public:
+    Uniform& mUniform;
+    typedef In VertInType;
+    typedef Uniform VertUniformType;
+
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> OutType;
+
+    struct Traits {
+        static constexpr int POSITION_ATTACHMENT = 0;
+        static constexpr int NORMAL_ATTACHMENT = 1;
+        static constexpr int VIEW_ATTACHMENT = 2;
+    };
+
+    NormalViewVertexShader(Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos    = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector3f& normal = std::get<InTraits::NORMAL_ATTACHMENT>(in);
+
+        const Eigen::Vector4f P = mUniform.modelViewMatrix * pos;
+
+        const Eigen::Vector3f N = mUniform.modelViewMatrix.template topLeftCorner<3,3>() * normal;
+        const Eigen::Vector3f V = P.topRows<3>();
+
+        const Eigen::Vector4f outPos = mUniform.projMatrix * P;
+        return std::make_tuple(outPos, N, V);
+    }
+
+    Uniform& uniform() { return mUniform; }
+};
+
+template <typename T>
+int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
+template <typename T>
+T normalize(T val) {
+    val.normalize();
+    return val;
+}
+
+
+template <class In, class InTraits, class Uniform>
+class EquiRectFragmentShader {
+private:
+public:
+    const Uniform& mUniform;
+    typedef In VertOutFragInType;
+    typedef Uniform FragUniformType;
+
+    typedef std::tuple<Eigen::Vector4f, float> OutType;
+
+    struct Traits {
+        static constexpr int COLOR_ATTACHMENT = 0;
+        static constexpr int DEPTH_ATTACHMENT = 1;
+    };
+
+    EquiRectFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        Eigen::Vector3f N     = std::get<InTraits::NORMAL_ATTACHMENT>(in);
+        Eigen::Vector3f V     = std::get<InTraits::VIEW_ATTACHMENT>(in);
+        //assert(pos[2] < 0.0);
+
+        N.normalize();
+        V.normalize();
+
+        auto R = reflect(V, N);
+
+        R.normalize();
+
+        Eigen::Vector2f tex;
+
+        tex[1] = R[1];
+        R[1] = 0.0;
+        tex[0] = normalize(R)[0] * 0.5;
+#if 1
+        float s = sgn(R[2]) * 0.5;
+
+        tex[0] = 0.75 - s * (0.5 - tex[0]);
+        tex[1] = 0.5 + 0.5 * tex[1];
+#else
+        if(R[2] >= 0) {
+            tex = (tex + Eigen::Vector2f::Ones(2)) * 0.5;
+        } else {
+            tex[1] = (tex[1] + 1.0) * 0.5;
+            tex[0] = (-tex[0] * 0.5) + 1.0;
+        }
+#endif
+        auto color = mUniform.textureSampler.get(tex[0], tex[1]);
+
+        return std::make_tuple(color, pos[2]);
+    }
+};
+
 #endif /* SHADERS_H_ */

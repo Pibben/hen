@@ -348,8 +348,42 @@ void phongShading() {
     animate(m, vertexShader, fragmentShader);
 }
 
+void equiRectangular() {
+    //Input types
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { NORMAL_ATTACHMENT = 1 };
+    };
+
+    //Vertex shader
+    struct MyVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    } vertUniform;
+
+    typedef NormalViewVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
+
+    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/equirect.jpg");
+    //cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
+    struct MyFragUniformType {
+        TextureSampler<Eigen::Vector4f> textureSampler;
+    };
+    MyFragUniformType fragUniform = {TextureSampler<Eigen::Vector4f>(texImg)};
+
+
+    typedef EquiRectFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    MyFragmentShaderType fragmentShader(fragUniform);
+
+    auto m = loadMeshNormal<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+
+    animate(m, vertexShader, fragmentShader);
+}
+
 int main(int argc, char** argv) {
-    phongShading();
+    equiRectangular();
 }
 
 

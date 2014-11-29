@@ -73,8 +73,11 @@ public:
     TextureSampler(cimg_library::CImg<unsigned char>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
 
     OutType get(float u, float v) const {
-        const int x = u * (mSizeX-1) + 0.5;
-        const int y = mSizeY - (v * (mSizeY-1) + 0.5);
+        int x = u * (mSizeX-1) + 0.5;
+        int y = mSizeY - (v * (mSizeY-1) + 0.5);
+
+        x %= mSizeX;
+        y %= mSizeY;
 
         assert(x >= 0 && x < mSizeX);
         assert(y >= 0 && y < mSizeY);
