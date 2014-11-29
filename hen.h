@@ -91,13 +91,13 @@ public:
 template <class Type, int RES_X, int RES_Y>
 class FramebufferAdapter {
 private:
-    typedef std::array<Type, RES_X*RES_Y> ArrayType;
+    typedef std::vector<Type> ArrayType;
     ArrayType mArray;
     unsigned int mSizeX;
     unsigned int mSizeY;
     Type mTrash;
 public:
-    FramebufferAdapter() : mSizeX(RES_X), mSizeY(RES_Y), mTrash() {}
+    FramebufferAdapter() : mArray(RES_X*RES_Y), mSizeX(RES_X), mSizeY(RES_Y), mTrash() {}
 
     Type& operator()(unsigned int x, unsigned int y) {
         if(x >= 0 && x < mSizeX && y >= 0 && y < mSizeY) {
