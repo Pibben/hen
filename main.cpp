@@ -105,12 +105,14 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     Eigen::Affine3f transform(Eigen::Translation3f(0,0,-10));
     vertexShader.uniform().modelViewMatrix = transform.matrix();
 
+    const int width = 640*2;
+    const int height = 480*2;
 
     //Renderer
-    Renderer<typename FragmentShader::OutType, typename FragmentShader::Traits, 640, 480> renderer;
+    Renderer<typename FragmentShader::OutType, typename FragmentShader::Traits, width, height> renderer;
 
     cimg_library::CImgDisplay disp;
-    cimg_library::CImg<unsigned char> img(640, 480, 1, 3);
+    cimg_library::CImg<unsigned char> img(width, height, 1, 3);
     //cimg_library::CImg<float> depth(640, 480);
 
     while(true) {
