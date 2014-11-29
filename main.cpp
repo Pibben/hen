@@ -41,6 +41,80 @@ public:
     }
 };
 
+template <class OutType>
+class CubeSampler {
+    cimg_library::CImg<unsigned char>& mImg;
+    unsigned int mSizeX;
+    unsigned int mSizeY;
+
+public:
+    CubeSampler(cimg_library::CImg<unsigned char>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
+
+    OutType get(float vx, float vy, float vz) const {
+        const float ax = std::abs(vx);
+        const float ay = std::abs(vy);
+        const float az = std::abs(vz);
+
+        float uOffset = 0;
+        float vOffset = 0;
+
+        float u = 0;
+        float v = 0;
+
+        if(ax >= ay && ax >= az) {
+            //X biggest
+
+            if(vx > 0) {
+                uOffset = 2.0;
+                vOffset = 1.0 ;
+            } else {
+                uOffset = 0;
+                vOffset = 1.0;
+            }
+
+            u = (vz / -vx + 1.0 + uOffset * 2.0) / 8.0;
+            v = (vy / ax + 1.0 + vOffset * 2.0) / 6.0;
+        } else if(ay >= ax && ay >= az) {
+            //Y biggest
+
+            uOffset = 1.0;
+            if(vy > 0) {
+                vOffset = 2.0;
+            } else {
+                vOffset = 0;
+            }
+
+            u = (vx / ay + 1.0 + uOffset * 2.0) / 8.0;
+            v = (vz / -vy + 1.0 + vOffset * 2.0) / 6.0;
+        } else if(az >= ax && az >= ay) {
+            //Z biggest
+
+            vOffset = 1.0;
+            if(vz > 0) {
+                uOffset = 1.0;
+            } else {
+                uOffset = 3.0;
+            }
+
+            u = (vx / vz + 1.0 + uOffset * 2.0) / 8.0;
+            v = (vy / az + 1.0 + vOffset * 2.0) / 6.0;
+        }
+
+        int x = u * (mSizeX-1) + 0.5;
+        int y = mSizeY - (v * (mSizeY-1) + 0.5);
+
+        assert(x >= 0 && x < mSizeX);
+        assert(y >= 0 && y < mSizeY);
+
+        const float r = mImg(x, y, 0);
+        const float g = mImg(x, y, 1);
+        const float b = mImg(x, y, 2);
+        const float a = 255.0;
+
+        return OutType(r, g, b, a);
+    }
+};
+
 
 template <class In>
 std::vector<In> loadMeshColor(const std::string& filename, const Eigen::Vector4f& color) {
@@ -428,8 +502,42 @@ void equiRectangular() {
     animate(m, vertexShader, fragmentShader);
 }
 
+void cubeMap() {
+    //Input types
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { NORMAL_ATTACHMENT = 1 };
+    };
+
+    //Vertex shader
+    struct MyVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    } vertUniform;
+
+    typedef NormalViewVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
+
+    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/cubemap.jpg");
+    //cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
+    struct MyFragUniformType {
+        CubeSampler<Eigen::Vector4f> cubeSampler;
+    };
+    MyFragUniformType fragUniform = {CubeSampler<Eigen::Vector4f>(texImg)};
+
+
+    typedef CubemapFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    MyFragmentShaderType fragmentShader(fragUniform);
+
+    auto m = loadMeshNormal<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+
+    animate(m, vertexShader, fragmentShader);
+}
+
 int main(int argc, char** argv) {
-    equiRectangular();
+    cubeMap();
 }
 
 

@@ -378,4 +378,38 @@ public:
     }
 };
 
+template <class In, class InTraits, class Uniform>
+class CubemapFragmentShader {
+private:
+public:
+    const Uniform& mUniform;
+    typedef In VertOutFragInType;
+    typedef Uniform FragUniformType;
+
+    typedef std::tuple<Eigen::Vector4f, float> OutType;
+
+    struct Traits {
+        static constexpr int COLOR_ATTACHMENT = 0;
+        static constexpr int DEPTH_ATTACHMENT = 1;
+    };
+
+    CubemapFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        Eigen::Vector3f N     = std::get<InTraits::NORMAL_ATTACHMENT>(in);
+        Eigen::Vector3f V     = std::get<InTraits::VIEW_ATTACHMENT>(in);
+        //assert(pos[2] < 0.0);
+
+        N.normalize();
+        V.normalize();
+
+        auto R = reflect(V, N);
+
+        auto color = mUniform.cubeSampler.get(R[0], R[1], R[2]);
+
+        return std::make_tuple(color, pos[2]);
+    }
+};
+
 #endif /* SHADERS_H_ */
