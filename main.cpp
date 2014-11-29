@@ -84,9 +84,12 @@ std::vector<In> loadMeshNormal(const std::string& filename) {
             vs[i] = vertices[f.coords[i]];
         }
 
-        const Eigen::Vector3f norm = (vs[1]-vs[0]).cross(vs[2]-vs[0]);
-
         for(int i = 0; i < 3; ++i) {
+#if 0
+            const Eigen::Vector3f norm = (vs[1]-vs[0]).cross(vs[2]-vs[0]);
+#else
+            const Eigen::Vector3f norm = normals[f.coords[i]];
+#endif
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
             v.topRows<3>() = vs[i];
             m.push_back({v, norm});
@@ -313,8 +316,40 @@ void textureTest() {
 
     animate(mesh, vertexShader, fragmentShader);
 }
+
+void phongShading() {
+    //Input types
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { NORMAL_ATTACHMENT = 1 };
+    };
+
+    //Vertex shader
+    struct MyVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+        Eigen::Vector3f lightPos;
+    } vertUniform;
+    vertUniform.lightPos = Eigen::Vector3f(100,100,100);
+
+    typedef PhongVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
+
+    struct MyFragUniformType {
+    } fragUniform;
+
+    typedef PhongFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    MyFragmentShaderType fragmentShader(fragUniform);
+
+    auto m = loadMeshNormal<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+
+    animate(m, vertexShader, fragmentShader);
+}
+
 int main(int argc, char** argv) {
-    flatShading();
+    phongShading();
 }
 
 
