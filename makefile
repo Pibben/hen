@@ -12,6 +12,8 @@ LIBS = -lpthread -lX11
 
 SRCS = main.cpp
 
+HEADERS = hen.h stdcomp/shaders.h
+
 OBJS = $(SRCS:.cpp=.o)
 
 MAIN = hen
@@ -22,7 +24,7 @@ all:    $(MAIN)
 $(MAIN): $(OBJS) 
 		$(CC) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 
-.cpp.o:
+main.o: main.cpp $(HEADERS)
 		$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
 
 clean:
