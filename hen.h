@@ -61,33 +61,6 @@ public:
 };
 
 
-
-
-template <class OutType>
-class TextureSampler {
-    cimg_library::CImg<unsigned char>& mImg;
-    unsigned int mSizeX;
-    unsigned int mSizeY;
-
-public:
-    TextureSampler(cimg_library::CImg<unsigned char>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
-
-    OutType get(float u, float v) const {
-        int x = u * (mSizeX-1) + 0.5;
-        int y = mSizeY - (v * (mSizeY-1) + 0.5);
-
-        assert(x >= 0 && x < mSizeX);
-        assert(y >= 0 && y < mSizeY);
-
-        const float r = mImg(x, y, 0);
-        const float g = mImg(x, y, 1);
-        const float b = mImg(x, y, 2);
-        const float a = 255.0;
-
-        return OutType(r, g, b, a);
-    }
-};
-
 template <class Type, int RES_X, int RES_Y>
 class FramebufferAdapter {
 private:
