@@ -216,6 +216,20 @@ public:
     }
 };
 
+template <class PixelType>
+class DepthVisitor {
+private:
+    cimg_library::CImg<float>& mImg;
+    int mCount;
+public:
+    DepthVisitor(cimg_library::CImg<float>& img) : mImg(img), mCount(0) {}
+
+    void operator()(const PixelType& p) {
+        mImg(mCount % mImg.width(), mImg.height() - 1 - mCount/mImg.width()) = p;
+        mCount++;
+    }
+};
+
 template <class Mesh, class VertexShader, class FragmentShader>
 void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.uniform().projMatrix = proj(-5, 5, -5, 5, 5, 30);
@@ -249,6 +263,48 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
 
         //renderer.readbackDepth(depth);
         //disp.display(normalizeDepth(depth));
+
+        renderer.clear();
+        //disp.wait(100);
+        if(disp.is_closed()) {
+            break;
+        }
+    }
+}
+
+template <class Mesh, class VertexShader, class FragmentShader>
+void animateDepth(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
+    vertexShader.uniform().projMatrix = proj(-5, 5, -5, 5, 5, 30);
+
+    vertexShader.uniform().modelViewMatrix = Eigen::Matrix4f::Identity();
+    vertexShader.uniform().modelViewMatrix = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0}); //TODO: Should be in projMatrix?
+
+    const int width = 640*2;
+    const int height = 480*2;
+
+    //Renderer
+    typedef Renderer<typename FragmentShader::OutType, typename FragmentShader::Traits, width, height> RendererType;
+    RendererType renderer;
+
+    cimg_library::CImgDisplay disp;
+    cimg_library::CImg<float> depth(width, height);
+
+    Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
+    Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
+    rotMatrix.topLeftCorner<3,3>() = aa.matrix();
+    while(true) {
+        vertexShader.uniform().modelViewMatrix *= rotMatrix;
+
+        //Render depth
+        renderer.template render<typename Mesh::value_type, VertexShader, FragmentShader>(mesh, vertexShader, fragmentShader);
+
+        DepthVisitor<typename RendererType::DepthType> visitor(depth);
+        renderer.visitDepthbuffer(visitor);
+
+        //disp.display(img);
+
+        //renderer.readbackDepth(depth);
+        disp.display(normalizeDepth(depth));
 
         renderer.clear();
         //disp.wait(100);
@@ -534,8 +590,64 @@ void cubeMap() {
     animate(m, vertexShader, fragmentShader);
 }
 
+void shadow() {
+    //Input types
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { TEXTURE_ATTACHMENT = 1 };
+    };
+
+    const auto lightPos = Eigen::Vector3f(100,100,100);
+
+    //Vertex shader
+    struct ShadowVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    } shadowVertUniform;
+
+    shadowVertUniform.projMatrix = proj(-1, 1, -1, 1, 1, 1000);
+    shadowVertUniform.modelViewMatrix = lookAt(lightPos, {0, 0, 0}, {0, 1, 0});
+
+    typedef ShadowGenVertexShader<MyVertInType, InTraits, ShadowVertUniformType> ShadowVertexShaderType;
+    ShadowVertexShaderType shadowVertexShader(shadowVertUniform);
+
+    struct ShadowFragUniformType {} shadowFragUniform;
+
+    typedef ShadowGenFragmentShader<typename ShadowVertexShaderType::OutType, typename ShadowVertexShaderType::Traits, ShadowFragUniformType> ShadowFragmentShaderType;
+    ShadowFragmentShaderType shadowFragmentShader(shadowFragUniform);
+#if 0
+
+    //Vertex shader
+    struct MyVertUniformType {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+        Eigen::Matrix4f shadowMatrix;
+    } vertUniform;
+
+    typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
+    MyVertexShaderType vertexShader(vertUniform);
+
+    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCow.png");
+    //cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
+    struct MyFragUniformType {
+        TextureSampler<Eigen::Vector4f> textureSampler;
+        TextureSampler<float> shadowSampler;
+    };
+    MyFragUniformType fragUniform = {TextureSampler<Eigen::Vector4f>(texImg)};
+
+    typedef TextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
+    MyFragmentShaderType fragmentShader(fragUniform);
+#endif
+    auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+
+    //animate(m, vertexShader, fragmentShader);
+    animateDepth(m, shadowVertexShader, shadowFragmentShader);
+}
+
 int main(int argc, char** argv) {
-    cubeMap();
+    shadow();
 }
 
 

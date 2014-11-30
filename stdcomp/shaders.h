@@ -400,4 +400,132 @@ public:
     }
 };
 
+template <class In, class InTraits, class Uniform>
+class ShadowGenVertexShader {
+private:
+public:
+    Uniform& mUniform;
+    typedef In VertInType;
+    typedef Uniform VertUniformType;
+
+    typedef std::tuple<Eigen::Vector4f> OutType;
+
+    struct Traits {
+        static constexpr int POSITION_ATTACHMENT = 0;
+    };
+
+    ShadowGenVertexShader(Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+
+        const Eigen::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
+
+        return std::make_tuple(outPos);
+    }
+
+    Uniform& uniform() { return mUniform; }
+};
+
+template <class In, class InTraits, class Uniform>
+class ShadowGenFragmentShader {
+private:
+public:
+    const Uniform& mUniform;
+    typedef In VertOutFragInType;
+    typedef Uniform FragUniformType;
+
+    typedef std::tuple<Eigen::Vector4f, float> OutType;
+
+    struct Traits {
+        static constexpr int COLOR_ATTACHMENT = 0;
+        static constexpr int DEPTH_ATTACHMENT = 1;
+    };
+
+    ShadowGenFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+
+        return std::make_tuple(Eigen::Vector4f(), pos[2]);
+    }
+};
+
+template <class In, class InTraits, class Uniform>
+class ShadowVertexShader {
+private:
+public:
+    Uniform& mUniform;
+    typedef In VertInType;
+    typedef Uniform VertUniformType;
+
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, Eigen::Vector4f, float> OutType;
+
+    struct Traits {
+        static constexpr int POSITION_ATTACHMENT = 0;
+        static constexpr int TEXTURE_ATTACHMENT = 1;
+        static constexpr int SHADOW_ATTACHMENT = 2;
+        static constexpr int INV_DEPTH_ATTACHMENT = 3;
+    };
+
+    ShadowVertexShader(Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector2f tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
+
+        const Eigen::Vector4f mvPos = mUniform.modelViewMatrix * pos;
+        const Eigen::Vector4f outPos = mUniform.projMatrix * mvPos;
+
+        const float invDepth = 1.0 / mvPos[2];
+
+        const Eigen::Vector4f shadow_coord = mUniform.shadowMatrix * pos;
+
+        return std::make_tuple(outPos, tex * invDepth, shadow_coord, invDepth);
+    }
+
+    Uniform& uniform() { return mUniform; }
+};
+
+template <class In, class InTraits, class Uniform>
+class ShadowFragmentShader {
+private:
+public:
+    const Uniform& mUniform;
+    typedef In VertOutFragInType;
+    typedef Uniform FragUniformType;
+
+    typedef std::tuple<Eigen::Vector4f, float> OutType;
+
+    struct Traits {
+        static constexpr int COLOR_ATTACHMENT = 0;
+        static constexpr int DEPTH_ATTACHMENT = 1;
+    };
+
+    ShadowFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+
+    OutType operator()(const In& in) const {
+        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
+        const Eigen::Vector4f& shadow_coord   = std::get<InTraits::SHADOW_ATTACHMENT>(in);
+        const float invDepth = std::get<InTraits::INV_DEPTH_ATTACHMENT>(in);
+
+        const auto realTex = tex / invDepth;
+
+        auto color = mUniform.textureSampler.get(realTex[0], realTex[1]);
+
+        const float shadow_depth = mUniform.shadowSampler.get(shadow_coord[0] / shadow_coord[3], shadow_coord[1] / shadow_coord[3]);
+
+        float shade = 0.0;
+
+        if(shadow_coord[2] / shadow_coord[3] > shadow_depth) {
+            shade = 0.1;
+        } else {
+            shade = 1.0;
+        }
+
+        return std::make_tuple(color * shade, pos[2]);
+    }
+};
+
 #endif /* SHADERS_H_ */
