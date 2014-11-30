@@ -221,9 +221,7 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     vertexShader.uniform().projMatrix = proj(-5, 5, -5, 5, 5, 30);
 
     vertexShader.uniform().modelViewMatrix = Eigen::Matrix4f::Identity();
-
-    Eigen::Affine3f transform(Eigen::Translation3f(0,0,-10));
-    vertexShader.uniform().modelViewMatrix = transform.matrix();
+    vertexShader.uniform().modelViewMatrix = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0}); //TODO: Should be in projMatrix?
 
     const int width = 640*2;
     const int height = 480*2;
@@ -236,10 +234,10 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     cimg_library::CImg<unsigned char> img(width, height, 1, 3);
     //cimg_library::CImg<float> depth(640, 480);
 
+    Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
+    Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
+    rotMatrix.topLeftCorner<3,3>() = aa.matrix();
     while(true) {
-        Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
-        Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
-        rotMatrix.topLeftCorner<3,3>() = aa.matrix();
         vertexShader.uniform().modelViewMatrix *= rotMatrix;
 
         renderer.template render<typename Mesh::value_type, VertexShader, FragmentShader>(mesh, vertexShader, fragmentShader);

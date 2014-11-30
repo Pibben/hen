@@ -52,6 +52,38 @@ inline Eigen::Matrix4f proj(float left, float right,
     return m;
 }
 
+
+template <typename T>
+int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
+template <typename T>
+T normalize(T val) {
+    val.normalize();
+    return val;
+}
+
+inline Eigen::Matrix4f lookAt(const Eigen::Vector3f& eye, const Eigen::Vector3f& center, const Eigen::Vector3f& up) {
+    const Eigen::Vector3f F = center - eye;
+    const Eigen::Vector3f f = normalize(F);
+
+    const Eigen::Vector3f UP = normalize(up);
+
+    const Eigen::Vector3f s = f.cross(UP);
+    const Eigen::Vector3f u = normalize(s).cross(f);
+
+    Eigen::Matrix4f M = Eigen::Matrix4f::Identity();
+
+    M.block<1,3>(0,0) = s;
+    M.block<1,3>(1,0) = u;
+    M.block<1,3>(2,0) = -f;
+
+    Eigen::Affine3f transform((Eigen::Translation3f(-eye)));
+
+    return M * transform.matrix();
+}
+
 inline cimg_library::CImg<unsigned char> normalizeDepth(cimg_library::CImg<float>& depth) {
     const int width = depth.width();
     const int height = depth.height();

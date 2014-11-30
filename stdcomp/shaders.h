@@ -316,18 +316,6 @@ public:
     Uniform& uniform() { return mUniform; }
 };
 
-template <typename T>
-int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
-}
-
-template <typename T>
-T normalize(T val) {
-    val.normalize();
-    return val;
-}
-
-
 template <class In, class InTraits, class Uniform>
 class EquiRectFragmentShader {
 private:
