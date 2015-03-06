@@ -131,7 +131,7 @@ private:
         }
     }
 
-    template <class Vertex, class FragmentShader, int PositionAttachment>
+    template <int PositionAttachment, class Vertex, class FragmentShader>
     void rasterizeLine(Vertex v1, Vertex v2, const FragmentShader& fragmentShader) {
 
         float x0 = std::get<PositionAttachment>(v1)[0];
@@ -186,7 +186,7 @@ private:
         }
     }
 
-    template <class Vertex, int PositionAttachment, class FragmentShader, int yStep>
+    template <int PositionAttachment, int yStep, class Vertex, class FragmentShader>
     void rasterizeTrianglePart(Vertex v1, Vertex v2, Vertex v3,
                                       const FragmentShader& fragmentShader) {
 
@@ -257,18 +257,18 @@ public:
         clear();
     }
 
-    template <class Vertex, int PositionAttachment, class FragmentShader>
+    template <int PositionAttachment, class Vertex, class FragmentShader>
     void rasterizeTriangleLines(Vertex v1, Vertex v2, Vertex v3,
-                                       const FragmentShader& fragmentShader) {
-        rasterizeLine<Vertex, FragmentShader, PositionAttachment>(v1, v2, fragmentShader);
-        rasterizeLine<Vertex, FragmentShader, PositionAttachment>(v1, v3, fragmentShader);
-        rasterizeLine<Vertex, FragmentShader, PositionAttachment>(v2, v3, fragmentShader);
+                                const FragmentShader& fragmentShader) {
+        rasterizeLine<PositionAttachment>(v1, v2, fragmentShader);
+        rasterizeLine<PositionAttachment>(v1, v3, fragmentShader);
+        rasterizeLine<PositionAttachment>(v2, v3, fragmentShader);
     }
 
 
-    template <class Vertex, int PositionAttachment, class FragmentShader>
+    template <int PositionAttachment, class Vertex, class FragmentShader>
     void rasterizeTriangle(Vertex v1, Vertex v2, Vertex v3,
-                                  const FragmentShader& fragmentShader) {
+                           const FragmentShader& fragmentShader) {
 
         Vertex& top = v1;
         Vertex& mid = v2;
@@ -292,16 +292,16 @@ public:
 
         if(t[1] == m[1]) {
             //Flat top
-            rasterizeTrianglePart<Vertex, PositionAttachment, FragmentShader, 1>(top, mid, bot, fragmentShader);
+            rasterizeTrianglePart<PositionAttachment, 1>(top, mid, bot, fragmentShader);
         } else if(m[1] == b[1]) {
             //Flat bottom
-            rasterizeTrianglePart<Vertex, PositionAttachment, FragmentShader, -1>(bot, mid, top, fragmentShader);
+            rasterizeTrianglePart<PositionAttachment, -1>(bot, mid, top, fragmentShader);
         } else {
             TupleInterpolator<Vertex> inptb(top, bot);
             Vertex split = inptb.run((m[1] - t[1]) / (b[1] - t[1]));
 
-            rasterizeTrianglePart<Vertex, PositionAttachment, FragmentShader, -1>(mid, split, top, fragmentShader);
-            rasterizeTrianglePart<Vertex, PositionAttachment, FragmentShader,  1>(mid, split, bot, fragmentShader);
+            rasterizeTrianglePart<PositionAttachment, -1>(mid, split, top, fragmentShader);
+            rasterizeTrianglePart<PositionAttachment,  1>(mid, split, bot, fragmentShader);
         }
     }
 
@@ -361,7 +361,7 @@ public:
             }
 
             //Rasterization
-            rasterizeTriangle<VertOutFragInType, POSITION_ATTACHMENT, FragmentShader>(v1, v2, v3, fragmentShader);
+            rasterizeTriangle<POSITION_ATTACHMENT>(v1, v2, v3, fragmentShader);
         }
     }
 

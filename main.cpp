@@ -254,7 +254,7 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     while(true) {
         vertexShader.uniform().modelViewMatrix *= rotMatrix;
 
-        renderer.template render<typename Mesh::value_type, VertexShader, FragmentShader>(mesh, vertexShader, fragmentShader);
+        renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader);
 
         Visitor<typename RendererType::DataType> visitor(img);
         renderer.visitFramebuffer(visitor);
@@ -296,7 +296,7 @@ void animateDepth(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& 
         vertexShader.uniform().modelViewMatrix *= rotMatrix;
 
         //Render depth
-        renderer.template render<typename Mesh::value_type, VertexShader, FragmentShader>(mesh, vertexShader, fragmentShader);
+        renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader);
 
         DepthVisitor<typename RendererType::DepthType> visitor(depth);
         renderer.visitDepthbuffer(visitor);
