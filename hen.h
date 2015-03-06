@@ -123,9 +123,9 @@ private:
         static constexpr int DepthAttachment = FragmentShader::Traits::DEPTH_ATTACHMENT;
 
         const auto fragment = fragmentShader(v);
-        const float depth = std::get<DepthAttachment>(fragment);
+        const auto& depth = std::get<DepthAttachment>(fragment);
         if(depth > 0.0 && depth < 1.0 && depth < depthBuffer(x, y)) {
-            const auto color = std::get<ColorAttachment>(fragment);
+            const auto& color = std::get<ColorAttachment>(fragment);
             frameBuffer(x, y) = color;
             depthBuffer(x, y) = depth;
         }
