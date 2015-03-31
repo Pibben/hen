@@ -12,7 +12,7 @@ LIBS = -lpthread -lX11
 
 SRCS = main.cpp
 
-HEADERS = hen.h stdcomp/shaders.h utils.h
+HEADERS = hen.h stdcomp/shaders.h utils.h stdcomp/samplers.h
 
 OBJS = $(SRCS:.cpp=.o)
 
