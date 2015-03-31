@@ -11,6 +11,7 @@
 #include <Eigen/Dense>
 
 #include "../utils.h"
+#include "samplers.h"
 
 template <class In, class InTraits, class Uniform>
 class ColorVertexShader {
@@ -282,11 +283,22 @@ public:
     }
 };
 
-template <class In, class InTraits, class Uniform>
 class NormalViewVertexShader {
 private:
+	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { NORMAL_ATTACHMENT = 1 };
+    };
+
+    struct Uniform {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    };
+
 public:
-    Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertInType;
     typedef Uniform VertUniformType;
 
@@ -297,8 +309,6 @@ public:
         static constexpr int NORMAL_ATTACHMENT = 1;
         static constexpr int VIEW_ATTACHMENT = 2;
     };
-
-    NormalViewVertexShader(Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos    = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -366,11 +376,21 @@ public:
     }
 };
 
-template <class In, class InTraits, class Uniform>
 class CubemapFragmentShader {
 private:
+	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> In;
+
+    struct InTraits {
+        static constexpr int POSITION_ATTACHMENT = 0;
+        static constexpr int NORMAL_ATTACHMENT = 1;
+        static constexpr int VIEW_ATTACHMENT = 2;
+    };
+
+    struct Uniform {
+        CubeSampler<Eigen::Vector4f> cubeSampler;
+    };
 public:
-    const Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertOutFragInType;
     typedef Uniform FragUniformType;
 
@@ -381,7 +401,9 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    CubemapFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+    void setCubeSampler(const CubeSampler<Eigen::Vector4f>& cubeSampler) {
+    	mUniform.cubeSampler = cubeSampler;
+    }
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);

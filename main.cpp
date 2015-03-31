@@ -448,7 +448,7 @@ void phongShading() {
 
     animate(m, vertexShader, fragmentShader);
 }
-
+#if 0
 void equiRectangular() {
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType;
@@ -482,35 +482,16 @@ void equiRectangular() {
 
     animate(m, vertexShader, fragmentShader);
 }
+#endif
 
 void cubeMap() {
-    //Input types
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType;
+	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType; //TODO:
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { NORMAL_ATTACHMENT = 1 };
-    };
+	NormalViewVertexShader vertexShader;
+	CubemapFragmentShader fragmentShader;
 
-    //Vertex shader
-    struct MyVertUniformType {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-    } vertUniform;
-
-    typedef NormalViewVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
-    MyVertexShaderType vertexShader(vertUniform);
-
-    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/cubemap.jpg");
-    //cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
-    struct MyFragUniformType {
-        CubeSampler<Eigen::Vector4f> cubeSampler;
-    };
-    MyFragUniformType fragUniform = {CubeSampler<Eigen::Vector4f>(texImg)};
-
-
-    typedef CubemapFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
-    MyFragmentShaderType fragmentShader(fragUniform);
+	cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/cubemap.jpg");
+	fragmentShader.setCubeSampler(CubeSampler<Eigen::Vector4f>(texImg));
 
     auto m = loadMeshNormal<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
