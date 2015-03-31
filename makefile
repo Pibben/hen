@@ -2,7 +2,7 @@ CC = clang++
 
 OPT = 3
 
-CFLAGS = -Wall -g -O$(OPT) -std=c++1y -stdlib=libc++ -Wno-deprecated-register
+CFLAGS = -Wall -Wextra -g -O$(OPT) -std=c++1y -stdlib=libc++ -Wno-deprecated-register
 
 INCLUDES = -I/usr/include/eigen3/
 

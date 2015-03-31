@@ -29,7 +29,7 @@ std::vector<In> loadMeshColor(const std::string& filename, const Eigen::Vector4f
 
     std::vector<In> m;
 
-    for(int j = 0; j < faces.size(); ++j) {
+    for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
@@ -53,7 +53,7 @@ std::vector<In> loadMesh(const std::string& filename) {
 
     std::vector<In> m;
 
-    for(int j = 0; j < faces.size(); ++j) {
+    for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
@@ -77,7 +77,7 @@ std::vector<In> loadMeshNormal(const std::string& filename) {
 
     std::vector<In> m;
 
-    for(int j = 0; j < faces.size(); ++j) {
+    for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
 
         Eigen::Vector3f vs[3];

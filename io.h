@@ -80,19 +80,19 @@ inline Face parseFace(const std::string& str) {
 
 }
 
-inline void parseObject(const std::string& str) {
+inline void parseObject(const std::string& /*str*/) {
     //std::cout << str << std::endl;
 }
 
-inline void parseMtllib(const std::string& str) {
+inline void parseMtllib(const std::string& /*str*/) {
     //std::cout << str << std::endl;
 }
 
-inline void parseMtl(const std::string& str) {
+inline void parseMtl(const std::string& /*str*/) {
     //std::cout << str << std::endl;
 }
 
-inline void parseSmooth(const std::string& str) {
+inline void parseSmooth(const std::string& /*str*/) {
     //std::cout << str << std::endl;
 }
 

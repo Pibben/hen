@@ -24,8 +24,8 @@ public:
         int x = u * (mSizeX-1) + 0.5;
         int y = mSizeY - (v * (mSizeY-1) + 0.5);
 
-        assert(x >= 0 && x < mSizeX);
-        assert(y >= 0 && y < mSizeY);
+        assert(x >= 0 && x < (int)mSizeX);
+        assert(y >= 0 && y < (int)mSizeY);
 
         const float r = mImg(x, y, 0);
         const float g = mImg(x, y, 1);
@@ -99,8 +99,8 @@ public:
         int x = u * (mSizeX-1) + 0.5;
         int y = mSizeY - (v * (mSizeY-1) + 0.5);
 
-        assert(x >= 0 && x < mSizeX);
-        assert(y >= 0 && y < mSizeY);
+        assert(x >= 0 && x < (int)mSizeX);
+        assert(y >= 0 && y < (int)mSizeY);
 
         const float r = mImg(x, y, 0);
         const float g = mImg(x, y, 1);

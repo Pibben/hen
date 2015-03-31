@@ -345,7 +345,7 @@ public:
 
         //Now in screen space
 
-        for(int i = 0; i < immStore.size(); i+=3) {
+        for(size_t i = 0; i < immStore.size(); i+=3) {
             //Primitive assembly
             const auto& v1 = immStore.at(i+0);
             const auto& v2 = immStore.at(i+1);
