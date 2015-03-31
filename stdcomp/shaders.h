@@ -326,11 +326,20 @@ public:
     Uniform& uniform() { return mUniform; }
 };
 
-template <class In, class InTraits, class Uniform>
 class EquiRectFragmentShader {
 private:
+	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> In;
+
+    struct InTraits {
+        static constexpr int POSITION_ATTACHMENT = 0;
+        static constexpr int NORMAL_ATTACHMENT = 1;
+        static constexpr int VIEW_ATTACHMENT = 2;
+    };
+    struct Uniform {
+        TextureSampler<Eigen::Vector4f> textureSampler;
+    };
 public:
-    const Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertOutFragInType;
     typedef Uniform FragUniformType;
 
@@ -341,7 +350,9 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    EquiRectFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+    void setTextureSampler(const TextureSampler<Eigen::Vector4f>& textureSampler) {
+    	mUniform.textureSampler = textureSampler;
+    }
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);

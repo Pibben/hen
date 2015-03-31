@@ -16,32 +16,6 @@
 
 #include "CImg.h"
 
-template <class OutType>
-class TextureSampler {
-    cimg_library::CImg<unsigned char>& mImg;
-    unsigned int mSizeX;
-    unsigned int mSizeY;
-
-public:
-    TextureSampler(cimg_library::CImg<unsigned char>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
-
-    OutType get(float u, float v) const {
-        int x = u * (mSizeX-1) + 0.5;
-        int y = mSizeY - (v * (mSizeY-1) + 0.5);
-
-        assert(x >= 0 && x < mSizeX);
-        assert(y >= 0 && y < mSizeY);
-
-        const float r = mImg(x, y, 0);
-        const float g = mImg(x, y, 1);
-        const float b = mImg(x, y, 2);
-        const float a = 255.0;
-
-        return OutType(r, g, b, a);
-    }
-};
-
-
 
 template <class In>
 std::vector<In> loadMeshColor(const std::string& filename, const Eigen::Vector4f& color) {
@@ -448,41 +422,20 @@ void phongShading() {
 
     animate(m, vertexShader, fragmentShader);
 }
-#if 0
+
 void equiRectangular() {
-    //Input types
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType;
+	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType; //TODO:
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { NORMAL_ATTACHMENT = 1 };
-    };
+	NormalViewVertexShader vertexShader;
+	EquiRectFragmentShader fragmentShader;
 
-    //Vertex shader
-    struct MyVertUniformType {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-    } vertUniform;
-
-    typedef NormalViewVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
-    MyVertexShaderType vertexShader(vertUniform);
-
-    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/equirect.jpg");
-    //cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
-    struct MyFragUniformType {
-        TextureSampler<Eigen::Vector4f> textureSampler;
-    };
-    MyFragUniformType fragUniform = {TextureSampler<Eigen::Vector4f>(texImg)};
-
-
-    typedef EquiRectFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
-    MyFragmentShaderType fragmentShader(fragUniform);
+	cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/equirect.jpg");
+	fragmentShader.setTextureSampler(TextureSampler<Eigen::Vector4f>(texImg));
 
     auto m = loadMeshNormal<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
-#endif
 
 void cubeMap() {
 	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType; //TODO:
