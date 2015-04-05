@@ -65,8 +65,8 @@ std::vector<In> loadMesh(const std::string& filename) {
     return m;
 }
 
-template <class In>
-std::vector<In> loadMeshNormal(const std::string& filename) {
+typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> PositionAndNormal;
+static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename) {
     std::vector<Eigen::Vector3f> vertices;
     std::vector<Eigen::Vector2f> uvs;
     std::vector<Eigen::Vector3f> normals;
@@ -75,7 +75,7 @@ std::vector<In> loadMeshNormal(const std::string& filename) {
     loadObj(filename, vertices, uvs, normals, faces);
     printf("Loaded %lu faces\n", faces.size());
 
-    std::vector<In> m;
+    std::vector<PositionAndNormal> m;
 
     for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
@@ -340,7 +340,7 @@ void flatShading() {
     typedef ColorFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
     MyFragmentShaderType fragmentShader(fragUniform);
 
-    auto m = loadMeshNormal<MyVertInType>("models/cow/cowTM08New00RTime02-tri.obj");
+    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
@@ -418,21 +418,19 @@ void phongShading() {
     typedef PhongFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
     MyFragmentShaderType fragmentShader(fragUniform);
 
-    auto m = loadMeshNormal<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
 
 void equiRectangular() {
-	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType; //TODO:
-
 	NormalViewVertexShader vertexShader;
 	EquiRectFragmentShader fragmentShader;
 
 	cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/equirect.jpg");
 	fragmentShader.setTextureSampler(TextureSampler<Eigen::Vector4f>(texImg));
 
-    auto m = loadMeshNormal<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
@@ -446,7 +444,7 @@ void cubeMap() {
 	cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/cubemap.jpg");
 	fragmentShader.setCubeSampler(CubeSampler<Eigen::Vector4f>(texImg));
 
-    auto m = loadMeshNormal<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
