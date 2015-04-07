@@ -316,8 +316,8 @@ public:
         typedef typename VertexShader::OutType VertOutFragInType;
         static_assert(std::is_same<FragOutType, typename FragmentShader::OutType>::value, "Error");
 
-        typedef typename VertexShader::VertUniformType VertUniformType;
-        typedef typename FragmentShader::FragUniformType FragUniformType;
+        //typedef typename VertexShader::VertUniformType VertUniformType;
+        //typedef typename FragmentShader::FragUniformType FragUniformType;
 
         typedef typename std::tuple_element<POSITION_ATTACHMENT, VertOutFragInType>::type ScreenPosType;
 

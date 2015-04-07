@@ -436,8 +436,6 @@ void equiRectangular() {
 }
 
 void cubeMap() {
-	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType; //TODO:
-
 	NormalViewVertexShader vertexShader;
 	CubemapFragmentShader fragmentShader;
 
