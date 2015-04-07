@@ -1,12 +1,15 @@
 CC = clang++
+#CC = /opt/gcc-5.0/bin/g++
 
 OPT = 3
 
 CFLAGS = -Wall -Wextra -pedantic -g -O$(OPT) -std=c++1y -stdlib=libc++ -Wno-deprecated-register
+#CFLAGS = -Wall -Wextra -pedantic -g -O$(OPT) -std=c++14 -Wno-deprecated-declarations
 
 INCLUDES = -I/usr/include/eigen3/
 
 LFLAGS = -stdlib=libc++ -O$(OPT)
+#LFLAGS = -O$(OPT)
 
 LIBS = -lpthread -lX11
 
