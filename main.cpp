@@ -34,7 +34,7 @@ std::vector<In> loadMeshColor(const std::string& filename, const Eigen::Vector4f
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
             v.topRows<3>() = vertices[f.coords[i]];
-            m.push_back({v, color});
+            m.emplace_back(v, color);
         }
     }
 
@@ -58,7 +58,7 @@ std::vector<In> loadMesh(const std::string& filename) {
         for(int i = 0; i < 3; ++i) {
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
             v.topRows<3>() = vertices[f.coords[i]];
-            m.push_back({v, uvs[f.uvs[i]]});
+            m.emplace_back(v, uvs[f.uvs[i]]);
         }
     }
 
@@ -94,7 +94,7 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
 #endif
             Eigen::Vector4f v = Eigen::Vector4f::Ones();
             v.topRows<3>() = vs[i];
-            m.push_back({v, norm});
+            m.emplace_back(v, norm);
         }
     }
 
