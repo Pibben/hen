@@ -1,6 +1,10 @@
 #ifndef __HEN_H__
 #define __HEN_H__
 
+//TODO: Render depth only
+//TODO: Unify empty uniforms
+//TODO: Inheritance in shaders?
+
 #include <algorithm>
 #include <array>
 #include <cassert>
