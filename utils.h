@@ -12,6 +12,8 @@
 
 #include "CImg.h"
 
+struct EmptyUniform {};
+
 inline Eigen::Vector3f reflect(const Eigen::Vector3f& R, const Eigen::Vector3f& N) {
     Eigen::Vector3f Rout = R - 2.0*N.dot(R)*N;
 
@@ -52,6 +54,11 @@ inline Eigen::Matrix4f proj(float left, float right,
     return m;
 }
 
+inline Eigen::Matrix4f scaleBiasMatrix() {
+    Eigen::Matrix4f scaleBias = Eigen::Matrix4f::Identity()*0.5f;
+    scaleBias.block<4,1>(0,3) += Eigen::Vector4f(1,1,1,1)*0.5;
+    return scaleBias;
+}
 
 template <typename T>
 int sgn(T val) {

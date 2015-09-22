@@ -460,7 +460,7 @@ public:
     Uniform& uniform() { return mUniform; }
 };
 
-template <class In, class InTraits, class Uniform>
+template <class In, class InTraits, class Uniform=EmptyUniform>
 class ShadowGenFragmentShader {
 private:
 public:
@@ -475,7 +475,7 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    ShadowGenFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+    ShadowGenFragmentShader(const Uniform& uniform=Uniform()) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
