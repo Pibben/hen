@@ -486,7 +486,10 @@ void shadow() {
         Eigen::Matrix4f shadowMatrix;
     } shadowVertUniform;
 
-    //TODO: calculate shadow matrix
+    Eigen::Matrix4f scaleBias = Eigen::Matrix4f::Identity()*0.5f;
+    scaleBias.block<1,4>(3,0) += Eigen::Vector4f(1,1,1,1)*0.5;
+
+    shadowVertUniform.shadowMatrix = scaleBias * shadowGenVertUniform.projMatrix * shadowGenVertUniform.modelViewMatrix;
 
     typedef ShadowVertexShader<MyVertInType, InTraits, ShadowVertUniformType> ShadowVertexShaderType;
 
