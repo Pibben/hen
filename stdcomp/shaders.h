@@ -482,6 +482,7 @@ public:
 
         return std::make_tuple(Eigen::Vector4f(), pos[2]);
     }
+
 };
 
 template <class In, class InTraits, class Uniform>
@@ -524,7 +525,7 @@ template <class In, class InTraits, class Uniform>
 class ShadowFragmentShader {
 private:
 public:
-    const Uniform& mUniform;
+    Uniform& mUniform;
     typedef In VertOutFragInType;
     typedef Uniform FragUniformType;
 
@@ -535,7 +536,7 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    ShadowFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+    ShadowFragmentShader(Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -551,7 +552,7 @@ public:
 
         float shade = 0.0;
 
-        if(shadow_coord[2] / shadow_coord[3] - shadow_depth > 0.001) {
+        if(shadow_coord[2] / shadow_coord[3] - shadow_depth > 0.01) {
             shade = 0.1;
         } else {
             shade = 1.0;
@@ -559,6 +560,9 @@ public:
 
         return std::make_tuple(color * shade, pos[2]);
     }
+
+    Uniform& uniform() { return mUniform; }
+
 };
 
 #endif /* SHADERS_H_ */

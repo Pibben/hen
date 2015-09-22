@@ -44,6 +44,7 @@ class ShadowSampler {
 
 public:
     ShadowSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
+    ShadowSampler(unsigned int sizeX, unsigned int sizeY) : mImg(cimg_library::CImg<OutType>(sizeX, sizeY)), mSizeX(sizeX), mSizeY(sizeY) {}
     ShadowSampler(cimg_library::CImg<OutType>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
 
     OutType get(float u, float v) const {
@@ -55,6 +56,8 @@ public:
 
         return mImg(x, y, 0);
     }
+
+    cimg_library::CImg<OutType>& texture() { return mImg; }
 };
 
 template <class OutType>
