@@ -479,7 +479,6 @@ void shadow() {
         enum { TEXTURE_ATTACHMENT = 1 };
     };
 
-
     struct ShadowVertUniformType {
         Eigen::Matrix4f projMatrix;
         Eigen::Matrix4f modelViewMatrix;
@@ -487,20 +486,41 @@ void shadow() {
     } shadowVertUniform;
 
     Eigen::Matrix4f scaleBias = Eigen::Matrix4f::Identity()*0.5f;
-    scaleBias.block<1,4>(3,0) += Eigen::Vector4f(1,1,1,1)*0.5;
+    scaleBias.block<4,1>(0,3) += Eigen::Vector4f(1,1,1,1)*0.5;
 
     shadowVertUniform.shadowMatrix = scaleBias * shadowGenVertUniform.projMatrix * shadowGenVertUniform.modelViewMatrix;
 
     typedef ShadowVertexShader<MyVertInType, InTraits, ShadowVertUniformType> ShadowVertexShaderType;
+    ShadowVertexShaderType shadowVertexShader(shadowVertUniform);
 
-    struct ShadowFragUniformType {} shadowFragUniform;
-
-    typedef ShadowFragmentShader<typename ShadowVertexShaderType::OutType, typename ShadowVertexShaderType::Traits, ShadowFragUniformType> ShadowFragmentShaderType;
+    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
 
     auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
-    //animate(m, vertexShader, fragmentShader);
-    animateDepth(m, shadowGenVertexShader, shadowGenFragmentShader);
+    //Render shadow depth
+    const int width = 640*2;
+    const int height = 480*2;
+    cimg_library::CImg<float> depth(width, height);
+
+    typedef Renderer<typename ShadowGenFragmentShaderType::OutType, typename ShadowGenFragmentShaderType::Traits, width, height> RendererType;
+    RendererType renderer;
+
+    renderer.template render<MyVertInType>(m, shadowGenVertexShader, shadowGenFragmentShader);
+
+    //Read back depth
+    DepthVisitor<typename RendererType::DepthType> visitor(depth);
+    renderer.visitDepthbuffer(visitor);
+
+    struct ShadowFragUniformType {
+        TextureSampler<Eigen::Vector4f> textureSampler;
+        ShadowSampler<float> shadowSampler;
+    } shadowFragUniform = {TextureSampler<Eigen::Vector4f>(texImg), ShadowSampler<float>(depth)};
+
+    typedef ShadowFragmentShader<typename ShadowVertexShaderType::OutType, typename ShadowVertexShaderType::Traits, ShadowFragUniformType> ShadowFragmentShaderType;
+    ShadowFragmentShaderType shadowFragmentShader(shadowFragUniform);
+
+    animate(m, shadowVertexShader, shadowFragmentShader);
+    //animateDepth(m, shadowGenVertexShader, shadowGenFragmentShader);
 }
 
 int main(int argc, char** argv) {

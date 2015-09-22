@@ -37,6 +37,27 @@ public:
 };
 
 template <class OutType>
+class ShadowSampler {
+    cimg_library::CImg<OutType> mImg;
+    unsigned int mSizeX;
+    unsigned int mSizeY;
+
+public:
+    ShadowSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
+    ShadowSampler(cimg_library::CImg<OutType>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
+
+    OutType get(float u, float v) const {
+        int x = u * (mSizeX-1) + 0.5;
+        int y = mSizeY - (v * (mSizeY-1) + 0.5);
+
+        assert(x >= 0 && x < (int)mSizeX);
+        assert(y >= 0 && y < (int)mSizeY);
+
+        return mImg(x, y, 0);
+    }
+};
+
+template <class OutType>
 class CubeSampler {
     cimg_library::CImg<unsigned char> mImg; //TODO
     unsigned int mSizeX;

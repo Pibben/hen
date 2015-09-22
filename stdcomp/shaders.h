@@ -551,7 +551,7 @@ public:
 
         float shade = 0.0;
 
-        if(shadow_coord[2] / shadow_coord[3] > shadow_depth) {
+        if(shadow_coord[2] / shadow_coord[3] - shadow_depth > 0.001) {
             shade = 0.1;
         } else {
             shade = 1.0;
