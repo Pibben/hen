@@ -321,8 +321,7 @@ void color(const Eigen::Vector4f &color) {
 
     struct MyFragUniformType {} fragUniform;
 
-    typedef ColorFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
-    MyFragmentShaderType fragmentShader(fragUniform);
+    ColorFragmentShader fragmentShader;
 
     auto m = loadMeshColor<MyVertInType>("models/sphere2.obj", color);
 
@@ -368,32 +367,10 @@ void multiTexture() {
 }
 
 void flatShading() {
-    //Input types
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType;
+    FlatVertexShader vertexShader(Eigen::Vector3f(100,100,100));
+    ColorFragmentShader fragmentShader;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { NORMAL_ATTACHMENT = 1 };
-    };
-
-    //Vertex shader
-    struct MyVertUniformType {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-        Eigen::Vector3f lightPos;
-    } vertUniform;
-
-    vertUniform.lightPos = Eigen::Vector3f(100,100,100);
-
-    typedef FlatVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
-    MyVertexShaderType vertexShader(vertUniform);
-
-    struct MyFragUniformType {} fragUniform;
-
-    typedef ColorFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
-    MyFragmentShaderType fragmentShader(fragUniform);
-
-    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri.obj");
+    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }

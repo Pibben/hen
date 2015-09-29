@@ -42,13 +42,17 @@ public:
     Uniform& uniform() { return mUniform; }
 };
 
-template <class In, class InTraits, class Uniform>
 class ColorFragmentShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { COLOR_ATTACHMENT = 1 };
+    };
+
 public:
-    const Uniform& mUniform;
     typedef In VertOutFragInType;
-    typedef Uniform FragUniformType;
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
@@ -56,8 +60,6 @@ public:
         static constexpr int COLOR_ATTACHMENT = 0;
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
-
-    ColorFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -161,11 +163,22 @@ public:
     }
 };
 
-template <class In, class InTraits, class Uniform>
 class FlatVertexShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { NORMAL_ATTACHMENT = 1 };
+    };
+
+    struct Uniform {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+        Eigen::Vector3f lightPos;
+    };
 public:
-    Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertInType;
     typedef Uniform VertUniformType;
 
@@ -176,7 +189,9 @@ public:
         static constexpr int COLOR_ATTACHMENT = 1;
     };
 
-    FlatVertexShader(Uniform& uniform) : mUniform(uniform) {}
+    FlatVertexShader(const Eigen::Vector3f& lightPos) {
+        mUniform.lightPos = lightPos;
+    }
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos    = std::get<InTraits::POSITION_ATTACHMENT>(in);
