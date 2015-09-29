@@ -268,7 +268,7 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
     }
 }
 
-void textureAnimation() {
+void texture() {
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
 
@@ -301,7 +301,7 @@ void textureAnimation() {
     animate(m, vertexShader, fragmentShader);
 }
 
-void colorAnimation(const Eigen::Vector4f& color) {
+void color(const Eigen::Vector4f &color) {
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertInType;
 
@@ -329,7 +329,7 @@ void colorAnimation(const Eigen::Vector4f& color) {
     animate(m, vertexShader, fragmentShader);
 }
 
-void multiTextureAnimation() {
+void multiTexture() {
     //Input types
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
 
