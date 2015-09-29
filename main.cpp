@@ -399,30 +399,8 @@ void flatShading() {
 }
 
 void phongShading() {
-    //Input types
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> MyVertInType;
-
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { NORMAL_ATTACHMENT = 1 };
-    };
-
-    //Vertex shader
-    struct MyVertUniformType {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-        Eigen::Vector3f lightPos;
-    } vertUniform;
-    vertUniform.lightPos = Eigen::Vector3f(100,100,100);
-
-    typedef PhongVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
-    MyVertexShaderType vertexShader(vertUniform);
-
-    struct MyFragUniformType {
-    } fragUniform;
-
-    typedef PhongFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
-    MyFragmentShaderType fragmentShader(fragUniform);
+    PhongVertexShader vertexShader(Eigen::Vector3f(100,100,100));
+    PhongFragmentShader fragmentShader;
 
     auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
 

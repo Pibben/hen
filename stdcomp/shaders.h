@@ -207,11 +207,22 @@ public:
     Uniform& uniform() { return mUniform; }
 };
 
-template <class In, class InTraits, class Uniform>
 class PhongVertexShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { NORMAL_ATTACHMENT = 1 };
+    };
+
+    struct Uniform {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+        Eigen::Vector3f lightPos;
+    };
 public:
-    Uniform& mUniform;
+    Uniform mUniform; //TODO: Private?
     typedef In VertInType;
     typedef Uniform VertUniformType;
 
@@ -224,7 +235,9 @@ public:
         static constexpr int VIEW_ATTACHMENT = 3;
     };
 
-    PhongVertexShader(Uniform& uniform) : mUniform(uniform) {}
+    PhongVertexShader(const Eigen::Vector3f& lightPos) {
+        mUniform.lightPos = lightPos;
+    }
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos    = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -245,13 +258,19 @@ public:
     Uniform& uniform() { return mUniform; }
 };
 
-template <class In, class InTraits, class Uniform>
 class PhongFragmentShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f, Eigen::Vector3f> In;
+
+    struct InTraits {
+        static constexpr int POSITION_ATTACHMENT = 0;
+        static constexpr int NORMAL_ATTACHMENT = 1;
+        static constexpr int LIGHT_ATTACHMENT = 2;
+        static constexpr int VIEW_ATTACHMENT = 3;
+    };
+
 public:
-    const Uniform& mUniform;
     typedef In VertOutFragInType;
-    typedef Uniform FragUniformType;
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
@@ -259,8 +278,6 @@ public:
         static constexpr int COLOR_ATTACHMENT = 0;
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
-
-    PhongFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
