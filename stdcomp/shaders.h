@@ -79,11 +79,21 @@ public:
     }
 };
 
-template <class In, class InTraits, class Uniform>
 class TextureVertexShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { TEXTURE_ATTACHMENT = 1 };
+    };
+
+    struct Uniform {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    };
 public:
-    Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertInType;
     typedef Uniform VertUniformType;
 
@@ -94,8 +104,6 @@ public:
         static constexpr int TEXTURE_ATTACHMENT = 1;
         static constexpr int INV_DEPTH_ATTACHMENT = 2;
     };
-
-    TextureVertexShader(Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -112,11 +120,23 @@ public:
     Uniform& uniform() { return mUniform; }
 };
 
-template <class In, class InTraits, class Uniform>
 class TextureFragmentShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { TEXTURE_ATTACHMENT = 1 };
+        enum { INV_DEPTH_ATTACHMENT = 2 };
+    };
+
+    typedef TextureSampler<Eigen::Vector4f> SamplerType;
+
+    struct Uniform {
+        SamplerType textureSampler;
+    };
 public:
-    const Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertOutFragInType;
     typedef Uniform FragUniformType;
 
@@ -127,7 +147,11 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    TextureFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+    TextureFragmentShader(const std::string& filename) {
+        cimg_library::CImg<unsigned char> texImg(filename.c_str());
+
+        mUniform = {SamplerType(texImg)};
+    }
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -142,11 +166,24 @@ public:
     }
 };
 
-template <class In, class InTraits, class Uniform>
 class MultiTextureFragmentShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { TEXTURE_ATTACHMENT = 1 };
+        enum { INV_DEPTH_ATTACHMENT = 2 };
+    };
+
+    typedef TextureSampler<Eigen::Vector4f> SamplerType;
+
+    struct Uniform {
+        SamplerType textureSampler;
+        SamplerType aoSampler;
+    };
 public:
-    const Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertOutFragInType;
     typedef Uniform FragUniformType;
 
@@ -157,14 +194,22 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    MultiTextureFragmentShader(const Uniform& uniform) : mUniform(uniform) {}
+    MultiTextureFragmentShader(const std::string& filename1, const std::string& filename2) {
+        cimg_library::CImg<unsigned char> texImg(filename1.c_str());
+        cimg_library::CImg<unsigned char> aoImg(filename2.c_str());
+
+        mUniform = {SamplerType(texImg), SamplerType(aoImg)};
+    }
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
         const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
+        const float invDepth = std::get<InTraits::INV_DEPTH_ATTACHMENT>(in);
 
-        auto color = mUniform.textureSampler.get(tex[0], tex[1]);
-        auto ao = mUniform.aoSampler.get(tex[0], tex[1]);
+        const auto realTex = tex / invDepth;
+
+        auto color = mUniform.textureSampler.get(realTex[0], realTex[1]);
+        auto ao = mUniform.aoSampler.get(realTex[0], realTex[1]);
 
         color = color.cwiseProduct(ao) / 255.0;
 

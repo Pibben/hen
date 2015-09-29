@@ -269,33 +269,11 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
 }
 
 void texture() {
-    //Input types
+
+    TextureVertexShader vertexShader;
+    TextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
+
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
-
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { TEXTURE_ATTACHMENT = 1 };
-    };
-
-    //Vertex shader
-    struct MyVertUniformType {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-    } vertUniform;
-
-    typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
-    MyVertexShaderType vertexShader(vertUniform);
-
-    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCow.png");
-    //cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
-    struct MyFragUniformType {
-        TextureSampler<Eigen::Vector4f> textureSampler;
-    };
-    MyFragUniformType fragUniform = {TextureSampler<Eigen::Vector4f>(texImg)};
-
-    typedef TextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
-    MyFragmentShaderType fragmentShader(fragUniform);
-
     auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
@@ -311,38 +289,11 @@ void color(const Eigen::Vector4f &color) {
 }
 
 void multiTexture() {
-    //Input types
+    TextureVertexShader vertexShader;
+    MultiTextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png",
+                                              "/home/per/code/hen/models/cow/colorOpacityCowAO.png");
+
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
-
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { TEXTURE_ATTACHMENT = 1 };
-    };
-
-    //Vertex shader
-    struct MyVertUniformType {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-    } vertUniform;
-
-    typedef TextureVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
-    MyVertexShaderType vertexShader(vertUniform);
-
-    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCow.png");
-    cimg_library::CImg<unsigned char> aoImg("/home/per/code/hen/models/cow/colorOpacityCowAO.png");
-
-    typedef TextureSampler<Eigen::Vector4f> SamplerType;
-
-    struct MyFragUniformType {
-        SamplerType textureSampler;
-        SamplerType aoSampler;
-    };
-
-    MyFragUniformType fragUniform = {SamplerType(texImg), SamplerType(aoImg)};
-
-    typedef MultiTextureFragmentShader<typename MyVertexShaderType::OutType, typename MyVertexShaderType::Traits, MyFragUniformType> MyFragmentShaderType;
-    MyFragmentShaderType fragmentShader(fragUniform);
-
     auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
