@@ -302,28 +302,10 @@ void texture() {
 }
 
 void color(const Eigen::Vector4f &color) {
-    //Input types
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> MyVertInType;
-
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { COLOR_ATTACHMENT = 1 };
-    };
-
-    //Vertex shader
-    struct MyVertUniformType {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-    } vertUniform;
-
-    typedef ColorVertexShader<MyVertInType, InTraits, MyVertUniformType> MyVertexShaderType;
-    MyVertexShaderType vertexShader(vertUniform);
-
-    struct MyFragUniformType {} fragUniform;
-
+    ColorVertexShader vertexShader;
     ColorFragmentShader fragmentShader;
 
-    auto m = loadMeshColor<MyVertInType>("models/sphere2.obj", color);
+    auto m = loadMeshColor<std::tuple<Eigen::Vector4f, Eigen::Vector4f>>("models/sphere2.obj", color);
 
     animate(m, vertexShader, fragmentShader);
 }

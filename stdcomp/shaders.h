@@ -13,11 +13,22 @@
 #include "../utils.h"
 #include "samplers.h"
 
-template <class In, class InTraits, class Uniform>
 class ColorVertexShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { COLOR_ATTACHMENT = 1 };
+    };
+
+    struct Uniform {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    };
+
 public:
-    Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertInType;
     typedef Uniform VertUniformType;
 
@@ -27,8 +38,6 @@ public:
         static constexpr int POSITION_ATTACHMENT = 0;
         static constexpr int COLOR_ATTACHMENT = 1;
     };
-
-    ColorVertexShader(Uniform& uniform) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
