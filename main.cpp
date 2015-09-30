@@ -331,10 +331,7 @@ void equiRectangular() {
 
 void cubeMap() {
 	NormalViewVertexShader vertexShader;
-	CubemapFragmentShader fragmentShader;
-
-	cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/cubemap.jpg");
-	fragmentShader.setCubeSampler(CubeSampler<Eigen::Vector4f>(texImg));
+	CubemapFragmentShader fragmentShader("/home/per/code/hen/cubemap.jpg");
 
     auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
 

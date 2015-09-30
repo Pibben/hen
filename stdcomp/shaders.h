@@ -498,9 +498,7 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    void setCubeSampler(const CubeSampler<Eigen::Vector4f>& cubeSampler) {
-    	mUniform.cubeSampler = cubeSampler;
-    }
+    CubemapFragmentShader(const std::string& filename) : mUniform{CubeSampler<Eigen::Vector4f>(filename)} {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);

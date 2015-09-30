@@ -67,13 +67,13 @@ public:
 
 template <class OutType>
 class CubeSampler {
-    cimg_library::CImg<unsigned char> mImg; //TODO
-    unsigned int mSizeX;
-    unsigned int mSizeY;
+private:
+    TextureSampler<OutType> mTextureMap;
 
 public:
-    CubeSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
-    CubeSampler(cimg_library::CImg<unsigned char>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
+    CubeSampler() : mTextureMap() {}
+    CubeSampler(cimg_library::CImg<unsigned char>& img) : mTextureMap(img) {}
+    CubeSampler(const std::string& filename) : mTextureMap(filename) {}
 
     OutType get(float vx, float vy, float vz) const {
         const float ax = std::abs(vx);
@@ -125,18 +125,7 @@ public:
             v = (vy / az + 1.0 + vOffset * 2.0) / 6.0;
         }
 
-        int x = u * (mSizeX-1) + 0.5;
-        int y = mSizeY - (v * (mSizeY-1) + 0.5);
-
-        assert(x >= 0 && x < (int)mSizeX);
-        assert(y >= 0 && y < (int)mSizeY);
-
-        const float r = mImg(x, y, 0);
-        const float g = mImg(x, y, 1);
-        const float b = mImg(x, y, 2);
-        const float a = 255.0;
-
-        return OutType(r, g, b, a);
+        return mTextureMap.get(u, v);
     }
 };
 
