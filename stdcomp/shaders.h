@@ -519,11 +519,21 @@ public:
     }
 };
 
-template <class In, class InTraits, class Uniform>
 class ShadowGenVertexShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { TEXTURE_ATTACHMENT = 1 };
+    };
+
+    struct Uniform {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+    };
 public:
-    Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertInType;
     typedef Uniform VertUniformType;
 
@@ -533,7 +543,10 @@ public:
         static constexpr int POSITION_ATTACHMENT = 0;
     };
 
-    ShadowGenVertexShader(Uniform& uniform) : mUniform(uniform) {}
+    ShadowGenVertexShader(const Eigen::Matrix4f& shadowProjectionMatrix, const Eigen::Matrix4f& shadowModelViewMatrix) {
+        mUniform.projMatrix = shadowProjectionMatrix;
+        mUniform.modelViewMatrix = shadowModelViewMatrix;
+    }
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -546,13 +559,15 @@ public:
     Uniform& uniform() { return mUniform; }
 };
 
-template <class In, class InTraits, class Uniform=EmptyUniform>
 class ShadowGenFragmentShader {
 private:
+    typedef std::tuple<Eigen::Vector4f> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+    };
 public:
-    const Uniform& mUniform;
     typedef In VertOutFragInType;
-    typedef Uniform FragUniformType;
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
@@ -560,8 +575,6 @@ public:
         static constexpr int COLOR_ATTACHMENT = 0;
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
-
-    ShadowGenFragmentShader(const Uniform& uniform=Uniform()) : mUniform(uniform) {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -571,11 +584,28 @@ public:
 
 };
 
-template <class In, class InTraits, class Uniform>
-class ShadowVertexShader {
+class ShadowTextureVertexShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { TEXTURE_ATTACHMENT = 1 };
+    };
+
+    struct ShadowFragUniformType {
+        TextureSampler<Eigen::Vector4f> textureSampler;
+        ShadowSampler<float> shadowSampler;
+    };
+
+    struct Uniform {
+        Eigen::Matrix4f projMatrix;
+        Eigen::Matrix4f modelViewMatrix;
+        Eigen::Matrix4f shadowMatrix;
+    };
+
 public:
-    Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertInType;
     typedef Uniform VertUniformType;
 
@@ -588,7 +618,9 @@ public:
         static constexpr int INV_DEPTH_ATTACHMENT = 3;
     };
 
-    ShadowVertexShader(Uniform& uniform) : mUniform(uniform) {}
+    ShadowTextureVertexShader(const Eigen::Matrix4f& shadowMatrix) {
+        mUniform.shadowMatrix = shadowMatrix;
+    }
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
@@ -607,11 +639,23 @@ public:
     Uniform& uniform() { return mUniform; }
 };
 
-template <class In, class InTraits, class Uniform>
-class ShadowFragmentShader {
+class ShadowTextureFragmentShader {
 private:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, Eigen::Vector4f, float> In;
+
+    struct InTraits {
+        enum { POSITION_ATTACHMENT = 0 };
+        enum { TEXTURE_ATTACHMENT = 1 };
+        enum { SHADOW_ATTACHMENT = 2 };
+        enum { INV_DEPTH_ATTACHMENT = 3 };
+    };
+
+    struct Uniform {
+        TextureSampler<Eigen::Vector4f> textureSampler;
+        ShadowSampler<float> shadowSampler;
+    };
 public:
-    Uniform& mUniform;
+    Uniform mUniform;
     typedef In VertOutFragInType;
     typedef Uniform FragUniformType;
 
@@ -622,7 +666,8 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    ShadowFragmentShader(Uniform& uniform) : mUniform(uniform) {}
+    ShadowTextureFragmentShader(const std::string& filename) : mUniform{TextureSampler<Eigen::Vector4f>(filename),
+                                                        ShadowSampler<float>(2048, 2048)} {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);

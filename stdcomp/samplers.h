@@ -19,6 +19,11 @@ class TextureSampler {
 public:
     TextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
     TextureSampler(cimg_library::CImg<unsigned char>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
+    TextureSampler(const std::string& filename) {
+        mImg.load(filename.c_str());
+        mSizeX = mImg.width();
+        mSizeY = mImg.height();
+    }
 
     OutType get(float u, float v) const {
         int x = u * (mSizeX-1) + 0.5;

@@ -342,62 +342,22 @@ void cubeMap() {
 }
 
 void shadow() {
-    //Input types
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
-
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { TEXTURE_ATTACHMENT = 1 };
-    };
-
-    //Shadow generator shaders
-
-    //Shadow generator vertex shader
-    struct ShadowGenVertUniformType {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-    } shadowGenVertUniform;
-
     const auto lightPos = Eigen::Vector3f(5,5,5);
-    shadowGenVertUniform.projMatrix = proj(-1, 1, -1, 1, 1, 1000);
-    shadowGenVertUniform.modelViewMatrix = lookAt(lightPos, {0, 0, 0}, {0, 1, 0});
+    const auto shadowProjectionMatrix = proj(-1, 1, -1, 1, 1, 1000);
+    const auto shadowModelViewMatrix  = lookAt(lightPos, {0, 0, 0}, {0, 1, 0});
 
-    typedef ShadowGenVertexShader<MyVertInType, InTraits, ShadowGenVertUniformType> ShadowGenVertexShaderType;
-    ShadowGenVertexShaderType shadowGenVertexShader(shadowGenVertUniform);
+    ShadowGenVertexShader shadowGenVertexShader(shadowProjectionMatrix, shadowModelViewMatrix);
+    ShadowGenFragmentShader shadowGenFragmentShader;
 
-    //Shadow generator fragment shader
-    typedef ShadowGenFragmentShader<typename ShadowGenVertexShaderType::OutType, typename ShadowGenVertexShaderType::Traits> ShadowGenFragmentShaderType;
-    ShadowGenFragmentShaderType shadowGenFragmentShader;
-
-    //Rasterising shaders
-
-    //Vertex shader
-    struct ShadowVertUniformType {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-        Eigen::Matrix4f shadowMatrix;
-    } shadowVertUniform;
-
-    shadowVertUniform.shadowMatrix = scaleBiasMatrix() * shadowGenVertUniform.projMatrix * shadowGenVertUniform.modelViewMatrix;
-
-    typedef ShadowVertexShader<MyVertInType, InTraits, ShadowVertUniformType> ShadowVertexShaderType;
-    ShadowVertexShaderType shadowVertexShader(shadowVertUniform);
-
-    //Fragment shader
-    cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/models/cow/colorOpacityCow.png");
-
-    struct ShadowFragUniformType {
-        TextureSampler<Eigen::Vector4f> textureSampler;
-        ShadowSampler<float> shadowSampler;
-    } shadowFragUniform = {TextureSampler<Eigen::Vector4f>(texImg), ShadowSampler<float>(2048, 2048)};
-
-    typedef ShadowFragmentShader<typename ShadowVertexShaderType::OutType, typename ShadowVertexShaderType::Traits, ShadowFragUniformType> ShadowFragmentShaderType;
-    ShadowFragmentShaderType shadowFragmentShader(shadowFragUniform);
+    const auto shadowMatrix = scaleBiasMatrix() * shadowProjectionMatrix * shadowModelViewMatrix;
+    ShadowTextureVertexShader shadowTextureVertexShader(shadowMatrix);
+    ShadowTextureFragmentShader shadowTextureFragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
 
     //Animate
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
     auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
-    animateShadow(m, shadowGenVertexShader, shadowGenFragmentShader, shadowVertexShader, shadowFragmentShader);
+    animateShadow(m, shadowGenVertexShader, shadowGenFragmentShader, shadowTextureVertexShader, shadowTextureFragmentShader);
 }
 
 int main(int argc, char** argv) {
