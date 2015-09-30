@@ -322,7 +322,7 @@ void equiRectangular() {
 	EquiRectFragmentShader fragmentShader;
 
 	cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/equirect.jpg");
-	fragmentShader.setTextureSampler(TextureSampler<Eigen::Vector4f>(texImg));
+	fragmentShader.setTextureSampler(RGBATextureSampler<Eigen::Vector4f>(texImg));
 
     auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
 

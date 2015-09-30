@@ -11,15 +11,15 @@
 //TODO: Share code
 
 template <class OutType>
-class TextureSampler {
+class RGBATextureSampler {
     cimg_library::CImg<unsigned char> mImg;
     unsigned int mSizeX;
     unsigned int mSizeY;
 
 public:
-    TextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
-    TextureSampler(cimg_library::CImg<unsigned char>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
-    TextureSampler(const std::string& filename) {
+    RGBATextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
+    RGBATextureSampler(cimg_library::CImg<unsigned char>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
+    RGBATextureSampler(const std::string& filename) {
         mImg.load(filename.c_str());
         mSizeX = mImg.width();
         mSizeY = mImg.height();
@@ -39,18 +39,21 @@ public:
 
         return OutType(r, g, b, a);
     }
+
+    unsigned int width() const { return mSizeX; }
+    unsigned int height() const { return mSizeY; }
 };
 
-template <class OutType>
-class ShadowSampler {
-    cimg_library::CImg<OutType> mImg;
+template <class OutType, class StorageType=OutType>
+class SingleChannelTextureSampler {
+    cimg_library::CImg<StorageType> mImg;
     unsigned int mSizeX;
     unsigned int mSizeY;
 
 public:
-    ShadowSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
-    ShadowSampler(unsigned int sizeX, unsigned int sizeY) : mImg(cimg_library::CImg<OutType>(sizeX, sizeY)), mSizeX(sizeX), mSizeY(sizeY) {}
-    ShadowSampler(cimg_library::CImg<OutType>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
+    SingleChannelTextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
+    SingleChannelTextureSampler(unsigned int sizeX, unsigned int sizeY) : mImg(cimg_library::CImg<StorageType>(sizeX, sizeY)), mSizeX(sizeX), mSizeY(sizeY) {}
+    SingleChannelTextureSampler(cimg_library::CImg<StorageType>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
 
     OutType get(float u, float v) const {
         int x = u * (mSizeX-1) + 0.5;
@@ -59,7 +62,7 @@ public:
         assert(x >= 0 && x < (int)mSizeX);
         assert(y >= 0 && y < (int)mSizeY);
 
-        return mImg(x, y, 0);
+        return static_cast<OutType>(mImg(x, y, 0));
     }
 
     cimg_library::CImg<OutType>& texture() { return mImg; }
@@ -68,7 +71,7 @@ public:
 template <class OutType>
 class CubeSampler {
 private:
-    TextureSampler<OutType> mTextureMap;
+    RGBATextureSampler<OutType> mTextureMap;
 
 public:
     CubeSampler() : mTextureMap() {}

@@ -130,7 +130,7 @@ private:
         enum { INV_DEPTH_ATTACHMENT = 2 };
     };
 
-    typedef TextureSampler<Eigen::Vector4f> SamplerType;
+    typedef RGBATextureSampler<Eigen::Vector4f> SamplerType;
 
     struct Uniform {
         SamplerType textureSampler;
@@ -176,7 +176,7 @@ private:
         enum { INV_DEPTH_ATTACHMENT = 2 };
     };
 
-    typedef TextureSampler<Eigen::Vector4f> SamplerType;
+    typedef RGBATextureSampler<Eigen::Vector4f> SamplerType;
 
     struct Uniform {
         SamplerType textureSampler;
@@ -422,7 +422,7 @@ private:
         static constexpr int VIEW_ATTACHMENT = 2;
     };
     struct Uniform {
-        TextureSampler<Eigen::Vector4f> textureSampler;
+        RGBATextureSampler<Eigen::Vector4f> textureSampler;
     };
 public:
     Uniform mUniform;
@@ -436,7 +436,7 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    void setTextureSampler(const TextureSampler<Eigen::Vector4f>& textureSampler) {
+    void setTextureSampler(const RGBATextureSampler<Eigen::Vector4f>& textureSampler) {
     	mUniform.textureSampler = textureSampler;
     }
 
@@ -592,8 +592,8 @@ private:
     };
 
     struct ShadowFragUniformType {
-        TextureSampler<Eigen::Vector4f> textureSampler;
-        ShadowSampler<float> shadowSampler;
+        RGBATextureSampler<Eigen::Vector4f> textureSampler;
+        SingleChannelTextureSampler<float> shadowSampler;
     };
 
     struct Uniform {
@@ -649,8 +649,8 @@ private:
     };
 
     struct Uniform {
-        TextureSampler<Eigen::Vector4f> textureSampler;
-        ShadowSampler<float> shadowSampler;
+        RGBATextureSampler<Eigen::Vector4f> textureSampler;
+        SingleChannelTextureSampler<float> shadowSampler;
     };
 public:
     Uniform mUniform;
@@ -664,8 +664,8 @@ public:
         static constexpr int DEPTH_ATTACHMENT = 1;
     };
 
-    ShadowTextureFragmentShader(const std::string& filename) : mUniform{TextureSampler<Eigen::Vector4f>(filename),
-                                                        ShadowSampler<float>(2048, 2048)} {}
+    ShadowTextureFragmentShader(const std::string& filename) : mUniform{RGBATextureSampler<Eigen::Vector4f>(filename),
+                                                        SingleChannelTextureSampler<float>(2048, 2048)} {}
 
     OutType operator()(const In& in) const {
         const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
