@@ -319,10 +319,7 @@ void phongShading() {
 
 void equiRectangular() {
 	NormalViewVertexShader vertexShader;
-	EquiRectFragmentShader fragmentShader;
-
-	cimg_library::CImg<unsigned char> texImg("/home/per/code/hen/equirect.jpg");
-	fragmentShader.setTextureSampler(RGBATextureSampler<Eigen::Vector4f>(texImg));
+	EquiRectFragmentShader fragmentShader("/home/per/code/hen/equirect.jpg");
 
     auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
