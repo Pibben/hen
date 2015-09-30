@@ -17,8 +17,8 @@
 #include "CImg.h"
 
 
-template <class In>
-std::vector<In> loadMeshColor(const std::string& filename, const Eigen::Vector4f& color) {
+typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> PositionAndColor;
+std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const Eigen::Vector4f& color) {
     std::vector<Eigen::Vector3f> vertices;
     std::vector<Eigen::Vector2f> uvs;
     std::vector<Eigen::Vector3f> normals;
@@ -27,7 +27,7 @@ std::vector<In> loadMeshColor(const std::string& filename, const Eigen::Vector4f
     loadObj(filename, vertices, uvs, normals, faces);
     printf("Loaded %lu faces\n", faces.size());
 
-    std::vector<In> m;
+    std::vector<PositionAndColor> m;
 
     for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
@@ -41,8 +41,8 @@ std::vector<In> loadMeshColor(const std::string& filename, const Eigen::Vector4f
     return m;
 }
 
-template <class In>
-std::vector<In> loadMesh(const std::string& filename) {
+typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> PositionAndUv;
+std::vector<PositionAndUv> loadMeshUv(const std::string &filename) {
     std::vector<Eigen::Vector3f> vertices;
     std::vector<Eigen::Vector2f> uvs;
     std::vector<Eigen::Vector3f> normals;
@@ -51,7 +51,7 @@ std::vector<In> loadMesh(const std::string& filename) {
     loadObj(filename, vertices, uvs, normals, faces);
     printf("Loaded %lu faces\n", faces.size());
 
-    std::vector<In> m;
+    std::vector<PositionAndUv> m;
 
     for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
@@ -273,8 +273,7 @@ void texture() {
     TextureVertexShader vertexShader;
     TextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
 
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
-    auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshUv("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
@@ -283,7 +282,7 @@ void color(const Eigen::Vector4f &color) {
     ColorVertexShader vertexShader;
     ColorFragmentShader fragmentShader;
 
-    auto m = loadMeshColor<std::tuple<Eigen::Vector4f, Eigen::Vector4f>>("models/sphere2.obj", color);
+    auto m = loadMeshColor("models/sphere2.obj", color);
 
     animate(m, vertexShader, fragmentShader);
 }
@@ -293,8 +292,7 @@ void multiTexture() {
     MultiTextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png",
                                               "/home/per/code/hen/models/cow/colorOpacityCowAO.png");
 
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
-    auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshUv("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
@@ -348,8 +346,7 @@ void shadow() {
     ShadowTextureFragmentShader shadowTextureFragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
 
     //Animate
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> MyVertInType;
-    auto m = loadMesh<MyVertInType>("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshUv("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animateShadow(m, shadowGenVertexShader, shadowGenFragmentShader, shadowTextureVertexShader, shadowTextureFragmentShader);
 }
