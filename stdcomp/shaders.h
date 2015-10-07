@@ -25,13 +25,10 @@ private:
         Eigen::Matrix4f modelViewMatrix;
     };
 
+    Uniform mUniform;
+
 public:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> InType;
-
-    Uniform mUniform;
-    typedef InType VertInType;
-    typedef Uniform VertUniformType;
-
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> OutType;
 
     enum class Traits {
@@ -48,7 +45,8 @@ public:
         return std::make_tuple(outPos, color);
     }
 
-    Uniform& uniform() { return mUniform; }
+    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class ColorFragmentShader {
@@ -60,9 +58,6 @@ private:
 
 public:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> InType;
-
-    typedef InType VertOutFragInType;
-
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
     enum class Traits {
@@ -90,13 +85,10 @@ private:
         Eigen::Matrix4f projMatrix;
         Eigen::Matrix4f modelViewMatrix;
     };
+    Uniform mUniform;
+
 public:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> InType;
-
-    Uniform mUniform;
-    typedef InType VertInType;
-    typedef Uniform VertUniformType;
-
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> OutType;
 
     enum class Traits {
@@ -117,7 +109,8 @@ public:
         return std::make_tuple(outPos, tex * invDepth, invDepth);
     }
 
-    Uniform& uniform() { return mUniform; }
+    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class TextureFragmentShader {
@@ -133,13 +126,10 @@ private:
     struct Uniform {
         SamplerType textureSampler;
     };
-public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> InType;
 
     Uniform mUniform;
-    typedef InType VertOutFragInType;
-    typedef Uniform FragUniformType;
-
+public:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> InType;
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
     enum class Traits {
@@ -180,13 +170,10 @@ private:
         SamplerType textureSampler;
         SamplerType aoSampler;
     };
-public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> InType;
 
     Uniform mUniform;
-    typedef InType VertOutFragInType;
-    typedef Uniform FragUniformType;
-
+public:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> InType;
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
     enum class Traits {
@@ -229,13 +216,10 @@ private:
         Eigen::Matrix4f modelViewMatrix;
         Eigen::Vector3f lightPos;
     };
-public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> InType;
 
     Uniform mUniform;
-    typedef InType VertInType;
-    typedef Uniform VertUniformType;
-
+public:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> InType;
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> OutType;
 
     enum class Traits {
@@ -273,7 +257,8 @@ public:
         return std::make_tuple(outPos, color*intensity);
     }
 
-    Uniform& uniform() { return mUniform; }
+    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class PhongVertexShader {
@@ -288,13 +273,10 @@ private:
         Eigen::Matrix4f modelViewMatrix;
         Eigen::Vector3f lightPos;
     };
+
+    Uniform mUniform;
 public:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> InType;
-
-    Uniform mUniform; //TODO: Private?
-    typedef InType VertInType;
-    typedef Uniform VertUniformType;
-
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f, Eigen::Vector3f> OutType;
 
     enum class Traits {
@@ -324,7 +306,8 @@ public:
         return std::make_tuple(outPos, N, L, V);
     }
 
-    Uniform& uniform() { return mUniform; }
+    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class PhongFragmentShader {
@@ -338,9 +321,6 @@ private:
 
 public:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f, Eigen::Vector3f> InType;
-
-    typedef InType VertOutFragInType;
-
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
     enum class Traits {
@@ -381,13 +361,9 @@ private:
         Eigen::Matrix4f modelViewMatrix;
     };
 
+    Uniform mUniform;
 public:
 	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> InType;
-
-    Uniform mUniform;
-    typedef InType VertInType;
-    typedef Uniform VertUniformType;
-
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> OutType;
 
     enum class Traits {
@@ -409,7 +385,8 @@ public:
         return std::make_tuple(outPos, N, V);
     }
 
-    Uniform& uniform() { return mUniform; }
+    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class EquiRectFragmentShader {
@@ -423,13 +400,10 @@ private:
     struct Uniform {
         RGBATextureSampler<Eigen::Vector4f> textureSampler;
     };
-public:
-	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> InType;
 
     Uniform mUniform;
-    typedef InType VertOutFragInType;
-    typedef Uniform FragUniformType;
-
+public:
+	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> InType;
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
     enum class Traits {
@@ -483,13 +457,10 @@ private:
     struct Uniform {
         CubeSampler<Eigen::Vector4f> cubeSampler;
     };
-public:
-	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> InType;
 
     Uniform mUniform;
-    typedef InType VertOutFragInType;
-    typedef Uniform FragUniformType;
-
+public:
+	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> InType;
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
     enum class Traits {
@@ -527,13 +498,10 @@ private:
         Eigen::Matrix4f projMatrix;
         Eigen::Matrix4f modelViewMatrix;
     };
-public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> InType;
 
     Uniform mUniform;
-    typedef InType VertInType;
-    typedef Uniform VertUniformType;
-
+public:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> InType;
     typedef std::tuple<Eigen::Vector4f> OutType;
 
     enum class Traits {
@@ -553,7 +521,8 @@ public:
         return std::make_tuple(outPos);
     }
 
-    Uniform& uniform() { return mUniform; }
+    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class ShadowGenFragmentShader {
@@ -563,9 +532,6 @@ private:
     };
 public:
     typedef std::tuple<Eigen::Vector4f> InType;
-
-    typedef InType VertOutFragInType;
-
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
     enum class Traits {
@@ -599,13 +565,10 @@ private:
         Eigen::Matrix4f shadowMatrix;
     };
 
-public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> InType;
 
     Uniform mUniform;
-    typedef InType VertInType;
-    typedef Uniform VertUniformType;
-
+public:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> InType;
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, Eigen::Vector4f, float> OutType;
 
     enum class Traits {
@@ -633,7 +596,8 @@ public:
         return std::make_tuple(outPos, tex * invDepth, shadow_coord, invDepth);
     }
 
-    Uniform& uniform() { return mUniform; }
+    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class ShadowTextureFragmentShader {
@@ -649,13 +613,10 @@ private:
         RGBATextureSampler<Eigen::Vector4f> textureSampler;
         SingleChannelTextureSampler<float> shadowSampler;
     };
-public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, Eigen::Vector4f, float> InType;
 
     Uniform mUniform;
-    typedef InType VertOutFragInType;
-    typedef Uniform FragUniformType;
-
+public:
+    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, Eigen::Vector4f, float> InType;
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
     enum class Traits {

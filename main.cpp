@@ -133,10 +133,10 @@ public:
 
 template <class Mesh, class VertexShader, class FragmentShader>
 void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
-    vertexShader.uniform().projMatrix = proj(-5, 5, -5, 5, 5, 30);
+    vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
 
-    vertexShader.uniform().modelViewMatrix = Eigen::Matrix4f::Identity();
-    vertexShader.uniform().modelViewMatrix = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0}); //TODO: Should be in projMatrix?
+    vertexShader.modelViewMatrix() = Eigen::Matrix4f::Identity(); //TODO: Remove?
+    vertexShader.modelViewMatrix() = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0}); //TODO: Should be in projMatrix?
 
     const int width = 640*2;
     const int height = 480*2;
@@ -155,8 +155,10 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
 
     CImgColorRasterShader rasterShader(img, depth);
 
+    Timer<1> t;
+
     while(true) {
-        vertexShader.uniform().modelViewMatrix *= rotMatrix;
+        vertexShader.modelViewMatrix() *= rotMatrix;
 
         renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
 
@@ -174,10 +176,10 @@ template <class Mesh, class VertexGenShader, class FragmentGenShader,
                       class VertexShader, class FragmentShader>
 void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentGenShader& fragmentGenShader,
                                      VertexShader& vertexShader, FragmentShader& fragmentShader) {
-    vertexShader.uniform().projMatrix = proj(-5, 5, -5, 5, 5, 30);
+    vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
 
-    vertexShader.uniform().modelViewMatrix = Eigen::Matrix4f::Identity();
-    vertexShader.uniform().modelViewMatrix = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0}); //TODO: Should be in projMatrix?
+    vertexShader.modelViewMatrix() = Eigen::Matrix4f::Identity();
+    vertexShader.modelViewMatrix() = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0}); //TODO: Should be in projMatrix?
 
     const int width = 640*2;
     const int height = 480*2;
@@ -203,7 +205,7 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
     CImgColorRasterShader rasterShader(img, depth);
 
     while(true) {
-        vertexShader.uniform().modelViewMatrix *= rotMatrix;
+        vertexShader.modelViewMatrix() *= rotMatrix;
 
         //Render shadow depth
         shadowRenderer.template render<typename Mesh::value_type>(mesh, vertexGenShader, fragmentGenShader, shadowRasteShader);
