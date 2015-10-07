@@ -135,6 +135,8 @@ private:
         }
     }
 
+    enum {TOP_PART_Y_STEP = -1, BOTTOM_PART_Y_STEP = 1};
+
     template <int PositionAttachment, int yStep, class Vertex, class FragmentShader, class RasterShader>
     void rasterizeTrianglePart(Vertex v1, Vertex v2, Vertex v3,
                                const FragmentShader& fragmentShader, const RasterShader& rasterShader) {
@@ -215,38 +217,38 @@ public:
     void rasterizeTriangle(Vertex v1, Vertex v2, Vertex v3,
                            const FragmentShader& fragmentShader, const RasterShader& rasterShader) {
 
-        Vertex& top = v1;
-        Vertex& mid = v2;
-        Vertex& bot = v3;
-
-        auto criterion = [](Vertex& a, Vertex& b) {
+        auto compareVertexY = [](Vertex& a, Vertex& b) {
             return std::get<PositionAttachment>(a)[1] <= std::get<PositionAttachment>(b)[1];
         };
 
-        if(!criterion(top, bot)) std::swap(top, bot);
-        if(!criterion(top, mid)) std::swap(top, mid);
-        if(!criterion(mid, bot)) std::swap(mid, bot);
+        if(!compareVertexY(v1, v3)) std::swap(v1, v3);
+        if(!compareVertexY(v1, v2)) std::swap(v1, v2);
+        if(!compareVertexY(v2, v3)) std::swap(v2, v3);
 
-        assert(criterion(top, mid));
-        assert(criterion(mid, bot));
-        assert(criterion(top, bot));
+        Vertex& topVertex = v1;
+        Vertex& middleVertex = v2;
+        Vertex& bottomVertex = v3;
 
-        auto t = std::get<PositionAttachment>(top);
-        auto m = std::get<PositionAttachment>(mid);
-        auto b = std::get<PositionAttachment>(bot);
+        assert(compareVertexY(topVertex, middleVertex));
+        assert(compareVertexY(middleVertex, bottomVertex));
+        assert(compareVertexY(topVertex, bottomVertex));
 
-        if(t[1] == m[1]) {
+        auto& topPos    = std::get<PositionAttachment>(topVertex);
+        auto& middlePos = std::get<PositionAttachment>(middleVertex);
+        auto& bottomPos = std::get<PositionAttachment>(bottomVertex);
+
+        if(topPos[1] == middlePos[1]) {
             //Flat top
-            rasterizeTrianglePart<PositionAttachment, 1>(top, mid, bot, fragmentShader, rasterShader);
-        } else if(m[1] == b[1]) {
+            rasterizeTrianglePart<PositionAttachment, BOTTOM_PART_Y_STEP>(topVertex, middleVertex, bottomVertex, fragmentShader, rasterShader);
+        } else if(middlePos[1] == bottomPos[1]) {
             //Flat bottom
-            rasterizeTrianglePart<PositionAttachment, -1>(bot, mid, top, fragmentShader, rasterShader);
+            rasterizeTrianglePart<PositionAttachment, TOP_PART_Y_STEP>(bottomVertex, middleVertex, topVertex, fragmentShader, rasterShader);
         } else {
-            TupleInterpolator<Vertex> inptb(top, bot);
-            Vertex split = inptb.run((m[1] - t[1]) / (b[1] - t[1]));
+            TupleInterpolator<Vertex> inptb(topVertex, bottomVertex);
+            Vertex split = inptb.run((middlePos[1] - topPos[1]) / (bottomPos[1] - topPos[1]));
 
-            rasterizeTrianglePart<PositionAttachment, -1>(mid, split, top, fragmentShader, rasterShader);
-            rasterizeTrianglePart<PositionAttachment,  1>(mid, split, bot, fragmentShader, rasterShader);
+            rasterizeTrianglePart<PositionAttachment, TOP_PART_Y_STEP>(middleVertex, split, topVertex, fragmentShader, rasterShader);
+            rasterizeTrianglePart<PositionAttachment, BOTTOM_PART_Y_STEP>(middleVertex, split, bottomVertex, fragmentShader, rasterShader);
         }
     }
 
