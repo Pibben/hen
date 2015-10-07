@@ -257,7 +257,7 @@ public:
         static_assert(std::is_same<VertInType, typename VertexShader::InType>::value, "Error");
         static_assert(std::is_same<typename VertexShader::OutType, typename FragmentShader::InType>::value, "Error");
         static_assert(std::is_same<typename FragmentShader::OutType, FragOutType>::value, "Error");
-        //static_assert(std::is_same<typename FragmentShader::OutType, typename RasterShader::In>::value, "Error");
+        static_assert(std::is_same<typename FragmentShader::OutType, typename RasterShader::InType>::value, "Error");
 
         typedef typename VertexShader::OutType VertOutFragInType;
         std::vector<VertOutFragInType> immStore;
