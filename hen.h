@@ -67,14 +67,11 @@ template <class FragOutType, class Traits, int RES_X, int RES_Y>
 class Renderer {
 
 private:
-    static constexpr int COLOR_ATTACHMENT = Traits::COLOR_ATTACHMENT;
-    static constexpr int DEPTH_ATTACHMENT = Traits::DEPTH_ATTACHMENT;
-
     template <class Vertex, class FragmentShader, class RasterShader>
     void rasterizeFragment(const Vertex& v, const FragmentShader& fragmentShader, const RasterShader& rasterShader,
                            unsigned int x, unsigned int y) {
-        static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
-        static constexpr int DepthAttachment = FragmentShader::Traits::DEPTH_ATTACHMENT;
+        constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
+        constexpr int DepthAttachment = FragmentShader::Traits::DEPTH_ATTACHMENT;
 
         const auto fragment = fragmentShader(v);
         const auto& depth = std::get<DepthAttachment>(fragment);
@@ -257,15 +254,10 @@ public:
     void render(const std::vector<VertInType>& in, const VertexShader& vertexShader,
                 const FragmentShader& fragmentShader, const RasterShader& rasterShader) {
 
-        static constexpr int POSITION_ATTACHMENT = VertexShader::Traits::POSITION_ATTACHMENT;
-        //static constexpr int COLOR_ATTACHMENT = FragmentShader::Traits::COLOR_ATTACHMENT;
-        //static constexpr int DEPTH_ATTACHMENT = FragmentShader::Traits::DEPTH_ATTACHMENT;
+        constexpr int POSITION_ATTACHMENT = VertexShader::Traits::POSITION_ATTACHMENT;
 
         typedef typename VertexShader::OutType VertOutFragInType;
         static_assert(std::is_same<FragOutType, typename FragmentShader::OutType>::value, "Error");
-
-        //typedef typename VertexShader::VertUniformType VertUniformType;
-        //typedef typename FragmentShader::FragUniformType FragUniformType;
 
         typedef typename std::tuple_element<POSITION_ATTACHMENT, VertOutFragInType>::type ScreenPosType;
 
