@@ -147,73 +147,28 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
 
     cimg_library::CImgDisplay disp;
     cimg_library::CImg<unsigned char> img(width, height, 1, 3);
-    //cimg_library::CImg<float> depth(640, 480);
-
-    Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
-    Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
-    rotMatrix.topLeftCorner<3,3>() = aa.matrix();
-    while(true) {
-        vertexShader.uniform().modelViewMatrix *= rotMatrix;
-
-        renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader);
-
-        Visitor<typename RendererType::DataType> visitor(img);
-        renderer.visitFramebuffer(visitor);
-
-        disp.display(img);
-
-        //renderer.readbackDepth(depth);
-        //disp.display(normalizeDepth(depth));
-
-        renderer.clear();
-        //disp.wait(100);
-        if(disp.is_closed()) {
-            break;
-        }
-    }
-}
-
-template <class Mesh, class VertexShader, class FragmentShader>
-void animateDepth(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
-    vertexShader.uniform().projMatrix = proj(-5, 5, -5, 5, 5, 30);
-
-    vertexShader.uniform().modelViewMatrix = Eigen::Matrix4f::Identity();
-    vertexShader.uniform().modelViewMatrix = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0}); //TODO: Should be in projMatrix?
-
-    const int width = 640*2;
-    const int height = 480*2;
-
-    //Renderer
-    typedef Renderer<typename FragmentShader::OutType, typename FragmentShader::Traits, width, height> RendererType;
-    RendererType renderer;
-
-    cimg_library::CImgDisplay disp;
     cimg_library::CImg<float> depth(width, height);
 
     Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
     Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
     rotMatrix.topLeftCorner<3,3>() = aa.matrix();
+
+    CImgColorRasterShader rasterShader(img, depth);
+
     while(true) {
         vertexShader.uniform().modelViewMatrix *= rotMatrix;
 
-        //Render depth
-        renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader);
+        renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
 
-        DepthVisitor<typename RendererType::DepthType> visitor(depth);
-        renderer.visitDepthbuffer(visitor);
+        img.mirror('y'); //TODO: Investigate
+        disp.display(img);
 
-        //disp.display(img);
-
-        //renderer.readbackDepth(depth);
-        disp.display(normalizeDepth(depth));
-
-        renderer.clear();
-        //disp.wait(100);
         if(disp.is_closed()) {
             break;
         }
     }
 }
+
 
 template <class Mesh, class VertexGenShader, class FragmentGenShader,
                       class VertexShader, class FragmentShader>
@@ -236,6 +191,7 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
 
     cimg_library::CImgDisplay disp;
     cimg_library::CImg<unsigned char> img(width, height, 1, 3);
+    cimg_library::CImg<float> depth(width, height);
 
     Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
     Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
@@ -243,25 +199,22 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
 
     auto& depthTexture = fragmentShader.uniform().shadowSampler.texture();
 
+    CImgDepthRasterShader shadowRasteShader(depthTexture);
+    CImgColorRasterShader rasterShader(img, depth);
+
     while(true) {
         vertexShader.uniform().modelViewMatrix *= rotMatrix;
 
         //Render shadow depth
-        shadowRenderer.template render<typename Mesh::value_type>(mesh, vertexGenShader, fragmentGenShader);
+        shadowRenderer.template render<typename Mesh::value_type>(mesh, vertexGenShader, fragmentGenShader, shadowRasteShader);
 
-        DepthVisitor<typename RendererType::DepthType> depthVisitor(depthTexture);
-        shadowRenderer.visitDepthbuffer(depthVisitor);
+        depthTexture.mirror('y'); //TODO: Investigate
 
-        renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader);
+        renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
 
-        Visitor<typename RendererType::DataType> visitor(img);
-        renderer.visitFramebuffer(visitor);
-
+        img.mirror('y'); //TODO: Investigate
         disp.display(img);
-        //disp.display(normalizeDepth(depth));
 
-        renderer.clear();
-        //disp.wait(100);
         if(disp.is_closed()) {
             break;
         }
@@ -269,7 +222,6 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
 }
 
 void texture() {
-
     TextureVertexShader vertexShader;
     TextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
 

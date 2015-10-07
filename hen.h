@@ -62,47 +62,6 @@ public:
 };
 
 
-template <class Type, int RES_X, int RES_Y>
-class FramebufferAdapter {
-private:
-    typedef std::vector<Type> ArrayType;
-    ArrayType mArray;
-    unsigned int mSizeX;
-    unsigned int mSizeY;
-    Type mTrash;
-public:
-    FramebufferAdapter() : mArray(RES_X*RES_Y), mSizeX(RES_X), mSizeY(RES_Y), mTrash() {}
-
-    Type& operator()(unsigned int x, unsigned int y) {
-        if(x >= 0 && x < mSizeX && y >= 0 && y < mSizeY) {
-            return mArray[y*mSizeX+x];
-        } else {
-            return mTrash;
-        }
-    }
-
-    const Type& operator()(unsigned int x, unsigned int y) const {
-        if(x >= 0 && x < mSizeX && y >= 0 && y < mSizeY) {
-            return mArray[y*mSizeX+x];
-        } else {
-            return mTrash;
-        }
-    }
-
-    unsigned int sizeX() const { return mSizeX; }
-    unsigned int sizeY() const { return mSizeY; }
-
-    typename ArrayType::iterator begin() { return mArray.begin(); }
-    typename ArrayType::iterator end() { return mArray.end(); }
-
-    size_t size() const { return mArray.size(); }
-
-    Type& at(int idx) { return mArray.at(idx); }
-    const Type& at(int idx) const { return mArray.at(idx); }
-};
-
-
-
 
 template <class FragOutType, class Traits, int RES_X, int RES_Y>
 class Renderer {
@@ -111,28 +70,17 @@ private:
     static constexpr int COLOR_ATTACHMENT = Traits::COLOR_ATTACHMENT;
     static constexpr int DEPTH_ATTACHMENT = Traits::DEPTH_ATTACHMENT;
 
-public:
-    typedef typename std::tuple_element<COLOR_ATTACHMENT, FragOutType>::type DataType;
-    typedef typename std::tuple_element<DEPTH_ATTACHMENT, FragOutType>::type DepthType;
-
-private:
-    typedef FramebufferAdapter<DataType, RES_X, RES_Y> FrameBufferType;
-    FrameBufferType frameBuffer;
-    typedef FramebufferAdapter<DepthType, RES_X, RES_Y> DepthBufferType;
-    DepthBufferType depthBuffer;
-    
-    template <class Vertex, class FragmentShader>
-    void rasterizeFragment(const Vertex& v, const FragmentShader& fragmentShader, unsigned int x, unsigned int y) {
+    template <class Vertex, class FragmentShader, class RasterShader>
+    void rasterizeFragment(const Vertex& v, const FragmentShader& fragmentShader, const RasterShader& rasterShader,
+                           unsigned int x, unsigned int y) {
         static constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
         static constexpr int DepthAttachment = FragmentShader::Traits::DEPTH_ATTACHMENT;
 
         const auto fragment = fragmentShader(v);
         const auto& depth = std::get<DepthAttachment>(fragment);
-        if(depth > 0.0 && depth < 1.0 && depth < depthBuffer(x, y)) {
-            const auto& color = std::get<ColorAttachment>(fragment);
-            frameBuffer(x, y) = color;
-            depthBuffer(x, y) = depth;
-        }
+        const auto& color = std::get<ColorAttachment>(fragment);
+
+        rasterShader(color, depth, x, y);
     }
 
     template <int PositionAttachment, class Vertex, class FragmentShader>
@@ -190,9 +138,9 @@ private:
         }
     }
 
-    template <int PositionAttachment, int yStep, class Vertex, class FragmentShader>
+    template <int PositionAttachment, int yStep, class Vertex, class FragmentShader, class RasterShader>
     void rasterizeTrianglePart(Vertex v1, Vertex v2, Vertex v3,
-                                      const FragmentShader& fragmentShader) {
+                               const FragmentShader& fragmentShader, const RasterShader& rasterShader) {
 
         auto p1 = std::get<PositionAttachment>(v1);
         auto p2 = std::get<PositionAttachment>(v2);
@@ -228,7 +176,7 @@ private:
             float xpos = 0.0f;
 
             for(int x = xBegin; x < xEnd; ++x) {
-                rasterizeFragment(inpx.run(xpos), fragmentShader, x, y);
+                rasterizeFragment(inpx.run(xpos), fragmentShader, rasterShader, x, y);
                 xpos += xstep;
             }
             ypos += ystep;
@@ -257,10 +205,6 @@ private:
     }
 
 public:
-    Renderer() {
-        clear();
-    }
-
     template <int PositionAttachment, class Vertex, class FragmentShader>
     void rasterizeTriangleLines(Vertex v1, Vertex v2, Vertex v3,
                                 const FragmentShader& fragmentShader) {
@@ -270,9 +214,9 @@ public:
     }
 
 
-    template <int PositionAttachment, class Vertex, class FragmentShader>
+    template <int PositionAttachment, class Vertex, class FragmentShader, class RasterShader>
     void rasterizeTriangle(Vertex v1, Vertex v2, Vertex v3,
-                           const FragmentShader& fragmentShader) {
+                           const FragmentShader& fragmentShader, const RasterShader& rasterShader) {
 
         Vertex& top = v1;
         Vertex& mid = v2;
@@ -296,22 +240,22 @@ public:
 
         if(t[1] == m[1]) {
             //Flat top
-            rasterizeTrianglePart<PositionAttachment, 1>(top, mid, bot, fragmentShader);
+            rasterizeTrianglePart<PositionAttachment, 1>(top, mid, bot, fragmentShader, rasterShader);
         } else if(m[1] == b[1]) {
             //Flat bottom
-            rasterizeTrianglePart<PositionAttachment, -1>(bot, mid, top, fragmentShader);
+            rasterizeTrianglePart<PositionAttachment, -1>(bot, mid, top, fragmentShader, rasterShader);
         } else {
             TupleInterpolator<Vertex> inptb(top, bot);
             Vertex split = inptb.run((m[1] - t[1]) / (b[1] - t[1]));
 
-            rasterizeTrianglePart<PositionAttachment, -1>(mid, split, top, fragmentShader);
-            rasterizeTrianglePart<PositionAttachment,  1>(mid, split, bot, fragmentShader);
+            rasterizeTrianglePart<PositionAttachment, -1>(mid, split, top, fragmentShader, rasterShader);
+            rasterizeTrianglePart<PositionAttachment,  1>(mid, split, bot, fragmentShader, rasterShader);
         }
     }
 
-    template <class VertInType, class VertexShader, class FragmentShader>
+    template <class VertInType, class VertexShader, class FragmentShader, class RasterShader>
     void render(const std::vector<VertInType>& in, const VertexShader& vertexShader,
-                                                   const FragmentShader& fragmentShader) {
+                const FragmentShader& fragmentShader, const RasterShader& rasterShader) {
 
         static constexpr int POSITION_ATTACHMENT = VertexShader::Traits::POSITION_ATTACHMENT;
         //static constexpr int COLOR_ATTACHMENT = FragmentShader::Traits::COLOR_ATTACHMENT;
@@ -343,11 +287,13 @@ public:
             auto& pos = std::get<POSITION_ATTACHMENT>(vert);
             pos = pos + ScreenPosType(1.0, 1.0, 1.0, 0.0); //TODO: Fix
             pos = pos.cwiseQuotient(ScreenPosType(2.0, 2.0, 2.0, 1.0));
-            pos[0] *= this->frameBuffer.sizeX();
-            pos[1] *= this->frameBuffer.sizeY();
+            pos[0] *= RES_X;
+            pos[1] *= RES_Y;
         });
 
         //Now in screen space
+
+        rasterShader.clear();
 
         for(size_t i = 0; i < immStore.size(); i+=3) {
             //Primitive assembly
@@ -365,33 +311,10 @@ public:
             }
 
             //Rasterization
-            rasterizeTriangle<POSITION_ATTACHMENT>(v1, v2, v3, fragmentShader);
+            rasterizeTriangle<POSITION_ATTACHMENT>(v1, v2, v3, fragmentShader, rasterShader);
         }
     }
 
-    void clear() {
-        for(auto& d: depthBuffer) {
-            //d = std::numeric_limits<DepthType>::lowest();
-            d = std::numeric_limits<DepthType>::max();
-        }
-        for(auto& d: frameBuffer) {
-            d = DataType(0,0,0,0);
-        }
-    }
-
-    template <class Func>
-    void visitFramebuffer(Func func) {
-        for(const auto& p: frameBuffer) {
-            func(p);
-        }
-    }
-
-    template <class Func>
-    void visitDepthbuffer(Func func) {
-        for(const auto& p: depthBuffer) {
-            func(p);
-        }
-    }
 };
 
 #endif

@@ -692,4 +692,48 @@ public:
 
 };
 
+class CImgColorRasterShader {
+private:
+    cimg_library::CImg<unsigned char>& mFrame;
+    cimg_library::CImg<float>& mDepth;
+public:
+    CImgColorRasterShader(cimg_library::CImg<unsigned char>& frame, cimg_library::CImg<float>& depth) : mFrame(frame), mDepth(depth) {}
+
+    template<class Color>
+    void operator()(const Color& color, float depth, unsigned int x, unsigned int y) const {
+
+        if(depth > 0.0 && depth < 1.0 && depth < mDepth(x, y)) {
+            mFrame(x, y, 0) = color[0];
+            mFrame(x, y, 1) = color[1];
+            mFrame(x, y, 2) = color[2];
+
+            mDepth(x, y) = depth;
+        }
+    }
+
+    void clear() const {
+        mFrame.fill(0);
+        mDepth.fill(std::numeric_limits<float>::max());
+    }
+};
+
+class CImgDepthRasterShader {
+private:
+    cimg_library::CImg<float>& mDepth;
+public:
+    CImgDepthRasterShader(cimg_library::CImg<float>& depth) : mDepth(depth) {}
+
+    template<class Color>
+    void operator()(const Color& color, float depth, unsigned int x, unsigned int y) const {
+
+        if(depth > 0.0 && depth < 1.0 && depth < mDepth(x, y)) {
+            mDepth(x, y) = depth;
+        }
+    }
+
+    void clear() const {
+        mDepth.fill(std::numeric_limits<float>::max());
+    }
+};
+
 #endif /* SHADERS_H_ */
