@@ -160,7 +160,10 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     while(true) {
         vertexShader.modelViewMatrix() *= rotMatrix;
 
+        t.reset();
         renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
+        float us = t.getUS();
+        printf("%2.2f fps\n", 1.0 / (us / 1000.0 / 1000.0));
 
         img.mirror('y'); //TODO: Investigate
         disp.display(img);

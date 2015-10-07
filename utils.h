@@ -123,11 +123,18 @@ struct Timer<1> {
         latest = std::chrono::steady_clock::now();
     }
     void report(const std::string& msg = "") {
+        std::cout << msg << ": " << getUS() << " us" << std::endl;
+    }
+
+    float getUS() {
         auto now = std::chrono::steady_clock::now();
         auto diff = now - latest;
-
-        std::cout << msg << ": " << std::chrono::duration <double, std::micro> (diff).count() << " us" << std::endl;
         latest = now;
+        return std::chrono::duration <double, std::micro> (diff).count();
+    }
+
+    void reset() {
+        latest = std::chrono::steady_clock::now();
     }
 };
 
