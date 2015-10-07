@@ -256,7 +256,10 @@ public:
     void render(const std::vector<VertInType>& in, const VertexShader& vertexShader,
                 const FragmentShader& fragmentShader, const RasterShader& rasterShader) {
 
-        static_assert(std::is_same<FragOutType, typename FragmentShader::OutType>::value, "Error");
+        static_assert(std::is_same<VertInType, typename VertexShader::InType>::value, "Error");
+        static_assert(std::is_same<typename VertexShader::OutType, typename FragmentShader::InType>::value, "Error");
+        static_assert(std::is_same<typename FragmentShader::OutType, FragOutType>::value, "Error");
+        //static_assert(std::is_same<typename FragmentShader::OutType, typename RasterShader::In>::value, "Error");
 
         typedef typename VertexShader::OutType VertOutFragInType;
         std::vector<VertOutFragInType> immStore;
