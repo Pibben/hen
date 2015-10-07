@@ -74,10 +74,8 @@ private:
         constexpr int DepthAttachment = static_cast<int>(FragmentShader::Traits::DEPTH_INDEX);
 
         const auto fragment = fragmentShader(v);
-        const auto& depth = std::get<DepthAttachment>(fragment);
-        const auto& color = std::get<ColorAttachment>(fragment);
 
-        rasterShader(color, depth, x, y);
+        rasterShader(fragment, x, y);
     }
 
     template <int PositionAttachment, class Vertex, class FragmentShader>

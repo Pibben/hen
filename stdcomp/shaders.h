@@ -695,13 +695,24 @@ public:
 
 class CImgColorRasterShader {
 private:
+    enum class InTraits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
+    };
+
     cimg_library::CImg<unsigned char>& mFrame;
     cimg_library::CImg<float>& mDepth;
 public:
+    typedef std::tuple<Eigen::Vector4f, float> InType;
+
     CImgColorRasterShader(cimg_library::CImg<unsigned char>& frame, cimg_library::CImg<float>& depth) : mFrame(frame), mDepth(depth) {}
 
-    template<class Color>
-    void operator()(const Color& color, float depth, unsigned int x, unsigned int y) const {
+    void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
+        constexpr int ColorAttachment = static_cast<int>(InTraits::COLOR_INDEX);
+        constexpr int DepthAttachment = static_cast<int>(InTraits::DEPTH_INDEX);
+
+        const auto& depth = std::get<DepthAttachment>(fragment);
+        const auto& color = std::get<ColorAttachment>(fragment);
 
         if(depth > 0.0 && depth < 1.0 && depth < mDepth(x, y)) {
             mFrame(x, y, 0) = color[0];
@@ -720,12 +731,21 @@ public:
 
 class CImgDepthRasterShader {
 private:
+    enum class InTraits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
+    };
+
     cimg_library::CImg<float>& mDepth;
 public:
+    typedef std::tuple<Eigen::Vector4f, float> InType;
+
     CImgDepthRasterShader(cimg_library::CImg<float>& depth) : mDepth(depth) {}
 
-    template<class Color>
-    void operator()(const Color& color, float depth, unsigned int x, unsigned int y) const {
+    void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
+        constexpr int DepthAttachment = static_cast<int>(InTraits::DEPTH_INDEX);
+
+        const auto& depth = std::get<DepthAttachment>(fragment);
 
         if(depth > 0.0 && depth < 1.0 && depth < mDepth(x, y)) {
             mDepth(x, y) = depth;
