@@ -70,8 +70,8 @@ private:
     template <class Vertex, class FragmentShader, class RasterShader>
     void rasterizeFragment(const Vertex& v, const FragmentShader& fragmentShader, const RasterShader& rasterShader,
                            unsigned int x, unsigned int y) {
-        constexpr int ColorAttachment = FragmentShader::Traits::COLOR_ATTACHMENT;
-        constexpr int DepthAttachment = FragmentShader::Traits::DEPTH_ATTACHMENT;
+        constexpr int ColorAttachment = static_cast<int>(FragmentShader::Traits::COLOR_INDEX);
+        constexpr int DepthAttachment = static_cast<int>(FragmentShader::Traits::DEPTH_INDEX);
 
         const auto fragment = fragmentShader(v);
         const auto& depth = std::get<DepthAttachment>(fragment);
@@ -256,29 +256,28 @@ public:
     void render(const std::vector<VertInType>& in, const VertexShader& vertexShader,
                 const FragmentShader& fragmentShader, const RasterShader& rasterShader) {
 
-        constexpr int POSITION_ATTACHMENT = VertexShader::Traits::POSITION_ATTACHMENT;
-
-        typedef typename VertexShader::OutType VertOutFragInType;
         static_assert(std::is_same<FragOutType, typename FragmentShader::OutType>::value, "Error");
 
-        typedef typename std::tuple_element<POSITION_ATTACHMENT, VertOutFragInType>::type ScreenPosType;
-
+        typedef typename VertexShader::OutType VertOutFragInType;
         std::vector<VertOutFragInType> immStore;
 
         //Vertex stage
         std::transform(in.begin(), in.end(), std::back_inserter(immStore), vertexShader);
-        
+
         //Now in clip space
         //Perspective divide
+        constexpr int POSITION_INDEX = static_cast<int>(VertexShader::Traits::POSITION_INDEX);
+        typedef typename std::tuple_element<POSITION_INDEX, VertOutFragInType>::type ScreenPosType;
+
         std::for_each(immStore.begin(), immStore.end(), [](VertOutFragInType& vert) {
-            auto& pos = std::get<POSITION_ATTACHMENT>(vert);
+            auto& pos = std::get<POSITION_INDEX>(vert);
             pos /= pos[3];
         });
 
         //Now in NDC
 
         std::for_each(immStore.begin(), immStore.end(), [this](VertOutFragInType& vert) {
-            auto& pos = std::get<POSITION_ATTACHMENT>(vert);
+            auto& pos = std::get<POSITION_INDEX>(vert);
             pos = pos + ScreenPosType(1.0, 1.0, 1.0, 0.0); //TODO: Fix
             pos = pos.cwiseQuotient(ScreenPosType(2.0, 2.0, 2.0, 1.0));
             pos[0] *= RES_X;
@@ -295,9 +294,9 @@ public:
             const auto& v2 = immStore.at(i+1);
             const auto& v3 = immStore.at(i+2);
 
-            const auto& p1 = std::get<POSITION_ATTACHMENT>(v1);
-            const auto& p2 = std::get<POSITION_ATTACHMENT>(v2);
-            const auto& p3 = std::get<POSITION_ATTACHMENT>(v3);
+            const auto& p1 = std::get<POSITION_INDEX>(v1);
+            const auto& p2 = std::get<POSITION_INDEX>(v2);
+            const auto& p3 = std::get<POSITION_INDEX>(v3);
 
             //Backface culling
             if(isBackface(p1, p2, p3)) {
@@ -305,7 +304,7 @@ public:
             }
 
             //Rasterization
-            rasterizeTriangle<POSITION_ATTACHMENT>(v1, v2, v3, fragmentShader, rasterShader);
+            rasterizeTriangle<POSITION_INDEX>(v1, v2, v3, fragmentShader, rasterShader);
         }
     }
 

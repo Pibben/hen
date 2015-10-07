@@ -17,9 +17,9 @@ class ColorVertexShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { COLOR_ATTACHMENT = 1 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        COLOR_INDEX = 1
     };
 
     struct Uniform {
@@ -34,14 +34,14 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> OutType;
 
-    struct Traits {
-        static constexpr int POSITION_ATTACHMENT = 0;
-        static constexpr int COLOR_ATTACHMENT = 1;
+    enum class Traits {
+        POSITION_INDEX = 0,
+        COLOR_INDEX = 1
     };
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector4f& color = std::get<InTraits::COLOR_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const Eigen::Vector4f& color = std::get<static_cast<int>(InTraits::COLOR_INDEX)>(in);
 
         Eigen::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
 
@@ -55,9 +55,9 @@ class ColorFragmentShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { COLOR_ATTACHMENT = 1 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        COLOR_INDEX = 1
     };
 
 public:
@@ -65,14 +65,14 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
-    struct Traits {
-        static constexpr int COLOR_ATTACHMENT = 0;
-        static constexpr int DEPTH_ATTACHMENT = 1;
+    enum class Traits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
     };
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector4f& color = std::get<InTraits::COLOR_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const Eigen::Vector4f& color = std::get<static_cast<int>(InTraits::COLOR_INDEX)>(in);
         //assert(pos[2] < 0.0);
 
         return std::make_tuple(color, pos[2]);
@@ -83,9 +83,9 @@ class TextureVertexShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { TEXTURE_ATTACHMENT = 1 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        TEXTURE_INDEX = 1
     };
 
     struct Uniform {
@@ -99,15 +99,15 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> OutType;
 
-    struct Traits {
-        static constexpr int POSITION_ATTACHMENT = 0;
-        static constexpr int TEXTURE_ATTACHMENT = 1;
-        static constexpr int INV_DEPTH_ATTACHMENT = 2;
+    enum class Traits {
+        POSITION_INDEX = 0,
+        TEXTURE_INDEX = 1,
+        INV_DEPTH_INDEX = 2
     };
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector2f tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const Eigen::Vector2f tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
 
         const Eigen::Vector4f mvPos = mUniform.modelViewMatrix * pos;
         const Eigen::Vector4f outPos = mUniform.projMatrix * mvPos;
@@ -124,10 +124,10 @@ class TextureFragmentShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { TEXTURE_ATTACHMENT = 1 };
-        enum { INV_DEPTH_ATTACHMENT = 2 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        TEXTURE_INDEX = 1,
+        INV_DEPTH_INDEX = 2
     };
 
     typedef RGBATextureSampler<Eigen::Vector4f> SamplerType;
@@ -142,9 +142,9 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
-    struct Traits {
-        static constexpr int COLOR_ATTACHMENT = 0;
-        static constexpr int DEPTH_ATTACHMENT = 1;
+    enum class Traits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
     };
 
     TextureFragmentShader(const std::string& filename) {
@@ -154,9 +154,9 @@ public:
     }
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
-        const float invDepth = std::get<InTraits::INV_DEPTH_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const Eigen::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
+        const float invDepth = std::get<static_cast<int>(InTraits::INV_DEPTH_INDEX)>(in);
 
         const auto realTex = tex / invDepth;
 
@@ -170,10 +170,10 @@ class MultiTextureFragmentShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { TEXTURE_ATTACHMENT = 1 };
-        enum { INV_DEPTH_ATTACHMENT = 2 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        TEXTURE_INDEX = 1,
+        INV_DEPTH_INDEX = 2
     };
 
     typedef RGBATextureSampler<Eigen::Vector4f> SamplerType;
@@ -189,9 +189,9 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
-    struct Traits {
-        static constexpr int COLOR_ATTACHMENT = 0;
-        static constexpr int DEPTH_ATTACHMENT = 1;
+    enum class Traits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
     };
 
     MultiTextureFragmentShader(const std::string& filename1, const std::string& filename2) {
@@ -202,9 +202,9 @@ public:
     }
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
-        const float invDepth = std::get<InTraits::INV_DEPTH_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const Eigen::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
+        const float invDepth = std::get<static_cast<int>(InTraits::INV_DEPTH_INDEX)>(in);
 
         const auto realTex = tex / invDepth;
 
@@ -221,9 +221,9 @@ class FlatVertexShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { NORMAL_ATTACHMENT = 1 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        NORMAL_INDEX = 1
     };
 
     struct Uniform {
@@ -238,9 +238,9 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> OutType;
 
-    struct Traits {
-        static constexpr int POSITION_ATTACHMENT = 0;
-        static constexpr int COLOR_ATTACHMENT = 1;
+    enum class Traits {
+        POSITION_INDEX = 0,
+        COLOR_INDEX = 1
     };
 
     FlatVertexShader(const Eigen::Vector3f& lightPos) {
@@ -248,8 +248,8 @@ public:
     }
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos    = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector3f& normal = std::get<InTraits::NORMAL_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const Eigen::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
         const Eigen::Vector3f& lightPos = mUniform.lightPos;
 
@@ -280,9 +280,9 @@ class PhongVertexShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { NORMAL_ATTACHMENT = 1 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        NORMAL_INDEX = 1
     };
 
     struct Uniform {
@@ -297,11 +297,11 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f, Eigen::Vector3f> OutType;
 
-    struct Traits {
-        static constexpr int POSITION_ATTACHMENT = 0;
-        static constexpr int NORMAL_ATTACHMENT = 1;
-        static constexpr int LIGHT_ATTACHMENT = 2;
-        static constexpr int VIEW_ATTACHMENT = 3;
+    enum class Traits {
+        POSITION_INDEX = 0,
+        NORMAL_INDEX = 1,
+        LIGHT_INDEX = 2,
+        VIEW_INDEX = 3
     };
 
     PhongVertexShader(const Eigen::Vector3f& lightPos) {
@@ -309,8 +309,8 @@ public:
     }
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos    = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector3f& normal = std::get<InTraits::NORMAL_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const Eigen::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
         const Eigen::Vector3f& lightPos = mUniform.lightPos;
 
@@ -331,11 +331,11 @@ class PhongFragmentShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f, Eigen::Vector3f> In;
 
-    struct InTraits {
-        static constexpr int POSITION_ATTACHMENT = 0;
-        static constexpr int NORMAL_ATTACHMENT = 1;
-        static constexpr int LIGHT_ATTACHMENT = 2;
-        static constexpr int VIEW_ATTACHMENT = 3;
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        NORMAL_INDEX = 1,
+        LIGHT_INDEX = 2,
+        VIEW_INDEX = 3
     };
 
 public:
@@ -343,16 +343,16 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
-    struct Traits {
-        static constexpr int COLOR_ATTACHMENT = 0;
-        static constexpr int DEPTH_ATTACHMENT = 1;
+    enum class Traits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
     };
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        Eigen::Vector3f N     = std::get<InTraits::NORMAL_ATTACHMENT>(in);
-        Eigen::Vector3f L     = std::get<InTraits::LIGHT_ATTACHMENT>(in);
-        Eigen::Vector3f V     = std::get<InTraits::VIEW_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        Eigen::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        Eigen::Vector3f L     = std::get<static_cast<int>(InTraits::LIGHT_INDEX)>(in);
+        Eigen::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
         //assert(pos[2] < 0.0);
 
         N.normalize();
@@ -373,9 +373,9 @@ class NormalViewVertexShader {
 private:
 	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { NORMAL_ATTACHMENT = 1 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        NORMAL_INDEX = 1
     };
 
     struct Uniform {
@@ -390,15 +390,15 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> OutType;
 
-    struct Traits {
-        static constexpr int POSITION_ATTACHMENT = 0;
-        static constexpr int NORMAL_ATTACHMENT = 1;
-        static constexpr int VIEW_ATTACHMENT = 2;
+    enum class Traits {
+        POSITION_INDEX = 0,
+        NORMAL_INDEX = 1,
+        VIEW_INDEX = 2
     };
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos    = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector3f& normal = std::get<InTraits::NORMAL_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const Eigen::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
         const Eigen::Vector4f P = mUniform.modelViewMatrix * pos;
 
@@ -416,11 +416,12 @@ class EquiRectFragmentShader {
 private:
 	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> In;
 
-    struct InTraits {
-        static constexpr int POSITION_ATTACHMENT = 0;
-        static constexpr int NORMAL_ATTACHMENT = 1;
-        static constexpr int VIEW_ATTACHMENT = 2;
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        NORMAL_INDEX = 1,
+        VIEW_INDEX = 2
     };
+
     struct Uniform {
         RGBATextureSampler<Eigen::Vector4f> textureSampler;
     };
@@ -431,17 +432,17 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
-    struct Traits {
-        static constexpr int COLOR_ATTACHMENT = 0;
-        static constexpr int DEPTH_ATTACHMENT = 1;
+    enum class Traits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
     };
 
     EquiRectFragmentShader(const std::string& filename) : mUniform{RGBATextureSampler<Eigen::Vector4f>(filename)} {}
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        Eigen::Vector3f N     = std::get<InTraits::NORMAL_ATTACHMENT>(in);
-        Eigen::Vector3f V     = std::get<InTraits::VIEW_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        Eigen::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        Eigen::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
         //assert(pos[2] < 0.0);
 
         N.normalize();
@@ -475,10 +476,10 @@ class CubemapFragmentShader {
 private:
 	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> In;
 
-    struct InTraits {
-        static constexpr int POSITION_ATTACHMENT = 0;
-        static constexpr int NORMAL_ATTACHMENT = 1;
-        static constexpr int VIEW_ATTACHMENT = 2;
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        NORMAL_INDEX = 1,
+        VIEW_INDEX = 2
     };
 
     struct Uniform {
@@ -491,17 +492,17 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
-    struct Traits {
-        static constexpr int COLOR_ATTACHMENT = 0;
-        static constexpr int DEPTH_ATTACHMENT = 1;
+    enum class Traits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
     };
 
     CubemapFragmentShader(const std::string& filename) : mUniform{CubeSampler<Eigen::Vector4f>(filename)} {}
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        Eigen::Vector3f N     = std::get<InTraits::NORMAL_ATTACHMENT>(in);
-        Eigen::Vector3f V     = std::get<InTraits::VIEW_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        Eigen::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        Eigen::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
         //assert(pos[2] < 0.0);
 
         N.normalize();
@@ -519,9 +520,9 @@ class ShadowGenVertexShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { TEXTURE_ATTACHMENT = 1 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        TEXTURE_INDEX = 1
     };
 
     struct Uniform {
@@ -535,8 +536,8 @@ public:
 
     typedef std::tuple<Eigen::Vector4f> OutType;
 
-    struct Traits {
-        static constexpr int POSITION_ATTACHMENT = 0;
+    enum class Traits {
+        POSITION_INDEX = 0
     };
 
     ShadowGenVertexShader(const Eigen::Matrix4f& shadowProjectionMatrix, const Eigen::Matrix4f& shadowModelViewMatrix) {
@@ -545,7 +546,7 @@ public:
     }
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
 
         const Eigen::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
 
@@ -559,21 +560,21 @@ class ShadowGenFragmentShader {
 private:
     typedef std::tuple<Eigen::Vector4f> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
+    enum class InTraits {
+        POSITION_INDEX = 0
     };
 public:
     typedef In VertOutFragInType;
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
-    struct Traits {
-        static constexpr int COLOR_ATTACHMENT = 0;
-        static constexpr int DEPTH_ATTACHMENT = 1;
+    enum class Traits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
     };
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
 
         return std::make_tuple(Eigen::Vector4f(), pos[2]);
     }
@@ -584,9 +585,9 @@ class ShadowTextureVertexShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { TEXTURE_ATTACHMENT = 1 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        TEXTURE_INDEX = 1
     };
 
     struct ShadowFragUniformType {
@@ -607,11 +608,11 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, Eigen::Vector4f, float> OutType;
 
-    struct Traits {
-        static constexpr int POSITION_ATTACHMENT = 0;
-        static constexpr int TEXTURE_ATTACHMENT = 1;
-        static constexpr int SHADOW_ATTACHMENT = 2;
-        static constexpr int INV_DEPTH_ATTACHMENT = 3;
+    enum class Traits {
+        POSITION_INDEX = 0,
+        TEXTURE_INDEX = 1,
+        SHADOW_INDEX = 2,
+        INV_DEPTH_INDEX = 3
     };
 
     ShadowTextureVertexShader(const Eigen::Matrix4f& shadowMatrix) {
@@ -619,8 +620,8 @@ public:
     }
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector2f tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const Eigen::Vector2f tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
 
         const Eigen::Vector4f mvPos = mUniform.modelViewMatrix * pos;
         const Eigen::Vector4f outPos = mUniform.projMatrix * mvPos;
@@ -639,11 +640,11 @@ class ShadowTextureFragmentShader {
 private:
     typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, Eigen::Vector4f, float> In;
 
-    struct InTraits {
-        enum { POSITION_ATTACHMENT = 0 };
-        enum { TEXTURE_ATTACHMENT = 1 };
-        enum { SHADOW_ATTACHMENT = 2 };
-        enum { INV_DEPTH_ATTACHMENT = 3 };
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        TEXTURE_INDEX = 1,
+        SHADOW_INDEX = 2,
+        INV_DEPTH_INDEX = 3,
     };
 
     struct Uniform {
@@ -657,19 +658,19 @@ public:
 
     typedef std::tuple<Eigen::Vector4f, float> OutType;
 
-    struct Traits {
-        static constexpr int COLOR_ATTACHMENT = 0;
-        static constexpr int DEPTH_ATTACHMENT = 1;
+    enum class Traits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
     };
 
     ShadowTextureFragmentShader(const std::string& filename) : mUniform{RGBATextureSampler<Eigen::Vector4f>(filename),
                                                         SingleChannelTextureSampler<float>(2048, 2048)} {}
 
     OutType operator()(const In& in) const {
-        const Eigen::Vector4f& pos   = std::get<InTraits::POSITION_ATTACHMENT>(in);
-        const Eigen::Vector2f& tex = std::get<InTraits::TEXTURE_ATTACHMENT>(in);
-        const Eigen::Vector4f& shadow_coord   = std::get<InTraits::SHADOW_ATTACHMENT>(in);
-        const float invDepth = std::get<InTraits::INV_DEPTH_ATTACHMENT>(in);
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const Eigen::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
+        const Eigen::Vector4f& shadow_coord   = std::get<static_cast<int>(InTraits::SHADOW_INDEX)>(in);
+        const float invDepth = std::get<static_cast<int>(InTraits::INV_DEPTH_INDEX)>(in);
 
         const auto realTex = tex / invDepth;
 
