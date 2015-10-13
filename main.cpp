@@ -135,7 +135,7 @@ template <class Mesh, class VertexShader, class FragmentShader>
 void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
 
-    vertexShader.modelViewMatrix() = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0}); //TODO: Should be in projMatrix?
+    vertexShader.modelViewMatrix() = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0});
 
     const int width = 640*2;
     const int height = 480*2;
@@ -179,7 +179,7 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
                                      VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
 
-    vertexShader.modelViewMatrix() = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0}); //TODO: Should be in projMatrix?
+    vertexShader.modelViewMatrix() = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0});
 
     const int width = 640*2;
     const int height = 480*2;
