@@ -144,14 +144,14 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     Renderer renderer;
 
     cimg_library::CImgDisplay disp;
-    cimg_library::CImg<unsigned char> img(width, height, 1, 3);
-    cimg_library::CImg<float> depth(width, height);
+    cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
+    cimg_library::CImg<float> zbuffer(width, height);
 
     Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
     Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
     rotMatrix.topLeftCorner<3,3>() = aa.matrix();
 
-    CImgColorRasterShader rasterShader(img, depth);
+    CImgColorRasterShader rasterShader(framebuffer, zbuffer);
 
     Timer<1> t;
 
@@ -163,8 +163,8 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
         float us = t.getUS();
         printf("%2.2f fps\n", 1.0 / (us / 1000.0 / 1000.0));
 
-        img.mirror('y'); //TODO: Investigate
-        disp.display(img);
+        framebuffer.mirror('y'); //TODO: Investigate
+        disp.display(framebuffer);
 
         if(disp.is_closed()) {
             break;
@@ -188,17 +188,17 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
     Renderer renderer;
 
     cimg_library::CImgDisplay disp;
-    cimg_library::CImg<unsigned char> img(width, height, 1, 3);
-    cimg_library::CImg<float> depth(width, height);
+    cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
+    cimg_library::CImg<float> zbuffer(width, height);
 
     Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
     Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
     rotMatrix.topLeftCorner<3,3>() = aa.matrix();
 
-    auto& depthTexture = fragmentShader.getDepthTexture();
+    auto& depthTexture = fragmentShader.getDepthTexture(); //TODO: Who should own the shadow depth buffer?
 
     CImgDepthRasterShader shadowRasteShader(depthTexture);
-    CImgColorRasterShader rasterShader(img, depth);
+    CImgColorRasterShader rasterShader(framebuffer, zbuffer);
 
     while(true) {
         vertexShader.modelViewMatrix() *= rotMatrix;
@@ -210,8 +210,8 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
 
         renderer.render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
 
-        img.mirror('y'); //TODO: Investigate
-        disp.display(img);
+        framebuffer.mirror('y'); //TODO: Investigate
+        disp.display(framebuffer);
 
         if(disp.is_closed()) {
             break;
