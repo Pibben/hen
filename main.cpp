@@ -301,8 +301,61 @@ void shadow() {
     animateShadow(m, shadowGenVertexShader, shadowGenFragmentShader, shadowTextureVertexShader, shadowTextureFragmentShader);
 }
 
+float time() {
+    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(
+            std::chrono::system_clock::now().time_since_epoch()
+    );
+
+    //printf("%d %f\n", ms.count(), (int)ms.count() / 1000.0f);
+
+    return (int)ms.count() / 1000.0f;
+}
+
+void shaderToy() {
+    const int width = 640;
+    const int height = 480;
+
+    //Renderer
+    Renderer renderer;
+
+    cimg_library::CImgDisplay disp;
+    cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
+    cimg_library::CImg<float> zbuffer(width, height);
+
+    Eigen::Vector2f v1(-1.0f, -1.0f);
+    Eigen::Vector2f v2(-1.0f, 1.0f);
+    Eigen::Vector2f v3(1.0f, 1.0f);
+    Eigen::Vector2f v4(1.0f, -1.0f);
+
+    typedef std::vector<std::tuple<Eigen::Vector2f>> MeshType;
+
+    MeshType mesh { std::make_tuple(v1), std::make_tuple(v3), std::make_tuple(v2),
+                    std::make_tuple(v1), std::make_tuple(v4), std::make_tuple(v3) };
+
+    ShadertoyVertexShader vertexShader;
+    ShadertoyFragmentShader fragmentShader;
+    CImgColorRasterShader rasterShader(framebuffer, zbuffer);
+
+    Timer<1> t;
+
+    while(true) {
+        t.reset();
+        fragmentShader.setTime(time());
+        renderer.render<typename MeshType::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
+        float us = t.getUS();
+        printf("%2.2f fps\n", 1.0 / (us / 1000.0 / 1000.0));
+
+        framebuffer.mirror('y'); //TODO: Investigate
+        disp.display(framebuffer);
+
+        if(disp.is_closed()) {
+            break;
+        }
+    }
+}
+
 int main(int argc, char** argv) {
-    shadow();
+    shaderToy();
 }
 
 

@@ -8,6 +8,8 @@
 #ifndef SHADERS_H_
 #define SHADERS_H_
 
+#include <cmath>
+
 #include <Eigen/Dense>
 
 #include "../utils.h"
@@ -652,6 +654,117 @@ public:
 
     cimg_library::CImg<float>& getDepthTexture() { return mUniform.shadowSampler.texture(); }
 
+};
+
+class ShadertoyVertexShader {
+private:
+    enum class InTraits {
+        POSITION_INDEX = 0
+    };
+
+public:
+    typedef std::tuple<Eigen::Vector2f> InType;
+    typedef std::tuple<Eigen::Vector4f> OutType;
+
+    enum class Traits {
+        POSITION_INDEX = 0
+    };
+
+    OutType operator()(const InType& in) const {
+        const Eigen::Vector2f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        Eigen::Vector4f outPos(0.0f, 0.0f, 0.0f, 1.0f);
+        outPos.head<2>() = pos;
+
+        return std::make_tuple(outPos);
+    }
+
+};
+
+Eigen::Vector2f xy(const Eigen::Vector4f& in) {
+    return in.head<2>();
+}
+
+float mod(float x, float y) {
+    return std::fmod(x, y);
+}
+
+float step(float edge, float x) {
+    return x < edge ? 0.0f : 1.0f;
+}
+
+
+Eigen::Vector3f mix(const Eigen::Vector3f& x, const Eigen::Vector3f& y, float a) {
+    Eigen::Vector3f mx = x * (1.0 - a);
+    Eigen::Vector3f my = y * a;
+    return mx + my;
+}
+
+class ShadertoyFragmentShader {
+private:
+    enum class InTraits {
+        POSITION_INDEX = 0
+    };
+
+    float iGlobalTime;
+
+public:
+    typedef std::tuple<Eigen::Vector4f> InType;
+    typedef std::tuple<Eigen::Vector4f, float> OutType;
+
+    enum class Traits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
+    };
+
+    void setTime(float t) {
+        iGlobalTime = t;
+        //printf("%f\n", iGlobalTime);
+    }
+
+    OutType operator()(const InType& in) const {
+        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+
+        //https://www.shadertoy.com/view/4dsGzH
+        Eigen::Vector3f COLOR1 = Eigen::Vector3f(0.0, 0.0, 0.3);
+        Eigen::Vector3f COLOR2 = Eigen::Vector3f(0.5, 0.0, 0.0);
+        float BLOCK_WIDTH = 0.01;
+
+        Eigen::Vector2f iResolution(640, 480);
+
+        Eigen::Vector2f uv = xy(pos).cwiseQuotient(iResolution);
+
+        // To create the BG pattern
+        Eigen::Vector3f final_color;
+        Eigen::Vector3f bg_color;
+        Eigen::Vector3f wave_color = Eigen::Vector3f(0.0, 0.0, 0.0);
+
+        float c1 = mod(uv(0), 2.0 * BLOCK_WIDTH);
+        c1 = step(BLOCK_WIDTH, c1);
+
+        float c2 = mod(uv(1), 2.0 * BLOCK_WIDTH);
+        c2 = step(BLOCK_WIDTH, c2);
+
+        bg_color = mix(uv(0) * COLOR1, uv(1) * COLOR2, c1 * c2);
+
+
+        // To create the waves
+        float wave_width = 0.01;
+        uv  = -1.0 + 2.0 * uv.array();
+        uv(1) += 0.1;
+        for(float i = 0.0; i < 10.0; i++) {
+
+            uv(1) += (0.07 * std::sin(uv(0) + i/7.0 + iGlobalTime ));
+            wave_width = std::abs(1.0 / (150.0 * uv(1)));
+            wave_color += Eigen::Vector3f(wave_width * 1.9, wave_width, wave_width * 1.5);
+        }
+
+        final_color = bg_color + wave_color;
+
+
+        Eigen::Vector4f color(1.0);
+        color.head<3>() = final_color;
+        return std::make_tuple(color * 255, 0.2f);
+    }
 };
 
 class CImgColorRasterShader {
