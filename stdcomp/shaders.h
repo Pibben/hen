@@ -650,7 +650,7 @@ public:
         return std::make_tuple(color * shade, pos[2]);
     }
 
-    Uniform& uniform() { return mUniform; }
+    cimg_library::CImg<float>& getDepthTexture() { return mUniform.shadowSampler.texture(); }
 
 };
 

@@ -195,7 +195,7 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
     Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
     rotMatrix.topLeftCorner<3,3>() = aa.matrix();
 
-    auto& depthTexture = fragmentShader.uniform().shadowSampler.texture();
+    auto& depthTexture = fragmentShader.getDepthTexture();
 
     CImgDepthRasterShader shadowRasteShader(depthTexture);
     CImgColorRasterShader rasterShader(img, depth);
