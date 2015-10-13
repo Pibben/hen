@@ -688,6 +688,9 @@ public:
         mFrame.fill(0);
         mDepth.fill(std::numeric_limits<float>::max());
     }
+
+    unsigned int getXResolution() const { return mFrame.width(); }
+    unsigned int getYResolution() const { return mFrame.height(); }
 };
 
 class CImgDepthRasterShader {
@@ -716,6 +719,10 @@ public:
     void clear() const {
         mDepth.fill(std::numeric_limits<float>::max());
     }
+
+    unsigned int getXResolution() const { return mDepth.width(); }
+    unsigned int getYResolution() const { return mDepth.height(); }
+
 };
 
 #endif /* SHADERS_H_ */

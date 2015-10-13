@@ -142,8 +142,7 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     const int height = 480*2;
 
     //Renderer
-    typedef Renderer<typename FragmentShader::OutType, typename FragmentShader::Traits, width, height> RendererType;
-    RendererType renderer;
+    Renderer renderer;
 
     cimg_library::CImgDisplay disp;
     cimg_library::CImg<unsigned char> img(width, height, 1, 3);
@@ -161,7 +160,7 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
         vertexShader.modelViewMatrix() *= rotMatrix;
 
         t.reset();
-        renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
+        renderer.render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
         float us = t.getUS();
         printf("%2.2f fps\n", 1.0 / (us / 1000.0 / 1000.0));
 
@@ -188,11 +187,7 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
     const int height = 480*2;
 
     //Renderers
-    typedef Renderer<typename FragmentGenShader::OutType, typename FragmentGenShader::Traits, 2048, 2048> ShadowRendererType;
-    ShadowRendererType shadowRenderer;
-
-    typedef Renderer<typename FragmentShader::OutType, typename FragmentShader::Traits, width, height> RendererType;
-    RendererType renderer;
+    Renderer renderer;
 
     cimg_library::CImgDisplay disp;
     cimg_library::CImg<unsigned char> img(width, height, 1, 3);
@@ -211,11 +206,11 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
         vertexShader.modelViewMatrix() *= rotMatrix;
 
         //Render shadow depth
-        shadowRenderer.template render<typename Mesh::value_type>(mesh, vertexGenShader, fragmentGenShader, shadowRasteShader);
+        renderer.render<typename Mesh::value_type>(mesh, vertexGenShader, fragmentGenShader, shadowRasteShader);
 
         depthTexture.mirror('y'); //TODO: Investigate
 
-        renderer.template render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
+        renderer.render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
 
         img.mirror('y'); //TODO: Investigate
         disp.display(img);

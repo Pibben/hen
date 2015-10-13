@@ -63,7 +63,6 @@ public:
 
 
 
-template <class FragOutType, class Traits, int RES_X, int RES_Y>
 class Renderer {
 
 private:
@@ -256,7 +255,6 @@ public:
 
         static_assert(std::is_same<VertInType, typename VertexShader::InType>::value, "Error");
         static_assert(std::is_same<typename VertexShader::OutType, typename FragmentShader::InType>::value, "Error");
-        static_assert(std::is_same<typename FragmentShader::OutType, FragOutType>::value, "Error");
         static_assert(std::is_same<typename FragmentShader::OutType, typename RasterShader::InType>::value, "Error");
 
         typedef typename VertexShader::OutType VertOutFragInType;
@@ -277,12 +275,14 @@ public:
 
         //Now in NDC
 
-        std::for_each(immStore.begin(), immStore.end(), [this](VertOutFragInType& vert) {
+        const unsigned int xres = rasterShader.getXResolution();
+        const unsigned int yres = rasterShader.getYResolution();
+        std::for_each(immStore.begin(), immStore.end(), [this, xres, yres](VertOutFragInType& vert) {
             auto& pos = std::get<POSITION_INDEX>(vert);
             pos = pos + ScreenPosType(1.0, 1.0, 1.0, 0.0); //TODO: Fix
             pos = pos.cwiseQuotient(ScreenPosType(2.0, 2.0, 2.0, 1.0));
-            pos[0] *= RES_X;
-            pos[1] *= RES_Y;
+            pos[0] *= xres;
+            pos[1] *= yres;
         });
 
         //Now in screen space
