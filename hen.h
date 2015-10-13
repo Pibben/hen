@@ -42,18 +42,17 @@ Tuple tupleAddScaled(const Tuple& a, const Tuple& b, float s) {
     return c;
 }
 
-template <class VertOutFragIn>
+template <class Type>
 class TupleInterpolator {
-    typedef VertOutFragIn VertOutFragInType;
-    VertOutFragIn mStart;
-    VertOutFragIn mDelta;
+    Type mStart;
+    Type mDelta;
 public:
-    TupleInterpolator(const VertOutFragIn& in1, const VertOutFragIn& in2) {
+    TupleInterpolator(const Type& in1, const Type& in2) {
         mStart = in1;
         mDelta = tupleDiff(in2, in1);
     }
-    
-    VertOutFragIn run(float val) {
+
+    Type run(float val) {
         assert(val >= 0.0);
         assert(val <= 1.0);
         
