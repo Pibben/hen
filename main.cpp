@@ -7,21 +7,20 @@
 #include <chrono>
 #include <thread>
 
-#include <Eigen/Dense>
-
 #include "hen.h"
 #include "io.h"
 #include "stdcomp/shaders.h"
 #include "utils.h"
+#include "veclib.h"
 
 #include "CImg.h"
 
 
-typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> PositionAndColor;
-std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const Eigen::Vector4f& color) {
-    std::vector<Eigen::Vector3f> vertices;
-    std::vector<Eigen::Vector2f> uvs;
-    std::vector<Eigen::Vector3f> normals;
+typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> PositionAndColor;
+std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const VecLib::Vector4f& color) {
+    std::vector<VecLib::Vector3f> vertices;
+    std::vector<VecLib::Vector2f> uvs;
+    std::vector<VecLib::Vector3f> normals;
     std::vector<Face> faces;
 
     loadObj(filename, vertices, uvs, normals, faces);
@@ -32,8 +31,8 @@ std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const E
     for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
-            Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.topRows<3>() = vertices[f.coords[i]];
+            VecLib::Vector4f v = VecLib::Vector4f::Ones(); //TODO
+            v = vertices[f.coords[i]];
             m.emplace_back(v, color);
         }
     }
@@ -41,11 +40,11 @@ std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const E
     return m;
 }
 
-typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> PositionAndUv;
+typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f> PositionAndUv;
 std::vector<PositionAndUv> loadMeshUv(const std::string &filename) {
-    std::vector<Eigen::Vector3f> vertices;
-    std::vector<Eigen::Vector2f> uvs;
-    std::vector<Eigen::Vector3f> normals;
+    std::vector<VecLib::Vector3f> vertices;
+    std::vector<VecLib::Vector2f> uvs;
+    std::vector<VecLib::Vector3f> normals;
     std::vector<Face> faces;
 
     loadObj(filename, vertices, uvs, normals, faces);
@@ -56,8 +55,8 @@ std::vector<PositionAndUv> loadMeshUv(const std::string &filename) {
     for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
-            Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.topRows<3>() = vertices[f.coords[i]];
+            VecLib::Vector4f v = VecLib::Vector4f::Ones(); //TODO
+            v = vertices[f.coords[i]];
             m.emplace_back(v, uvs[f.uvs[i]]);
         }
     }
@@ -65,11 +64,11 @@ std::vector<PositionAndUv> loadMeshUv(const std::string &filename) {
     return m;
 }
 
-typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> PositionAndNormal;
+typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> PositionAndNormal;
 static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename) {
-    std::vector<Eigen::Vector3f> vertices;
-    std::vector<Eigen::Vector2f> uvs;
-    std::vector<Eigen::Vector3f> normals;
+    std::vector<VecLib::Vector3f> vertices;
+    std::vector<VecLib::Vector2f> uvs;
+    std::vector<VecLib::Vector3f> normals;
     std::vector<Face> faces;
 
     loadObj(filename, vertices, uvs, normals, faces);
@@ -80,7 +79,7 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
     for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
 
-        Eigen::Vector3f vs[3];
+        VecLib::Vector3f vs[3];
 
         for(int i = 0; i < 3; ++i) {
             vs[i] = vertices[f.coords[i]];
@@ -88,12 +87,12 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
 
         for(int i = 0; i < 3; ++i) {
 #if 0
-            const Eigen::Vector3f norm = (vs[1]-vs[0]).cross(vs[2]-vs[0]);
+            const VecLib::Vector3f norm = (vs[1]-vs[0]).cross(vs[2]-vs[0]);
 #else
-            const Eigen::Vector3f norm = normals[f.coords[i]];
+            const VecLib::Vector3f norm = normals[f.coords[i]];
 #endif
-            Eigen::Vector4f v = Eigen::Vector4f::Ones();
-            v.topRows<3>() = vs[i];
+            VecLib::Vector4f v = VecLib::Vector4f::Ones(); //TODO
+            v = vs[i];
             m.emplace_back(v, norm);
         }
     }
@@ -147,16 +146,16 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
     cimg_library::CImg<float> zbuffer(width, height);
 
-    Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
-    Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
-    rotMatrix.topLeftCorner<3,3>() = aa.matrix();
+    //VecLib::AngleAxisf aa((1/180.0)*M_PI, VecLib::Vector3f::UnitY());
+    //VecLib::Matrix4f rotMatrix = VecLib::Matrix4f::Identity();
+    //rotMatrix.topLeftCorner<3,3>() = aa.matrix();
 
     CImgColorRasterShader rasterShader(framebuffer, zbuffer);
 
     Timer<1> t;
 
     while(true) {
-        vertexShader.modelViewMatrix() *= rotMatrix;
+        //vertexShader.modelViewMatrix() *= rotMatrix;
 
         t.reset();
         renderer.render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
@@ -191,9 +190,9 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
     cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
     cimg_library::CImg<float> zbuffer(width, height);
 
-    Eigen::AngleAxisf aa((1/180.0)*M_PI, Eigen::Vector3f::UnitY());
-    Eigen::Matrix4f rotMatrix = Eigen::Matrix4f::Identity();
-    rotMatrix.topLeftCorner<3,3>() = aa.matrix();
+    //VecLib::AngleAxisf aa((1/180.0)*M_PI, VecLib::Vector3f::UnitY());
+    //VecLib::Matrix4f rotMatrix = VecLib::Matrix4f::Identity();
+    //rotMatrix.topLeftCorner<3,3>() = aa.matrix();
 
     auto& depthTexture = fragmentShader.getDepthTexture(); //TODO: Who should own the shadow depth buffer?
 
@@ -201,7 +200,7 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
     CImgColorRasterShader rasterShader(framebuffer, zbuffer);
 
     while(true) {
-        vertexShader.modelViewMatrix() *= rotMatrix;
+        //vertexShader.modelViewMatrix() *= rotMatrix;
 
         //Render shadow depth
         renderer.render<typename Mesh::value_type>(mesh, vertexGenShader, fragmentGenShader, shadowRasteShader);
@@ -228,7 +227,7 @@ void texture() {
     animate(m, vertexShader, fragmentShader);
 }
 
-void color(const Eigen::Vector4f &color) {
+void color(const VecLib::Vector4f &color) {
     ColorVertexShader vertexShader;
     ColorFragmentShader fragmentShader;
 
@@ -248,7 +247,7 @@ void multiTexture() {
 }
 
 void flatShading() {
-    FlatVertexShader vertexShader(Eigen::Vector3f(100,100,100));
+    FlatVertexShader vertexShader(VecLib::Vector3f(100,100,100));
     ColorFragmentShader fragmentShader;
 
     auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
@@ -257,7 +256,7 @@ void flatShading() {
 }
 
 void phongShading() {
-    PhongVertexShader vertexShader(Eigen::Vector3f(100,100,100));
+    PhongVertexShader vertexShader(VecLib::Vector3f(100,100,100));
     PhongFragmentShader fragmentShader;
 
     auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
@@ -284,7 +283,7 @@ void cubeMap() {
 }
 
 void shadow() {
-    const auto lightPos = Eigen::Vector3f(5,5,5);
+    const auto lightPos = VecLib::Vector3f(5,5,5);
     const auto shadowProjectionMatrix = proj(-1, 1, -1, 1, 1, 1000);
     const auto shadowModelViewMatrix  = lookAt(lightPos, {0, 0, 0}, {0, 1, 0});
 
@@ -322,12 +321,12 @@ void shaderToy() {
     cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
     cimg_library::CImg<float> zbuffer(width, height);
 
-    Eigen::Vector2f v1(-1.0f, -1.0f);
-    Eigen::Vector2f v2(-1.0f, 1.0f);
-    Eigen::Vector2f v3(1.0f, 1.0f);
-    Eigen::Vector2f v4(1.0f, -1.0f);
+    VecLib::Vector2f v1(-1.0f, -1.0f);
+    VecLib::Vector2f v2(-1.0f, 1.0f);
+    VecLib::Vector2f v3(1.0f, 1.0f);
+    VecLib::Vector2f v4(1.0f, -1.0f);
 
-    typedef std::vector<std::tuple<Eigen::Vector2f>> MeshType;
+    typedef std::vector<std::tuple<VecLib::Vector2f>> MeshType;
 
     MeshType mesh { std::make_tuple(v1), std::make_tuple(v3), std::make_tuple(v2),
                     std::make_tuple(v1), std::make_tuple(v4), std::make_tuple(v3) };

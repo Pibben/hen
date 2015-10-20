@@ -9,11 +9,14 @@
 #include <array>
 #include <cassert>
 #include <cstdio>
+#include <cmath>
 #include <iostream>
 #include <tuple>
 #include <utility>
 #include <vector>
 #include <type_traits>
+
+#include "veclib.h"
 
 template<std::size_t I = 0, typename FuncT, typename ... Tp>
 inline typename std::enable_if<I == sizeof...(Tp), void>::type
@@ -187,9 +190,9 @@ private:
     }
 
     template <class Vertex>
-    Eigen::Vector3f cross3(const Vertex& v1, const Vertex& v2) {
-        Eigen::Vector3f p1 = v1.template block<3,1>(0,0);
-        Eigen::Vector3f p2 = v2.template block<3,1>(0,0);
+    VecLib::Vector3f cross3(const Vertex& v1, const Vertex& v2) {
+        VecLib::Vector3f p1 = v1;
+        VecLib::Vector3f p2 = v2;
         return p1.cross(p2);
     }
 
@@ -279,7 +282,7 @@ public:
         std::for_each(immStore.begin(), immStore.end(), [this, xres, yres](VertOutFragInType& vert) {
             auto& pos = std::get<POSITION_INDEX>(vert);
             pos = pos + ScreenPosType(1.0, 1.0, 1.0, 0.0); //TODO: Fix
-            pos = pos.cwiseQuotient(ScreenPosType(2.0, 2.0, 2.0, 1.0));
+            pos = pos / ScreenPosType(2.0, 2.0, 2.0, 1.0);
             pos[0] *= xres;
             pos[1] *= yres;
         });

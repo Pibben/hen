@@ -19,6 +19,6 @@ set(SOURCE_FILES
     hen.h
     io.h
     main.cpp
-    utils.h)
+    utils.h veclib.h)
 
 add_executable(hen ${SOURCE_FILES})

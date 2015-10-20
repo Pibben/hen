@@ -8,23 +8,23 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <Eigen/Dense>
+#include "veclib.h"
 
 #include "CImg.h"
 
 struct EmptyUniform {};
 
-inline Eigen::Vector3f reflect(const Eigen::Vector3f& R, const Eigen::Vector3f& N) {
-    Eigen::Vector3f Rout = R - 2.0*N.dot(R)*N;
+inline VecLib::Vector3f reflect(const VecLib::Vector3f& R, const VecLib::Vector3f& N) {
+    VecLib::Vector3f Rout = R - 2.0f*N.dot(R)*N;
 
     return Rout;
 }
 
 
-inline Eigen::Matrix4f ortho(float left, float right,
+inline VecLib::Matrix4f ortho(float left, float right,
                              float bottom, float top,
                              float near, float far) {
-    Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
+    VecLib::Matrix4f m = VecLib::Matrix4f::Identity();
     m(0,0) = 2.0/(right - left);
     m(1,1) = 2.0/(top - bottom);
     m(2,2) = 2.0/(near - far);
@@ -36,10 +36,10 @@ inline Eigen::Matrix4f ortho(float left, float right,
     return m;
 }
 
-inline Eigen::Matrix4f proj(float left, float right,
+inline VecLib::Matrix4f proj(float left, float right,
                              float bottom, float top,
                              float near, float far) {
-    Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
+    VecLib::Matrix4f m = VecLib::Matrix4f::Identity();
     m(0,0) = 2.0f*near/(right - left);
     m(1,1) = 2.0f*near/(top - bottom);
     m(2,2) = 2.0f/(near - far);
@@ -54,9 +54,9 @@ inline Eigen::Matrix4f proj(float left, float right,
     return m;
 }
 
-inline Eigen::Matrix4f scaleBiasMatrix() {
-    Eigen::Matrix4f scaleBias = Eigen::Matrix4f::Identity()*0.5f;
-    scaleBias.block<4,1>(0,3) += Eigen::Vector4f(1,1,1,1)*0.5;
+inline VecLib::Matrix4f scaleBiasMatrix() {
+    VecLib::Matrix4f scaleBias = VecLib::Matrix4f::Identity()*0.5f;
+    //scaleBias.block<4,1>(0,3) += VecLib::Vector4f(1,1,1,1)*0.5; //TODO
     return scaleBias;
 }
 
@@ -71,24 +71,24 @@ T normalize(T val) {
     return val;
 }
 
-inline Eigen::Matrix4f lookAt(const Eigen::Vector3f& eye, const Eigen::Vector3f& center, const Eigen::Vector3f& up) {
-    const Eigen::Vector3f F = center - eye;
-    const Eigen::Vector3f f = normalize(F);
+inline VecLib::Matrix4f lookAt(const VecLib::Vector3f& eye, const VecLib::Vector3f& center, const VecLib::Vector3f& up) {
+    const VecLib::Vector3f F = center - eye;
+    const VecLib::Vector3f f = normalize(F);
 
-    const Eigen::Vector3f UP = normalize(up);
+    const VecLib::Vector3f UP = normalize(up);
 
-    const Eigen::Vector3f s = f.cross(UP);
-    const Eigen::Vector3f u = normalize(s).cross(f);
+    const VecLib::Vector3f s = f.cross(UP);
+    const VecLib::Vector3f u = normalize(s).cross(f);
 
-    Eigen::Matrix4f M = Eigen::Matrix4f::Identity();
+    VecLib::Matrix4f M = VecLib::Matrix4f::Identity();
 
-    M.block<1,3>(0,0) = s;
-    M.block<1,3>(1,0) = u;
-    M.block<1,3>(2,0) = -f;
+    //M.block<1,3>(0,0) = s;
+   // M.block<1,3>(1,0) = u;
+    //M.block<1,3>(2,0) = -f;
 
-    Eigen::Affine3f transform((Eigen::Translation3f(-eye)));
+   // VecLib::Affine3f transform((VecLib::Translation3f(-eye)));
 
-    return M * transform.matrix();
+    return M;// * transform.matrix();
 }
 
 inline cimg_library::CImg<unsigned char> normalizeDepth(cimg_library::CImg<float>& depth) {

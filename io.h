@@ -17,8 +17,8 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <Eigen/Dense>
 
-inline Eigen::Vector3f parseVertex(const std::string& str) {
-    Eigen::Vector3f v;
+inline VecLib::Vector3f parseVertex(const std::string& str) {
+    VecLib::Vector3f v;
     std::istringstream ss(str);
 
     ss >> v[0];
@@ -28,8 +28,8 @@ inline Eigen::Vector3f parseVertex(const std::string& str) {
     return v;
 }
 
-inline Eigen::Vector2f parseTexcoord(const std::string& str) {
-    Eigen::Vector2f v;
+inline VecLib::Vector2f parseTexcoord(const std::string& str) {
+    VecLib::Vector2f v;
     std::istringstream ss(str);
 
     ss >> v[0];
@@ -98,9 +98,9 @@ inline void parseSmooth(const std::string& /*str*/) {
 
 
 inline void loadObj(const std::string& filename,
-                    std::vector<Eigen::Vector3f>& vertices,
-                    std::vector<Eigen::Vector2f>& uvs,
-                    std::vector<Eigen::Vector3f>& normals,
+                    std::vector<VecLib::Vector3f>& vertices,
+                    std::vector<VecLib::Vector2f>& uvs,
+                    std::vector<VecLib::Vector3f>& normals,
                     std::vector<Face>& faces) {
     std::ifstream file(filename);
 
