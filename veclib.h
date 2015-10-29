@@ -197,6 +197,7 @@ public:
 
     Vector4(const Vector3<T>& vec3) {
         //TODO:
+        assert(0);
     }
 
     const Vector4& operator=(const Vector3<T>& vec3) {
@@ -415,6 +416,8 @@ Matrix4x4<T> operator*(const Matrix4x4<T>& v, T s) {
     return v.getScaled(s);
 }
 
+using Matrix3f = Matrix3x3<float>;
+using Matrix4f = Matrix4x4<float>;
 using Matrix3f = Matrix3x3<float>;
 using Matrix4f = Matrix4x4<float>;
 using Matrix3x3f = Matrix3x3<float>;
