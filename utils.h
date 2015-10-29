@@ -74,11 +74,14 @@ T normalize(T val) {
 inline Eigen::Matrix4f lookAt(const Eigen::Vector3f& eye, const Eigen::Vector3f& center, const Eigen::Vector3f& up) {
     const Eigen::Vector3f F = center - eye;
     const Eigen::Vector3f f = normalize(F);
+    //std::cout << "f: " << f << std::endl;
 
     const Eigen::Vector3f UP = normalize(up);
 
     const Eigen::Vector3f s = f.cross(UP);
+    //std::cout << "s: " << s << std::endl;
     const Eigen::Vector3f u = normalize(s).cross(f);
+    //std::cout << "u: " << u << std::endl;
 
     Eigen::Matrix4f M = Eigen::Matrix4f::Identity();
 
