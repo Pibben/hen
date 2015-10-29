@@ -318,6 +318,22 @@ public:
 #undef ROW
     }
 
+    T& operator[](int idx) {
+        return m[idx];
+    }
+
+    const T& operator[](int idx) const {
+        return m[idx];
+    }
+
+    T& operator()(int x, int y) {
+        return m[x+y*STEP];
+    }
+
+    const T& operator()(int x, int y) const {
+        return m[x+y*STEP];
+    }
+
     Matrix3x3 operator*(const Matrix3x3& o) const {
         Matrix3x3 r;
 
@@ -337,6 +353,19 @@ public:
                           m[0+2*STEP]*o[0] + m[1+2*STEP]*o[1] + m[2+2*STEP]*o[2]);
     }
 
+    static Matrix3x3 Zeros() {
+        Matrix3x3 retval(T(0));
+        return retval;
+    }
+
+    static Matrix3x3 Identity() {
+        Matrix3x3 retval = Zeros();
+        retval[0]        = T(1);
+        retval[1+1*STEP] = T(1);
+        retval[2+2*STEP] = T(1);
+
+        return retval;
+    }
 };
 
 template <class T>
@@ -361,6 +390,15 @@ public:
         std::fill(m, m+16, val);
     }
 
+    Matrix4x4(const Matrix3x3<T>& m3) {
+#define ROW(r) m[0+r*STEP] = m3[0+r*3]; m[1+r*STEP] = m3[1+r*3]; m[2+r*STEP] = m3[2+r*3]
+        ROW(0);
+        ROW(1);
+        ROW(2);
+#undef ROW
+        m[3+3*STEP] = T(1.0);
+    }
+
     T& operator[](int idx) {
         return m[idx];
     }
@@ -377,6 +415,9 @@ public:
         return m[x+y*STEP];
     }
 
+    void operator*=(const Matrix4x4& o) {
+        *this = *this * o;
+    }
 
     Matrix4x4 operator*(const Matrix4x4& o) const {
         Matrix4x4 r;

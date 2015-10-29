@@ -20,6 +20,18 @@ inline VecLib::Vector3f reflect(const VecLib::Vector3f& R, const VecLib::Vector3
     return Rout;
 }
 
+inline VecLib::Matrix3f rotateY(float radians) {
+    VecLib::Matrix3f m = VecLib::Matrix3f::Identity();
+    float sinTheta = std::sin(radians); //TODO: sincos
+    float cosTheta = std::cos(radians);
+    m(0, 0) = cosTheta;
+    m(2, 0) = sinTheta;
+    m(0, 2) = -sinTheta;
+    m(2, 2) = cosTheta;
+
+    return m;
+}
+
 
 //TODO: Verify
 inline VecLib::Matrix4f ortho(float left, float right,

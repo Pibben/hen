@@ -146,16 +146,14 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
     cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
     cimg_library::CImg<float> zbuffer(width, height);
 
-    //VecLib::AngleAxisf aa((1/180.0)*M_PI, VecLib::Vector3f::UnitY());
-    //VecLib::Matrix4f rotMatrix = VecLib::Matrix4f::Identity();
-    //rotMatrix.topLeftCorner<3,3>() = aa.matrix();
+    VecLib::Matrix4f rotMatrix = rotateY(1/180.0*M_PI);
 
     CImgColorRasterShader rasterShader(framebuffer, zbuffer);
 
     Timer<1> t;
 
     while(true) {
-        //vertexShader.modelViewMatrix() *= rotMatrix;
+        vertexShader.modelViewMatrix() *= rotMatrix;
 
         t.reset();
         renderer.render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
