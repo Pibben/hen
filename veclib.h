@@ -93,13 +93,11 @@ public:
 
     Vector3(T v1, T v2, T v3) {
         m[0] = v1;
-        m[1] = v1;
-        m[2] = v1;
+        m[1] = v2;
+        m[2] = v3;
     }
 
-    Vector3(const Vector4<T>& v4) {
-        Vector3(v4[0], v4[1], v4[2]);
-    }
+    Vector3(const Vector4<T>& v4) : Vector3(v4[0], v4[1], v4[2]) {}
 
     const T& operator[](int idx) const {
         return m[idx];
@@ -182,9 +180,7 @@ public:
         m[0] = m[1] = m[2] = m[3] = value;
     }
 
-    Vector4(const Vector2<T>& v, T v1, T v2) {
-        Vector4(v[0], v[1], v1, v2);
-    }
+    Vector4(const Vector2<T>& v, T v1, T v2) : Vector4(v[0], v[1], v1, v2) {}
 
     Vector4(T v1, T v2, T v3, T v4) {
         m[0] = v1;
@@ -193,9 +189,7 @@ public:
         m[3] = v4;
     }
 
-    Vector4(const Vector3<T>& vec3, T v) {
-        Vector4(vec3[0], vec3[1], vec3[2], v);
-    }
+    Vector4(const Vector3<T>& vec3, T v) : Vector4(vec3[0], vec3[1], vec3[2], v) {}
 
     Vector4(const Vector3<T>& vec3) {
         //TODO:

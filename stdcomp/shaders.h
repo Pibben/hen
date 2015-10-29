@@ -714,22 +714,26 @@ public:
         //printf("%f\n", iGlobalTime);
     }
 
+
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        using vec2 = VecLib::Vector2f;
+        using vec3 = VecLib::Vector3f;
+
+        const VecLib::Vector4f& fragCoord   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
 
         //https://www.shadertoy.com/view/4dsGzH
-        VecLib::Vector3f COLOR1 = VecLib::Vector3f(0.0, 0.0, 0.3);
-        VecLib::Vector3f COLOR2 = VecLib::Vector3f(0.5, 0.0, 0.0);
-        float BLOCK_WIDTH = 0.01;
+        static const VecLib::Vector3f iResolution(640, 480, 1.0);
 
-        VecLib::Vector3f iResolution(640, 480, 1.0);
+        static const vec3 COLOR1 = vec3(0.0, 0.0, 0.3);
+        static const vec3 COLOR2 = vec3(0.5, 0.0, 0.0);
+        static const float BLOCK_WIDTH = 0.01;
 
-        VecLib::Vector2f uv = pos.xy() / iResolution.xy();
+        vec2 uv = fragCoord.xy() / iResolution.xy();
 
         // To create the BG pattern
-        VecLib::Vector3f final_color;
-        VecLib::Vector3f bg_color;
-        VecLib::Vector3f wave_color = VecLib::Vector3f(0.0, 0.0, 0.0);
+        vec3 final_color = vec3(1.0);
+        vec3 bg_color = vec3(0.0);
+        vec3 wave_color = vec3(0.0);
 
         float c1 = mod(uv.x(), 2.0 * BLOCK_WIDTH);
         c1 = step(BLOCK_WIDTH, c1);
@@ -743,16 +747,15 @@ public:
         // To create the waves
         float wave_width = 0.01;
         uv  = -1.0f + 2.0f * uv;
-        uv.y() += 0.1f;
-        for(float i = 0.0f; i < 10.0f; i++) {
+        uv.y() += 0.1;
+        for(float i = 0.0; i < 10.0; i++) {
 
-            uv.y() += (0.07f * std::sin(uv.x() + i/7.0f + iGlobalTime ));
-            wave_width = std::abs(1.0f / (150.0f * uv.y()));
-            wave_color += VecLib::Vector3f(wave_width * 1.9f, wave_width, wave_width * 1.5f);
+            uv.y() += (0.07 * std::sin(uv.x() + i/7.0 + iGlobalTime ));
+            wave_width = std::abs(1.0 / (150.0 * uv.y()));
+            wave_color += vec3(wave_width * 1.9, wave_width, wave_width * 1.5);
         }
 
         final_color = bg_color + wave_color;
-
 
         VecLib::Vector4f color(final_color, 1.0);
         return std::make_tuple(color * 255.0f, 0.2f);
