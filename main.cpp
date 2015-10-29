@@ -354,8 +354,33 @@ void shaderToy() {
     }
 }
 
+void libtest() {
+    Eigen::Matrix4f m = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0});
+    std::cout << m * Eigen::Vector4f(1, 0, 0, 0) << std::endl;
+    std::cout << m * Eigen::Vector4f(0, 1, 0, 0) << std::endl;
+    std::cout << m * Eigen::Vector4f(0, 0, 1, 0) << std::endl;
+    std::cout << m * Eigen::Vector4f(0, 0, 0, 1) << std::endl;
+    /*
+        0.707107
+        0
+        0
+        0
+        0
+        0.707107
+        0.707107
+        0
+        0
+        -0.707107
+        0.707107
+        0
+        0
+        0
+        -9.8995
+     */
+}
+
 int main(int argc, char** argv) {
-    shaderToy();
+    libtest();
 }
 
 
