@@ -114,6 +114,8 @@ inline cimg_library::CImg<unsigned char> normalizeDepth(cimg_library::CImg<float
 template <int enable>
 struct Timer {
     void report(const std::string&) {}
+    float getUS() {return 0;}
+    void reset() {}
 };
 
 template <>
