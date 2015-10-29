@@ -82,13 +82,31 @@ inline VecLib::Matrix4f lookAt(const VecLib::Vector3f& eye, const VecLib::Vector
 
     VecLib::Matrix4f M = VecLib::Matrix4f::Identity();
 
+    M(0, 0) = s[0];
+    M(0, 1) = s[1];
+    M(0, 2) = s[2];
+
+    M(1, 0) = u[0];
+    M(1, 1) = u[1];
+    M(1, 2) = u[2];
+
+    M(2, 0) = -f[0];
+    M(2, 1) = -f[1];
+    M(2, 2) = -f[2];
+
     //M.block<1,3>(0,0) = s;
    // M.block<1,3>(1,0) = u;
     //M.block<1,3>(2,0) = -f;
 
    // VecLib::Affine3f transform((VecLib::Translation3f(-eye)));
 
-    return M;// * transform.matrix();
+    VecLib::Matrix4f tm = VecLib::Matrix4f::Identity();
+
+    tm(3, 0) = -eye[0];
+    tm(3, 1) = -eye[1];
+    tm(3, 2) = -eye[2];
+
+    return M * tm;
 }
 
 inline cimg_library::CImg<unsigned char> normalizeDepth(cimg_library::CImg<float>& depth) {
