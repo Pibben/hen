@@ -150,6 +150,11 @@ public:
         m[1] += other[1];
         m[2] += other[2];
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const Vector3& v) {
+        os << v.m[0] << " " << v.m[1] << " " << v.m[2];
+        return os;
+    }
 };
 
 template <class T>
