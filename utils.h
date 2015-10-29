@@ -21,6 +21,7 @@ inline VecLib::Vector3f reflect(const VecLib::Vector3f& R, const VecLib::Vector3
 }
 
 
+//TODO: Verify
 inline VecLib::Matrix4f ortho(float left, float right,
                              float bottom, float top,
                              float near, float far) {
@@ -29,9 +30,9 @@ inline VecLib::Matrix4f ortho(float left, float right,
     m(1,1) = 2.0/(top - bottom);
     m(2,2) = 2.0/(near - far);
 
-    m(0,3) = (left+right)/(left-right);
-    m(1,3) = (bottom+top)/(bottom-top);
-    m(2,3) = (far+near)/(far-near);
+    m(3,0) = (left+right)/(left-right);
+    m(3,1) = (bottom+top)/(bottom-top);
+    m(3,2) = (far+near)/(far-near);
 
     return m;
 }
@@ -44,12 +45,12 @@ inline VecLib::Matrix4f proj(float left, float right,
     m(1,1) = 2.0f*near/(top - bottom);
     m(2,2) = 2.0f/(near - far);
 
-    m(0,2) = (right+left)/(right-left);
-    m(1,2) = (top+bottom)/(top-bottom);
+    m(2,0) = (right+left)/(right-left);
+    m(2,1) = (top+bottom)/(top-bottom);
     m(2,2) = (near+far)/(near-far);
-    m(3,2) = -1.0f;
+    m(2,3) = -1.0f;
 
-    m(2,3) = 2*near*far / (near-far);
+    m(3,2) = 2*near*far / (near-far);
 
     return m;
 }
@@ -83,15 +84,15 @@ inline VecLib::Matrix4f lookAt(const VecLib::Vector3f& eye, const VecLib::Vector
     VecLib::Matrix4f M = VecLib::Matrix4f::Identity();
 
     M(0, 0) = s[0];
-    M(0, 1) = s[1];
-    M(0, 2) = s[2];
+    M(1, 0) = s[1];
+    M(2, 0) = s[2];
 
-    M(1, 0) = u[0];
+    M(0, 1) = u[0];
     M(1, 1) = u[1];
-    M(1, 2) = u[2];
+    M(2, 1) = u[2];
 
-    M(2, 0) = -f[0];
-    M(2, 1) = -f[1];
+    M(0, 2) = -f[0];
+    M(1, 2) = -f[1];
     M(2, 2) = -f[2];
 
     //M.block<1,3>(0,0) = s;
