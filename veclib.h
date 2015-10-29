@@ -125,7 +125,7 @@ public:
 
     Vector3 cross(const Vector3& o) const {
         return Vector3(m[1]*o[2]-m[2]*o[1],
-                       m[0]*o[2]-m[2]*o[0],
+                       m[2]*o[0]-m[0]*o[2],
                        m[0]*o[1]-m[1]*o[0]);
     }
 
