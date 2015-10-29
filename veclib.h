@@ -311,7 +311,7 @@ class Matrix3x3 {
     static const int STEP = 3;
 public:
     Matrix3x3(const Matrix4x4<T>& m4) {
-#define ROW(r) m[0+r*STEP] = m4[0+r*STEP]; m[1+r*STEP] = m4[1+r*STEP]; m[2+r*STEP] = m4[2+r*STEP]
+#define ROW(r) m[0+r*STEP] = m4[0+r*4]; m[1+r*STEP] = m4[1+r*4]; m[2+r*STEP] = m4[2+r*4]
         ROW(0);
         ROW(1);
         ROW(2);
