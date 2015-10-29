@@ -38,6 +38,10 @@ public:
     GEN_ACCESS1(y, 1);
 #undef GEN_ACESS2
 
+    friend std::ostream& operator<<(std::ostream& os, const Vector2& v) {
+        os << v.m[0] << " " << v.m[1];
+        return os;
+    }
 };
 
 template <class T>
@@ -251,6 +255,11 @@ public:
 
     Vector4 operator+(const Vector4& o) {
         return Vector4(m[0]+o[0], m[1]+o[1], m[2]+o[2], m[3]+o[3]);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Vector4& v) {
+        os << v.m[0] << " " << v.m[1] << " " << v.m[2] << " " << v.m[3];
+        return os;
     }
 };
 
