@@ -205,6 +205,10 @@ public:
         assert(0);
     }
 
+    void fill(T value) {
+        std::fill(m, m+4, value);
+    }
+
     const Vector4& operator=(const Vector3<T>& vec3) {
         m[0] = vec3[0];
         m[1] = vec3[1];
@@ -259,6 +263,13 @@ public:
         m[3] /= s;
     }
 
+    void operator*=(T s) {
+        m[0] *= s;
+        m[1] *= s;
+        m[2] *= s;
+        m[3] *= s;
+    }
+
     Vector4 operator+(const Vector4& o) {
         return Vector4(m[0]+o[0], m[1]+o[1], m[2]+o[2], m[3]+o[3]);
     }
@@ -307,15 +318,13 @@ class Matrix4x4;
 
 template <class T>
 class Matrix3x3 {
-    T m[9];
+    Vector3<T> m[3];
     static const int STEP = 3;
 public:
     Matrix3x3(const Matrix4x4<T>& m4) {
-#define ROW(r) m[0+r*STEP] = m4[0+r*4]; m[1+r*STEP] = m4[1+r*4]; m[2+r*STEP] = m4[2+r*4]
-        ROW(0);
-        ROW(1);
-        ROW(2);
-#undef ROW
+        for(int i = 0; i < 3; ++i) {
+            m[i] = m4[i];
+        }
     }
 
     T& operator[](int idx) {
@@ -370,13 +379,17 @@ public:
 
 template <class T>
 class Matrix4x4 {
-    T m[16];
+    Vector4<T> m[4];
     static const int STEP = 4;
+
+    Vector4<T> getRow(int i) const {
+        return Vector4<T>(m[0][i], m[1][i], m[2][i], m[3][i]);
+    }
 
 public:
     Matrix4x4 getScaled(T scale) const {
         Matrix4x4 r(*this);
-        for(int i = 0; i < 16; ++i) {
+        for(int i = 0; i < 4; ++i) {
             r[i] *= scale;
         }
 
@@ -387,33 +400,24 @@ public:
 
     }
     Matrix4x4(T val) { //TODO
-        std::fill(m, m+16, val);
+        std::for_each(m, m+4, [val](auto v){
+            v.fill(val);
+        });
     }
 
-    Matrix4x4(const Matrix3x3<T>& m3) {
-        std::fill(m, m+16, T(0)); //TODO
-#define ROW(r) m[0+r*STEP] = m3[0+r*3]; m[1+r*STEP] = m3[1+r*3]; m[2+r*STEP] = m3[2+r*3]
-        ROW(0);
-        ROW(1);
-        ROW(2);
-#undef ROW
+    Matrix4x4(const Matrix3x3<T>& m3) : Matrix4x4(T(0)) {
+        for(int i = 0; i < 3; ++i) {
+            m[i] = m3[i];
+        }
         m[3+3*STEP] = T(1.0);
     }
 
-    T& operator[](int idx) {
+    Vector4<T>& operator[](int idx) {
         return m[idx];
     }
 
-    const T& operator[](int idx) const {
+    const Vector4<T>& operator[](int idx) const {
         return m[idx];
-    }
-
-    T& operator()(int x, int y) {
-        return m[x+y*STEP];
-    }
-
-    const T& operator()(int x, int y) const {
-        return m[x+y*STEP];
     }
 
     void operator*=(const Matrix4x4& o) {
@@ -423,22 +427,17 @@ public:
     Matrix4x4 operator*(const Matrix4x4& o) const {
         Matrix4x4 r;
 
-#define ROW(x,y) r[x + y*STEP] = m[0+y*STEP] * o[x] + m[1+y*STEP] * o[x+1*STEP] + m[2+y*STEP] * o[x+2*STEP] + m[3+y*STEP] * o[x+3*STEP]
+        for(int i = 0; i < 4; ++i) {
+            for(int j = 0; j < 4; ++j) {
+                r[i][j] = r[i].dot(getRow(j));
+            }
+        }
 
-        ROW(0, 0); ROW(0, 1); ROW(0, 2); ROW(0, 3);
-        ROW(1, 0); ROW(1, 1); ROW(1, 2); ROW(1, 3);
-        ROW(2, 0); ROW(2, 1); ROW(2, 2); ROW(2, 3);
-        ROW(3, 0); ROW(3, 1); ROW(3, 2); ROW(3, 3);
-
-#undef ROW
         return r;
     }
 
     Vector4<T> operator*(const Vector4<T>& o) const {
-        return Vector4<T>(m[0]*o[0] + m[1]*o[1] + m[2]*o[2] + m[3]*o[3],
-                          m[0+1*STEP]*o[0] + m[1+1*STEP]*o[1] + m[2+1*STEP]*o[2] + m[3+1*STEP]*o[3],
-                          m[0+2*STEP]*o[0] + m[1+2*STEP]*o[1] + m[2+2*STEP]*o[2] + m[3+2*STEP]*o[3],
-                          m[0+3*STEP]*o[0] + m[1+3*STEP]*o[1] + m[2+3*STEP]*o[2] + m[3+3*STEP]*o[3]);
+        return Vector4<T>(getRow(0).dot(o), getRow(1).dot(o), getRow(2).dot(o), getRow(3).dot(o));
     }
 
     static Matrix4x4 Zeros() {
@@ -448,10 +447,10 @@ public:
 
     static Matrix4x4 Identity() {
         Matrix4x4 retval = Zeros();
-        retval[0]        = T(1);
-        retval[1+1*STEP] = T(1);
-        retval[2+2*STEP] = T(1);
-        retval[3+3*STEP] = T(1);
+        retval[0][0] = T(1);
+        retval[1][1] = T(1);
+        retval[2][2] = T(1);
+        retval[3][3] = T(1);
 
         return retval;
     }
