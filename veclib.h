@@ -391,6 +391,7 @@ public:
     }
 
     Matrix4x4(const Matrix3x3<T>& m3) {
+        std::fill(m, m+16, T(0)); //TODO
 #define ROW(r) m[0+r*STEP] = m3[0+r*3]; m[1+r*STEP] = m3[1+r*3]; m[2+r*STEP] = m3[2+r*3]
         ROW(0);
         ROW(1);
