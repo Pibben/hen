@@ -789,9 +789,9 @@ public:
         const auto& color = std::get<ColorAttachment>(fragment);
 
         if(depth > 0.0 && depth < 1.0 && depth < mDepth(x, y)) {
-            mFrame(x, y, 0) = color[0] <= 255 ? color[0] : 255;
-            mFrame(x, y, 1) = color[1] <= 255 ? color[1] : 255;
-            mFrame(x, y, 2) = color[2] <= 255 ? color[2] : 255;
+            mFrame(x, y, 0, 0) = color[0] <= 255 ? color[0] : 255;
+            mFrame(x, y, 0, 1) = color[1] <= 255 ? color[1] : 255;
+            mFrame(x, y, 0, 2) = color[2] <= 255 ? color[2] : 255;
 
             mDepth(x, y) = depth;
         }
