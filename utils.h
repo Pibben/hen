@@ -8,55 +8,68 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <Eigen/Dense>
+#include "veclib.h"
 
 #include "CImg.h"
 
 struct EmptyUniform {};
 
-inline Eigen::Vector3f reflect(const Eigen::Vector3f& R, const Eigen::Vector3f& N) {
-    Eigen::Vector3f Rout = R - 2.0*N.dot(R)*N;
+inline VecLib::Vector3f reflect(const VecLib::Vector3f& R, const VecLib::Vector3f& N) {
+    VecLib::Vector3f Rout = R - 2.0f*N.dot(R)*N;
 
     return Rout;
 }
 
+inline VecLib::Matrix3f rotateY(float radians) {
+    VecLib::Matrix3f m = VecLib::Matrix3f::Identity();
+    float sinTheta = std::sin(radians); //TODO: sincos
+    float cosTheta = std::cos(radians);
+    m(0, 0) = cosTheta;
+    m(2, 0) = sinTheta;
+    m(0, 2) = -sinTheta;
+    m(2, 2) = cosTheta;
 
-inline Eigen::Matrix4f ortho(float left, float right,
+    return m;
+}
+
+
+//TODO: Verify
+inline VecLib::Matrix4f ortho(float left, float right,
                              float bottom, float top,
                              float near, float far) {
-    Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
+    VecLib::Matrix4f m = VecLib::Matrix4f::Identity();
     m(0,0) = 2.0/(right - left);
     m(1,1) = 2.0/(top - bottom);
     m(2,2) = 2.0/(near - far);
 
-    m(0,3) = (left+right)/(left-right);
-    m(1,3) = (bottom+top)/(bottom-top);
-    m(2,3) = (far+near)/(far-near);
+    m(3,0) = (left+right)/(left-right);
+    m(3,1) = (bottom+top)/(bottom-top);
+    m(3,2) = (far+near)/(far-near);
 
     return m;
 }
 
-inline Eigen::Matrix4f proj(float left, float right,
+inline VecLib::Matrix4f proj(float left, float right,
                              float bottom, float top,
                              float near, float far) {
-    Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
+    VecLib::Matrix4f m = VecLib::Matrix4f::Identity();
     m(0,0) = 2.0f*near/(right - left);
     m(1,1) = 2.0f*near/(top - bottom);
     m(2,2) = 2.0f/(near - far);
 
-    m(0,2) = (right+left)/(right-left);
-    m(1,2) = (top+bottom)/(top-bottom);
+    m(2,0) = (right+left)/(right-left);
+    m(2,1) = (top+bottom)/(top-bottom);
     m(2,2) = (near+far)/(near-far);
-    m(3,2) = -1.0f;
+    m(2,3) = -1.0f;
 
-    m(2,3) = 2*near*far / (near-far);
+    m(3,2) = 2*near*far / (near-far);
 
     return m;
 }
 
-inline Eigen::Matrix4f scaleBiasMatrix() {
-    Eigen::Matrix4f scaleBias = Eigen::Matrix4f::Identity()*0.5f;
-    scaleBias.block<4,1>(0,3) += Eigen::Vector4f(1,1,1,1)*0.5;
+inline VecLib::Matrix4f scaleBiasMatrix() {
+    VecLib::Matrix4f scaleBias = VecLib::Matrix4f::Identity()*0.5f;
+    //scaleBias.block<4,1>(0,3) += VecLib::Vector4f(1,1,1,1)*0.5; //TODO
     return scaleBias;
 }
 
@@ -71,27 +84,42 @@ T normalize(T val) {
     return val;
 }
 
-inline Eigen::Matrix4f lookAt(const Eigen::Vector3f& eye, const Eigen::Vector3f& center, const Eigen::Vector3f& up) {
-    const Eigen::Vector3f F = center - eye;
-    const Eigen::Vector3f f = normalize(F);
-    //std::cout << "f: " << f << std::endl;
+inline VecLib::Matrix4f lookAt(const VecLib::Vector3f& eye, const VecLib::Vector3f& center, const VecLib::Vector3f& up) {
+    const VecLib::Vector3f F = center - eye;
+    const VecLib::Vector3f f = normalize(F);
 
-    const Eigen::Vector3f UP = normalize(up);
+    const VecLib::Vector3f UP = normalize(up);
 
-    const Eigen::Vector3f s = f.cross(UP);
-    //std::cout << "s: " << s << std::endl;
-    const Eigen::Vector3f u = normalize(s).cross(f);
-    //std::cout << "u: " << u << std::endl;
+    const VecLib::Vector3f s = f.cross(UP);
+    const VecLib::Vector3f u = normalize(s).cross(f);
 
-    Eigen::Matrix4f M = Eigen::Matrix4f::Identity();
+    VecLib::Matrix4f M = VecLib::Matrix4f::Identity();
 
-    M.block<1,3>(0,0) = s;
-    M.block<1,3>(1,0) = u;
-    M.block<1,3>(2,0) = -f;
+    M(0, 0) = s[0];
+    M(1, 0) = s[1];
+    M(2, 0) = s[2];
 
-    Eigen::Affine3f transform((Eigen::Translation3f(-eye)));
+    M(0, 1) = u[0];
+    M(1, 1) = u[1];
+    M(2, 1) = u[2];
 
-    return M * transform.matrix();
+    M(0, 2) = -f[0];
+    M(1, 2) = -f[1];
+    M(2, 2) = -f[2];
+
+    //M.block<1,3>(0,0) = s;
+   // M.block<1,3>(1,0) = u;
+    //M.block<1,3>(2,0) = -f;
+
+   // VecLib::Affine3f transform((VecLib::Translation3f(-eye)));
+
+    VecLib::Matrix4f tm = VecLib::Matrix4f::Identity();
+
+    tm(3, 0) = -eye[0];
+    tm(3, 1) = -eye[1];
+    tm(3, 2) = -eye[2];
+
+    return M * tm;
 }
 
 inline cimg_library::CImg<unsigned char> normalizeDepth(cimg_library::CImg<float>& depth) {
@@ -117,6 +145,8 @@ inline cimg_library::CImg<unsigned char> normalizeDepth(cimg_library::CImg<float
 template <int enable>
 struct Timer {
     void report(const std::string&) {}
+    float getUS() {return 0;}
+    void reset() {}
 };
 
 template <>

@@ -10,8 +10,6 @@
 
 #include <cmath>
 
-#include <Eigen/Dense>
-
 #include "../utils.h"
 #include "samplers.h"
 
@@ -23,15 +21,15 @@ private:
     };
 
     struct Uniform {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
+        VecLib::Matrix4f projMatrix;
+        VecLib::Matrix4f modelViewMatrix;
     };
 
     Uniform mUniform;
 
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> InType;
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> InType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> OutType;
 
     enum class Traits {
         POSITION_INDEX = 0,
@@ -39,16 +37,16 @@ public:
     };
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        const Eigen::Vector4f& color = std::get<static_cast<int>(InTraits::COLOR_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& color = std::get<static_cast<int>(InTraits::COLOR_INDEX)>(in);
 
-        Eigen::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
+        VecLib::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
 
         return std::make_tuple(outPos, color);
     }
 
-    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class ColorFragmentShader {
@@ -59,8 +57,8 @@ private:
     };
 
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> InType;
-    typedef std::tuple<Eigen::Vector4f, float> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> InType;
+    typedef std::tuple<VecLib::Vector4f, float> OutType;
 
     enum class Traits {
         COLOR_INDEX = 0,
@@ -68,8 +66,8 @@ public:
     };
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        const Eigen::Vector4f& color = std::get<static_cast<int>(InTraits::COLOR_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& color = std::get<static_cast<int>(InTraits::COLOR_INDEX)>(in);
         //assert(pos[2] < 0.0);
 
         return std::make_tuple(color, pos[2]);
@@ -84,14 +82,14 @@ private:
     };
 
     struct Uniform {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
+        VecLib::Matrix4f projMatrix;
+        VecLib::Matrix4f modelViewMatrix;
     };
     Uniform mUniform;
 
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> InType;
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f> InType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float> OutType;
 
     enum class Traits {
         POSITION_INDEX = 0,
@@ -100,19 +98,19 @@ public:
     };
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        const Eigen::Vector2f tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector2f tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
 
-        const Eigen::Vector4f mvPos = mUniform.modelViewMatrix * pos;
-        const Eigen::Vector4f outPos = mUniform.projMatrix * mvPos;
+        const VecLib::Vector4f mvPos = mUniform.modelViewMatrix * pos;
+        const VecLib::Vector4f outPos = mUniform.projMatrix * mvPos;
 
         const float invDepth = 1.0 / mvPos[2];
 
         return std::make_tuple(outPos, tex * invDepth, invDepth);
     }
 
-    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class TextureFragmentShader {
@@ -123,7 +121,7 @@ private:
         INV_DEPTH_INDEX = 2
     };
 
-    typedef RGBATextureSampler<Eigen::Vector4f> SamplerType;
+    typedef RGBATextureSampler<VecLib::Vector4f> SamplerType;
 
     struct Uniform {
         SamplerType textureSampler;
@@ -131,8 +129,8 @@ private:
 
     Uniform mUniform;
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> InType;
-    typedef std::tuple<Eigen::Vector4f, float> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float> InType;
+    typedef std::tuple<VecLib::Vector4f, float> OutType;
 
     enum class Traits {
         COLOR_INDEX = 0,
@@ -146,8 +144,8 @@ public:
     }
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        const Eigen::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
         const float invDepth = std::get<static_cast<int>(InTraits::INV_DEPTH_INDEX)>(in);
 
         const auto realTex = tex / invDepth;
@@ -166,7 +164,7 @@ private:
         INV_DEPTH_INDEX = 2
     };
 
-    typedef RGBATextureSampler<Eigen::Vector4f> SamplerType;
+    typedef RGBATextureSampler<VecLib::Vector4f> SamplerType;
 
     struct Uniform {
         SamplerType textureSampler;
@@ -175,8 +173,8 @@ private:
 
     Uniform mUniform;
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, float> InType;
-    typedef std::tuple<Eigen::Vector4f, float> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float> InType;
+    typedef std::tuple<VecLib::Vector4f, float> OutType;
 
     enum class Traits {
         COLOR_INDEX = 0,
@@ -191,8 +189,8 @@ public:
     }
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        const Eigen::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
         const float invDepth = std::get<static_cast<int>(InTraits::INV_DEPTH_INDEX)>(in);
 
         const auto realTex = tex / invDepth;
@@ -200,7 +198,7 @@ public:
         auto color = mUniform.textureSampler.get(realTex[0], realTex[1]);
         auto ao = mUniform.aoSampler.get(realTex[0], realTex[1]);
 
-        color = color.cwiseProduct(ao) / 255.0;
+        color = color.cwiseProduct(ao) / 255.0f;
 
         return std::make_tuple(color, pos[2]);
     }
@@ -214,36 +212,36 @@ private:
     };
 
     struct Uniform {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-        Eigen::Vector3f lightPos;
+        VecLib::Matrix4f projMatrix;
+        VecLib::Matrix4f modelViewMatrix;
+        VecLib::Vector3f lightPos;
     };
 
     Uniform mUniform;
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> InType;
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector4f> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> InType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> OutType;
 
     enum class Traits {
         POSITION_INDEX = 0,
         COLOR_INDEX = 1
     };
 
-    FlatVertexShader(const Eigen::Vector3f& lightPos) {
+    FlatVertexShader(const VecLib::Vector3f& lightPos) {
         mUniform.lightPos = lightPos;
     }
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        const Eigen::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        const VecLib::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
-        const Eigen::Vector3f& lightPos = mUniform.lightPos;
+        const VecLib::Vector3f& lightPos = mUniform.lightPos;
 
-        const Eigen::Vector4f P = mUniform.modelViewMatrix * pos;
+        const VecLib::Vector4f P = mUniform.modelViewMatrix * pos;
 
-        Eigen::Vector3f N = mUniform.modelViewMatrix.template topLeftCorner<3,3>() * normal;
-        Eigen::Vector3f L = lightPos - P.topRows<3>();
-        Eigen::Vector3f V = -P.topRows<3>();
+        VecLib::Vector3f N = VecLib::Matrix3f(mUniform.modelViewMatrix) * normal;
+        VecLib::Vector3f L = lightPos - P.xyz();
+        VecLib::Vector3f V = -P.xyz();
 
         N.normalize();
         L.normalize();
@@ -253,14 +251,14 @@ public:
 
         const float intensity = std::max(0.0f, R.dot(V));
 
-        const Eigen::Vector4f color(255,255,255,255);
+        const VecLib::Vector4f color(255,255,255,255);
 
-        const Eigen::Vector4f outPos = mUniform.projMatrix * P;
+        const VecLib::Vector4f outPos = mUniform.projMatrix * P;
         return std::make_tuple(outPos, color*intensity);
     }
 
-    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class PhongVertexShader {
@@ -271,15 +269,15 @@ private:
     };
 
     struct Uniform {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-        Eigen::Vector3f lightPos;
+        VecLib::Matrix4f projMatrix;
+        VecLib::Matrix4f modelViewMatrix;
+        VecLib::Vector3f lightPos;
     };
 
     Uniform mUniform;
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> InType;
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f, Eigen::Vector3f> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> InType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f, VecLib::Vector3f> OutType;
 
     enum class Traits {
         POSITION_INDEX = 0,
@@ -288,28 +286,28 @@ public:
         VIEW_INDEX = 3
     };
 
-    PhongVertexShader(const Eigen::Vector3f& lightPos) {
+    PhongVertexShader(const VecLib::Vector3f& lightPos) {
         mUniform.lightPos = lightPos;
     }
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        const Eigen::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        const VecLib::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
-        const Eigen::Vector3f& lightPos = mUniform.lightPos;
+        const VecLib::Vector3f& lightPos = mUniform.lightPos;
 
-        const Eigen::Vector4f P = mUniform.modelViewMatrix * pos;
+        const VecLib::Vector4f P = mUniform.modelViewMatrix * pos;
 
-        const Eigen::Vector3f N = mUniform.modelViewMatrix.template topLeftCorner<3,3>() * normal;
-        const Eigen::Vector3f L = lightPos - P.topRows<3>();
-        const Eigen::Vector3f V = -P.topRows<3>();
+        const VecLib::Vector3f N = VecLib::Matrix3f(mUniform.modelViewMatrix) * normal;
+        const VecLib::Vector3f L = lightPos - P.xyz();
+        const VecLib::Vector3f V = -P.xyz();
 
-        const Eigen::Vector4f outPos = mUniform.projMatrix * P;
+        const VecLib::Vector4f outPos = mUniform.projMatrix * P;
         return std::make_tuple(outPos, N, L, V);
     }
 
-    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class PhongFragmentShader {
@@ -322,8 +320,8 @@ private:
     };
 
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f, Eigen::Vector3f> InType;
-    typedef std::tuple<Eigen::Vector4f, float> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f, VecLib::Vector3f> InType;
+    typedef std::tuple<VecLib::Vector4f, float> OutType;
 
     enum class Traits {
         COLOR_INDEX = 0,
@@ -331,10 +329,10 @@ public:
     };
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        Eigen::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
-        Eigen::Vector3f L     = std::get<static_cast<int>(InTraits::LIGHT_INDEX)>(in);
-        Eigen::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        VecLib::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        VecLib::Vector3f L     = std::get<static_cast<int>(InTraits::LIGHT_INDEX)>(in);
+        VecLib::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
         //assert(pos[2] < 0.0);
 
         N.normalize();
@@ -345,7 +343,7 @@ public:
 
         const float intensity = std::max(0.0f, R.dot(V));
 
-        const Eigen::Vector4f color(255,255,255,255);
+        const VecLib::Vector4f color(255,255,255,255);
 
         return std::make_tuple(color*intensity, pos[2]);
     }
@@ -359,14 +357,14 @@ private:
     };
 
     struct Uniform {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
+        VecLib::Matrix4f projMatrix;
+        VecLib::Matrix4f modelViewMatrix;
     };
 
     Uniform mUniform;
 public:
-	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f> InType;
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> OutType;
+	typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> InType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f> OutType;
 
     enum class Traits {
         POSITION_INDEX = 0,
@@ -375,20 +373,20 @@ public:
     };
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        const Eigen::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        const VecLib::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
-        const Eigen::Vector4f P = mUniform.modelViewMatrix * pos;
+        const VecLib::Vector4f P = mUniform.modelViewMatrix * pos;
 
-        const Eigen::Vector3f N = mUniform.modelViewMatrix.template topLeftCorner<3,3>() * normal;
-        const Eigen::Vector3f V = P.topRows<3>();
+        const VecLib::Vector3f N = VecLib::Matrix3f(mUniform.modelViewMatrix) * normal;
+        const VecLib::Vector3f V = P.xyz();
 
-        const Eigen::Vector4f outPos = mUniform.projMatrix * P;
+        const VecLib::Vector4f outPos = mUniform.projMatrix * P;
         return std::make_tuple(outPos, N, V);
     }
 
-    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class EquiRectFragmentShader {
@@ -400,25 +398,25 @@ private:
     };
 
     struct Uniform {
-        RGBATextureSampler<Eigen::Vector4f> textureSampler;
+        RGBATextureSampler<VecLib::Vector4f> textureSampler;
     };
 
     Uniform mUniform;
 public:
-	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> InType;
-    typedef std::tuple<Eigen::Vector4f, float> OutType;
+	typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f> InType;
+    typedef std::tuple<VecLib::Vector4f, float> OutType;
 
     enum class Traits {
         COLOR_INDEX = 0,
         DEPTH_INDEX = 1
     };
 
-    EquiRectFragmentShader(const std::string& filename) : mUniform{RGBATextureSampler<Eigen::Vector4f>(filename)} {}
+    EquiRectFragmentShader(const std::string& filename) : mUniform{RGBATextureSampler<VecLib::Vector4f>(filename)} {}
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        Eigen::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
-        Eigen::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        VecLib::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        VecLib::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
         //assert(pos[2] < 0.0);
 
         N.normalize();
@@ -428,7 +426,7 @@ public:
 
         R.normalize();
 
-        Eigen::Vector2f tex;
+        VecLib::Vector2f tex;
 
         tex[1] = R[1]; // -1 .. 1
         R[1] = 0.0;
@@ -457,25 +455,25 @@ private:
     };
 
     struct Uniform {
-        CubeSampler<Eigen::Vector4f> cubeSampler;
+        CubeSampler<VecLib::Vector4f> cubeSampler;
     };
 
     Uniform mUniform;
 public:
-	typedef std::tuple<Eigen::Vector4f, Eigen::Vector3f, Eigen::Vector3f> InType;
-    typedef std::tuple<Eigen::Vector4f, float> OutType;
+	typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f> InType;
+    typedef std::tuple<VecLib::Vector4f, float> OutType;
 
     enum class Traits {
         COLOR_INDEX = 0,
         DEPTH_INDEX = 1
     };
 
-    CubemapFragmentShader(const std::string& filename) : mUniform{CubeSampler<Eigen::Vector4f>(filename)} {}
+    CubemapFragmentShader(const std::string& filename) : mUniform{CubeSampler<VecLib::Vector4f>(filename)} {}
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        Eigen::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
-        Eigen::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        VecLib::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        VecLib::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
         //assert(pos[2] < 0.0);
 
         N.normalize();
@@ -497,34 +495,34 @@ private:
     };
 
     struct Uniform {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
+        VecLib::Matrix4f projMatrix;
+        VecLib::Matrix4f modelViewMatrix;
     };
 
     Uniform mUniform;
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> InType;
-    typedef std::tuple<Eigen::Vector4f> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f> InType;
+    typedef std::tuple<VecLib::Vector4f> OutType;
 
     enum class Traits {
         POSITION_INDEX = 0
     };
 
-    ShadowGenVertexShader(const Eigen::Matrix4f& shadowProjectionMatrix, const Eigen::Matrix4f& shadowModelViewMatrix) {
+    ShadowGenVertexShader(const VecLib::Matrix4f& shadowProjectionMatrix, const VecLib::Matrix4f& shadowModelViewMatrix) {
         mUniform.projMatrix = shadowProjectionMatrix;
         mUniform.modelViewMatrix = shadowModelViewMatrix;
     }
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
 
-        const Eigen::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
+        const VecLib::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
 
         return std::make_tuple(outPos);
     }
 
-    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class ShadowGenFragmentShader {
@@ -533,8 +531,8 @@ private:
         POSITION_INDEX = 0
     };
 public:
-    typedef std::tuple<Eigen::Vector4f> InType;
-    typedef std::tuple<Eigen::Vector4f, float> OutType;
+    typedef std::tuple<VecLib::Vector4f> InType;
+    typedef std::tuple<VecLib::Vector4f, float> OutType;
 
     enum class Traits {
         COLOR_INDEX = 0,
@@ -542,9 +540,9 @@ public:
     };
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
 
-        return std::make_tuple(Eigen::Vector4f(), pos[2]);
+        return std::make_tuple(VecLib::Vector4f(), pos[2]);
     }
 
 };
@@ -557,21 +555,21 @@ private:
     };
 
     struct ShadowFragUniformType {
-        RGBATextureSampler<Eigen::Vector4f> textureSampler;
+        RGBATextureSampler<VecLib::Vector4f> textureSampler;
         SingleChannelTextureSampler<float> shadowSampler;
     };
 
     struct Uniform {
-        Eigen::Matrix4f projMatrix;
-        Eigen::Matrix4f modelViewMatrix;
-        Eigen::Matrix4f shadowMatrix;
+        VecLib::Matrix4f projMatrix;
+        VecLib::Matrix4f modelViewMatrix;
+        VecLib::Matrix4f shadowMatrix;
     };
 
 
     Uniform mUniform;
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f> InType;
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, Eigen::Vector4f, float> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f> InType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, VecLib::Vector4f, float> OutType;
 
     enum class Traits {
         POSITION_INDEX = 0,
@@ -580,26 +578,26 @@ public:
         INV_DEPTH_INDEX = 3
     };
 
-    ShadowTextureVertexShader(const Eigen::Matrix4f& shadowMatrix) {
+    ShadowTextureVertexShader(const VecLib::Matrix4f& shadowMatrix) {
         mUniform.shadowMatrix = shadowMatrix;
     }
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        const Eigen::Vector2f tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector2f tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
 
-        const Eigen::Vector4f mvPos = mUniform.modelViewMatrix * pos;
-        const Eigen::Vector4f outPos = mUniform.projMatrix * mvPos;
+        const VecLib::Vector4f mvPos = mUniform.modelViewMatrix * pos;
+        const VecLib::Vector4f outPos = mUniform.projMatrix * mvPos;
 
         const float invDepth = 1.0 / mvPos[2];
 
-        const Eigen::Vector4f shadow_coord = mUniform.shadowMatrix * pos;
+        const VecLib::Vector4f shadow_coord = mUniform.shadowMatrix * pos;
 
         return std::make_tuple(outPos, tex * invDepth, shadow_coord, invDepth);
     }
 
-    Eigen::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    Eigen::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
 };
 
 class ShadowTextureFragmentShader {
@@ -612,27 +610,27 @@ private:
     };
 
     struct Uniform {
-        RGBATextureSampler<Eigen::Vector4f> textureSampler;
+        RGBATextureSampler<VecLib::Vector4f> textureSampler;
         SingleChannelTextureSampler<float> shadowSampler;
     };
 
     Uniform mUniform;
 public:
-    typedef std::tuple<Eigen::Vector4f, Eigen::Vector2f, Eigen::Vector4f, float> InType;
-    typedef std::tuple<Eigen::Vector4f, float> OutType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, VecLib::Vector4f, float> InType;
+    typedef std::tuple<VecLib::Vector4f, float> OutType;
 
     enum class Traits {
         COLOR_INDEX = 0,
         DEPTH_INDEX = 1
     };
 
-    ShadowTextureFragmentShader(const std::string& filename) : mUniform{RGBATextureSampler<Eigen::Vector4f>(filename),
+    ShadowTextureFragmentShader(const std::string& filename) : mUniform{RGBATextureSampler<VecLib::Vector4f>(filename),
                                                         SingleChannelTextureSampler<float>(2048, 2048)} {}
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        const Eigen::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
-        const Eigen::Vector4f& shadow_coord   = std::get<static_cast<int>(InTraits::SHADOW_INDEX)>(in);
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
+        const VecLib::Vector4f& shadow_coord   = std::get<static_cast<int>(InTraits::SHADOW_INDEX)>(in);
         const float invDepth = std::get<static_cast<int>(InTraits::INV_DEPTH_INDEX)>(in);
 
         const auto realTex = tex / invDepth;
@@ -663,26 +661,21 @@ private:
     };
 
 public:
-    typedef std::tuple<Eigen::Vector2f> InType;
-    typedef std::tuple<Eigen::Vector4f> OutType;
+    typedef std::tuple<VecLib::Vector2f> InType;
+    typedef std::tuple<VecLib::Vector4f> OutType;
 
     enum class Traits {
         POSITION_INDEX = 0
     };
 
     OutType operator()(const InType& in) const {
-        const Eigen::Vector2f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        Eigen::Vector4f outPos(0.0f, 0.0f, 0.0f, 1.0f);
-        outPos.head<2>() = pos;
+        const VecLib::Vector2f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        VecLib::Vector4f outPos(pos, 0.0f, 1.0f);
 
         return std::make_tuple(outPos);
     }
 
 };
-
-Eigen::Vector2f xy(const Eigen::Vector4f& in) {
-    return in.head<2>();
-}
 
 float mod(float x, float y) {
     return std::fmod(x, y);
@@ -693,9 +686,9 @@ float step(float edge, float x) {
 }
 
 
-Eigen::Vector3f mix(const Eigen::Vector3f& x, const Eigen::Vector3f& y, float a) {
-    Eigen::Vector3f mx = x * (1.0 - a);
-    Eigen::Vector3f my = y * a;
+VecLib::Vector3f mix(const VecLib::Vector3f& x, const VecLib::Vector3f& y, float a) {
+    VecLib::Vector3f mx = x * (1.0f - a);
+    VecLib::Vector3f my = y * a;
     return mx + my;
 }
 
@@ -708,8 +701,8 @@ private:
     float iGlobalTime;
 
 public:
-    typedef std::tuple<Eigen::Vector4f> InType;
-    typedef std::tuple<Eigen::Vector4f, float> OutType;
+    typedef std::tuple<VecLib::Vector4f> InType;
+    typedef std::tuple<VecLib::Vector4f, float> OutType;
 
     enum class Traits {
         COLOR_INDEX = 0,
@@ -721,49 +714,51 @@ public:
         //printf("%f\n", iGlobalTime);
     }
 
+
     OutType operator()(const InType& in) const {
-        const Eigen::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        using vec2 = VecLib::Vector2f;
+        using vec3 = VecLib::Vector3f;
+
+        const VecLib::Vector4f& fragCoord   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
 
         //https://www.shadertoy.com/view/4dsGzH
-        Eigen::Vector3f COLOR1 = Eigen::Vector3f(0.0, 0.0, 0.3);
-        Eigen::Vector3f COLOR2 = Eigen::Vector3f(0.5, 0.0, 0.0);
-        float BLOCK_WIDTH = 0.01;
+        static const VecLib::Vector3f iResolution(640, 480, 1.0);
 
-        Eigen::Vector2f iResolution(640, 480);
+        static const vec3 COLOR1 = vec3(0.0, 0.0, 0.3);
+        static const vec3 COLOR2 = vec3(0.5, 0.0, 0.0);
+        static const float BLOCK_WIDTH = 0.01;
 
-        Eigen::Vector2f uv = xy(pos).cwiseQuotient(iResolution);
+        vec2 uv = fragCoord.xy() / iResolution.xy();
 
         // To create the BG pattern
-        Eigen::Vector3f final_color;
-        Eigen::Vector3f bg_color;
-        Eigen::Vector3f wave_color = Eigen::Vector3f(0.0, 0.0, 0.0);
+        vec3 final_color = vec3(1.0);
+        vec3 bg_color = vec3(0.0);
+        vec3 wave_color = vec3(0.0);
 
-        float c1 = mod(uv(0), 2.0 * BLOCK_WIDTH);
+        float c1 = mod(uv.x(), 2.0 * BLOCK_WIDTH);
         c1 = step(BLOCK_WIDTH, c1);
 
-        float c2 = mod(uv(1), 2.0 * BLOCK_WIDTH);
+        float c2 = mod(uv.y(), 2.0 * BLOCK_WIDTH);
         c2 = step(BLOCK_WIDTH, c2);
 
-        bg_color = mix(uv(0) * COLOR1, uv(1) * COLOR2, c1 * c2);
+        bg_color = mix(uv.x() * COLOR1, uv.y() * COLOR2, c1 * c2);
 
 
         // To create the waves
         float wave_width = 0.01;
-        uv  = -1.0 + 2.0 * uv.array();
-        uv(1) += 0.1;
+        uv  = -1.0f + 2.0f * uv;
+        uv.y() += 0.1;
         for(float i = 0.0; i < 10.0; i++) {
 
-            uv(1) += (0.07 * std::sin(uv(0) + i/7.0 + iGlobalTime ));
-            wave_width = std::abs(1.0 / (150.0 * uv(1)));
-            wave_color += Eigen::Vector3f(wave_width * 1.9, wave_width, wave_width * 1.5);
+            uv.y() += (0.07 * std::sin(uv.x() + i/7.0 + iGlobalTime ));
+            wave_width = std::abs(1.0 / (150.0 * uv.y()));
+            wave_color += vec3(wave_width * 1.9, wave_width, wave_width * 1.5);
         }
 
         final_color = bg_color + wave_color;
 
-
-        Eigen::Vector4f color(1.0);
-        color.head<3>() = final_color;
-        return std::make_tuple(color * 255, 0.2f);
+        VecLib::Vector4f color(final_color, 1.0);
+        return std::make_tuple(color * 255.0f, 0.2f);
     }
 };
 
@@ -777,7 +772,7 @@ private:
     cimg_library::CImg<unsigned char>& mFrame;
     cimg_library::CImg<float>& mDepth;
 public:
-    typedef std::tuple<Eigen::Vector4f, float> InType;
+    typedef std::tuple<VecLib::Vector4f, float> InType;
 
     CImgColorRasterShader(cimg_library::CImg<unsigned char>& frame, cimg_library::CImg<float>& depth) : mFrame(frame), mDepth(depth) {}
 
@@ -815,7 +810,7 @@ private:
 
     cimg_library::CImg<float>& mDepth;
 public:
-    typedef std::tuple<Eigen::Vector4f, float> InType;
+    typedef std::tuple<VecLib::Vector4f, float> InType;
 
     CImgDepthRasterShader(cimg_library::CImg<float>& depth) : mDepth(depth) {}
 
