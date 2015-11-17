@@ -348,14 +348,6 @@ public:
         return m[idx];
     }
 
-    T& operator()(int x, int y) {
-        return m[x][y];
-    }
-
-    const T& operator()(int x, int y) const {
-        return m[x][y];
-    }
-
     Matrix3x3 operator*(const Matrix3x3& o) const {
         Matrix3x3 r;
 
