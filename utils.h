@@ -24,10 +24,10 @@ inline VecLib::Matrix3f rotateY(float radians) {
     VecLib::Matrix3f m = VecLib::Matrix3f::Identity();
     float sinTheta = std::sin(radians); //TODO: sincos
     float cosTheta = std::cos(radians);
-    m(0, 0) = cosTheta;
-    m(2, 0) = sinTheta;
-    m(0, 2) = -sinTheta;
-    m(2, 2) = cosTheta;
+    m[0][0] = cosTheta;
+    m[0][2] = sinTheta;
+    m[2][0] = -sinTheta;
+    m[2][2] = cosTheta;
 
     return m;
 }
@@ -38,13 +38,13 @@ inline VecLib::Matrix4f ortho(float left, float right,
                              float bottom, float top,
                              float near, float far) {
     VecLib::Matrix4f m = VecLib::Matrix4f::Identity();
-    m(0,0) = 2.0/(right - left);
-    m(1,1) = 2.0/(top - bottom);
-    m(2,2) = 2.0/(near - far);
+    m[0][0] = 2.0/(right - left);
+    m[1][1] = 2.0/(top - bottom);
+    m[2][2] = 2.0/(near - far);
 
-    m(3,0) = (left+right)/(left-right);
-    m(3,1) = (bottom+top)/(bottom-top);
-    m(3,2) = (far+near)/(far-near);
+    m[3][0] = (left+right)/(left-right);
+    m[3][1] = (bottom+top)/(bottom-top);
+    m[3][2] = (far+near)/(far-near);
 
     return m;
 }
@@ -53,16 +53,16 @@ inline VecLib::Matrix4f proj(float left, float right,
                              float bottom, float top,
                              float near, float far) {
     VecLib::Matrix4f m = VecLib::Matrix4f::Identity();
-    m(0,0) = 2.0f*near/(right - left);
-    m(1,1) = 2.0f*near/(top - bottom);
-    m(2,2) = 2.0f/(near - far);
+    m[0][0] = 2.0f*near/(right - left);
+    m[1][1] = 2.0f*near/(top - bottom);
+    m[2][2] = 2.0f/(near - far);
 
-    m(2,0) = (right+left)/(right-left);
-    m(2,1) = (top+bottom)/(top-bottom);
-    m(2,2) = (near+far)/(near-far);
-    m(2,3) = -1.0f;
+    m[2][0] = (right+left)/(right-left);
+    m[2][1] = (top+bottom)/(top-bottom);
+    m[2][2] = (near+far)/(near-far);
+    m[2][3] = -1.0f;
 
-    m(3,2) = 2*near*far / (near-far);
+    m[3][2] = 2*near*far / (near-far);
 
     return m;
 }
@@ -95,17 +95,17 @@ inline VecLib::Matrix4f lookAt(const VecLib::Vector3f& eye, const VecLib::Vector
 
     VecLib::Matrix4f M = VecLib::Matrix4f::Identity();
 
-    M(0, 0) = s[0];
-    M(1, 0) = s[1];
-    M(2, 0) = s[2];
+    M[0][0] = s[0];
+    M[1][0] = s[1];
+    M[2][0] = s[2];
 
-    M(0, 1) = u[0];
-    M(1, 1) = u[1];
-    M(2, 1) = u[2];
+    M[0][1] = u[0];
+    M[1][1] = u[1];
+    M[2][1] = u[2];
 
-    M(0, 2) = -f[0];
-    M(1, 2) = -f[1];
-    M(2, 2) = -f[2];
+    M[0][2] = -f[0];
+    M[1][2] = -f[1];
+    M[2][2] = -f[2];
 
     //M.block<1,3>(0,0) = s;
    // M.block<1,3>(1,0) = u;
@@ -115,9 +115,9 @@ inline VecLib::Matrix4f lookAt(const VecLib::Vector3f& eye, const VecLib::Vector
 
     VecLib::Matrix4f tm = VecLib::Matrix4f::Identity();
 
-    tm(3, 0) = -eye[0];
-    tm(3, 1) = -eye[1];
-    tm(3, 2) = -eye[2];
+    tm[3][0] = -eye[0];
+    tm[3][1] = -eye[1];
+    tm[3][2] = -eye[2];
 
     return M * tm;
 }
