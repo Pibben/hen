@@ -466,6 +466,11 @@ public:
         return retval;
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const Matrix4x4& m) {
+        os << m.getRow(0) << std::endl << m.getRow(1) << std::endl << m.getRow(2) << std::endl << m.getRow(3);
+        return os;
+    }
+
 };
 
 template <class T>
