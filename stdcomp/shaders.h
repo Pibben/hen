@@ -693,16 +693,23 @@ VecLib::Vector3f mix(const VecLib::Vector3f& x, const VecLib::Vector3f& y, float
 }
 
 class ShadertoyFragmentShader {
-private:
+protected:
+    using vec2 = VecLib::Vector2f;
+    using vec3 = VecLib::Vector3f;
+    using vec4 = VecLib::Vector4f;
+
     enum class InTraits {
         POSITION_INDEX = 0
     };
 
     float iGlobalTime;
+    VecLib::Vector2f iResolution;
 
 public:
     typedef std::tuple<VecLib::Vector4f> InType;
     typedef std::tuple<VecLib::Vector4f, float> OutType;
+
+    ShadertoyFragmentShader() : iResolution(640, 480) {}
 
     enum class Traits {
         COLOR_INDEX = 0,
@@ -714,19 +721,39 @@ public:
         //printf("%f\n", iGlobalTime);
     }
 
+    virtual void mainImage(vec4& fragColor, const vec2& fragCoord) const = 0;
 
     OutType operator()(const InType& in) const {
-        using vec2 = VecLib::Vector2f;
-        using vec3 = VecLib::Vector3f;
 
-        const VecLib::Vector4f& fragCoord   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
 
-        //https://www.shadertoy.com/view/4dsGzH
-        static const VecLib::Vector3f iResolution(640, 480, 1.0);
+        const VecLib::Vector4f& fragCoord = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
 
-        static const vec3 COLOR1 = vec3(0.0, 0.0, 0.3);
-        static const vec3 COLOR2 = vec3(0.5, 0.0, 0.0);
-        static const float BLOCK_WIDTH = 0.01;
+        VecLib::Vector4f fragColor;
+
+        mainImage(fragColor, fragCoord.xy());
+
+
+        return std::make_tuple(fragColor * 255.0f, 0.2f);
+    }
+
+};
+
+inline float abs(float v) {
+    return std::abs(v);
+}
+
+inline double abs(double v) {
+    return std::abs(v);
+}
+
+class ShadertoyWaveFragmentShader : public ShadertoyFragmentShader {
+public:
+    const vec3 COLOR1 = vec3(0.0, 0.0, 0.3);
+    const vec3 COLOR2 = vec3(0.5, 0.0, 0.0);
+    static constexpr float BLOCK_WIDTH = 0.01;
+
+    //https://www.shadertoy.com/view/4dsGzH
+    virtual void mainImage(vec4& fragColor, const vec2& fragCoord) const {
 
         vec2 uv = fragCoord.xy() / iResolution.xy();
 
@@ -750,15 +777,15 @@ public:
         uv.y() += 0.1;
         for(float i = 0.0; i < 10.0; i++) {
 
-            uv.y() += (0.07 * std::sin(uv.x() + i/7.0 + iGlobalTime ));
-            wave_width = std::abs(1.0 / (150.0 * uv.y()));
+            uv.y() += (0.07 * sin(uv.x() + i/7.0 + iGlobalTime ));
+            wave_width = abs(1.0 / (150.0 * uv.y()));
             wave_color += vec3(wave_width * 1.9, wave_width, wave_width * 1.5);
         }
 
         final_color = bg_color + wave_color;
 
-        VecLib::Vector4f color(final_color, 1.0);
-        return std::make_tuple(color * 255.0f, 0.2f);
+
+        fragColor = vec4(final_color, 1.0);
     }
 };
 

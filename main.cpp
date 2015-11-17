@@ -330,7 +330,7 @@ void shaderToy() {
                     std::make_tuple(v1), std::make_tuple(v4), std::make_tuple(v3) };
 
     ShadertoyVertexShader vertexShader;
-    ShadertoyFragmentShader fragmentShader;
+    ShadertoyWaveFragmentShader fragmentShader;
     CImgColorRasterShader rasterShader(framebuffer, zbuffer);
 
     Timer<1> t;

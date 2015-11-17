@@ -38,6 +38,14 @@ public:
     GEN_ACCESS1(y, 1);
 #undef GEN_ACESS2
 
+    const Vector2& xy() const {
+        return *this;
+    }
+
+    Vector2& xy() {
+        return *this;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const Vector2& v) {
         os << v.m[0] << " " << v.m[1];
         return os;
