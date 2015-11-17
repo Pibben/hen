@@ -587,6 +587,7 @@ public:
     Matrix4x4() {
 
     }
+
     explicit Matrix4x4(T val) { //TODO
         std::for_each(m, m+4, [val](Vector4<T>& v){
             v.fill(val);
