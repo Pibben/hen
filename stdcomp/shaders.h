@@ -685,6 +685,19 @@ float step(float edge, float x) {
     return x < edge ? 0.0f : 1.0f;
 }
 
+float clamp(float val, float min, float max) {
+    return val < min ? min : val > max ? max : val;
+}
+
+float smoothstep(float edge0, float edge1, float x)
+{
+    // Scale, bias and saturate x to 0..1 range
+    x = clamp((x - edge0)/(edge1 - edge0), 0.0, 1.0);
+    // Evaluate polynomial
+    return x*x*(3 - 2*x);
+}
+
+
 
 VecLib::Vector3f mix(const VecLib::Vector3f& x, const VecLib::Vector3f& y, float a) {
     VecLib::Vector3f mx = x * (1.0f - a);
@@ -697,6 +710,9 @@ protected:
     using vec2 = VecLib::Vector2f;
     using vec3 = VecLib::Vector3f;
     using vec4 = VecLib::Vector4f;
+    using mat2 = VecLib::Matrix2f;
+    using mat3 = VecLib::Matrix3f;
+    using mat4 = VecLib::Matrix4f;
 
     enum class InTraits {
         POSITION_INDEX = 0
@@ -770,7 +786,6 @@ public:
 
         bg_color = mix(uv.x() * COLOR1, uv.y() * COLOR2, c1 * c2);
 
-
         // To create the waves
         float wave_width = 0.01;
         uv  = -1.0f + 2.0f * uv;
@@ -786,6 +801,193 @@ public:
 
 
         fragColor = vec4(final_color, 1.0);
+    }
+};
+
+class ShadertoySeascapeFragmentShader : public ShadertoyFragmentShader {
+    //https://www.shadertoy.com/view/Ms2SD1
+public:
+    static const int NUM_STEPS = 8;
+    static constexpr float PI	 	= 3.1415;
+    static constexpr float EPSILON	= 1e-3;
+    float EPSILON_NRM	= 0.1 / iResolution.x();
+
+// sea
+    static const int ITER_GEOMETRY = 3;
+    static const int ITER_FRAGMENT = 5;
+    static constexpr float SEA_HEIGHT = 0.6;
+    static constexpr float SEA_CHOPPY = 4.0;
+    static constexpr float SEA_SPEED = 0.8;
+    static constexpr float SEA_FREQ = 0.16;
+    static const vec3 SEA_BASE = vec3(0.1,0.19,0.22);
+    static const vec3 SEA_WATER_COLOR = vec3(0.8,0.9,0.6);
+    static float SEA_TIME = iGlobalTime * SEA_SPEED;
+    mat2 octave_m = mat2(1.6,1.2,-1.2,1.6);
+
+// math
+    static mat3 fromEuler(vec3 ang) {
+        vec2 a1 = vec2(sin(ang.x()),cos(ang.x()));
+        vec2 a2 = vec2(sin(ang.y()),cos(ang.y()));
+        vec2 a3 = vec2(sin(ang.z()),cos(ang.z()));
+        mat3 m;
+        m[0] = vec3(a1.y()*a3.y()+a1.x()*a2.x()*a3.x(),a1.y()*a2.x()*a3.x()+a3.y()*a1.x(),-a2.y()*a3.x());
+        m[1] = vec3(-a2.y()*a1.x(),a1.y()*a2.y(),a2.x());
+        m[2] = vec3(a3.y()*a1.x()*a2.x()+a1.y()*a3.x(),a1.x()*a3.x()-a1.y()*a3.y()*a2.x(),a2.y()*a3.y());
+        return m;
+    }
+    static float hash( vec2 p ) {
+        float h = dot(p,vec2(127.1,311.7));
+        return VecLib::fract(sin(h)*43758.5453123); //TODO
+    }
+    static float noise(  vec2 p ) {
+        vec2 i = floor( p );
+        vec2 f = fract( p );
+        vec2 u = f*f*(3.0f-2.0f*f); //TODO
+        return -1.0+2.0*VecLib::mix( VecLib::mix( hash( i + vec2(0.0,0.0) ), //TODO
+                                  hash( i + vec2(1.0,0.0) ), u.x()),
+                                     VecLib::mix( hash( i + vec2(0.0,1.0) ),
+                                  hash( i + vec2(1.0,1.0) ), u.x()), u.y());
+    }
+
+// lighting
+    static float diffuse(vec3 n,vec3 l,float p) {
+        return pow(dot(n,l) * 0.4 + 0.6,p);
+    }
+    static float specular(vec3 n,vec3 l,vec3 e,float s) {
+        float nrm = (s + 8.0) / (3.1415 * 8.0);
+        return pow(std::max(dot(reflect(e,n),l),0.0f),s) * nrm; //TODO
+    }
+
+// sky
+    static vec3 getSkyColor(vec3 e) {
+        e.y() = std::max(e.y(),0.0f); //TODO
+        vec3 ret;
+        ret.x() = std::pow(1.0-e.y(),2.0); //TODO
+        ret.y() = 1.0-e.y();
+        ret.z() = 0.6+(1.0-e.y())*0.4;
+        return ret;
+    }
+
+// sea
+    static float sea_octave(vec2 uv, float choppy) {
+        uv += noise(uv);
+        vec2 wv = 1.0f-abs(sin(uv)); //TODO
+        vec2 swv = abs(cos(uv));
+        wv = mix(wv,swv,wv);
+        return pow(1.0f-pow(wv.x() * wv.y(),0.65),choppy); //TODO
+    }
+
+    static float map(vec3 p) {
+        float freq = SEA_FREQ;
+        float amp = SEA_HEIGHT;
+        float choppy = SEA_CHOPPY;
+        vec2 uv = p.xz(); uv.x() *= 0.75;
+
+        float d, h = 0.0;
+        for(int i = 0; i < ITER_GEOMETRY; i++) {
+            d = sea_octave((uv+SEA_TIME)*freq,choppy);
+            d += sea_octave((uv-SEA_TIME)*freq,choppy);
+            h += d * amp;
+            uv *= octave_m; freq *= 1.9; amp *= 0.22;
+            choppy = VecLib::mix(choppy,1.0,0.2); //TODO
+        }
+        return p.y() - h;
+    }
+
+    static float map_detailed(vec3 p) {
+        float freq = SEA_FREQ;
+        float amp = SEA_HEIGHT;
+        float choppy = SEA_CHOPPY;
+        vec2 uv = p.xz(); uv.x() *= 0.75;
+
+        float d, h = 0.0;
+        for(int i = 0; i < ITER_FRAGMENT; i++) {
+            d = sea_octave((uv+SEA_TIME)*freq,choppy);
+            d += sea_octave((uv-SEA_TIME)*freq,choppy);
+            h += d * amp;
+            uv *= octave_m; freq *= 1.9; amp *= 0.22;
+            choppy = VecLib::mix(choppy,1.0,0.2);
+        }
+        return p.y() - h;
+    }
+
+    static vec3 getSeaColor(vec3 p, vec3 n, vec3 l, vec3 eye, vec3 dist) {
+        float fresnel = 1.0 - std::max(dot(n,-eye),0.0f); //TODO
+        fresnel = pow(fresnel,3.0) * 0.65;
+
+        vec3 reflected = getSkyColor(reflect(eye,n));
+        vec3 refracted = SEA_BASE + diffuse(n,l,80.0) * SEA_WATER_COLOR * 0.12f;
+
+        vec3 color = mix(refracted,reflected,fresnel);
+
+        float atten = std::max(1.0 - dot(dist,dist) * 0.001, 0.0); //TODO
+        color += SEA_WATER_COLOR * (p.y() - SEA_HEIGHT) * 0.18f * atten;
+
+        color += vec3(specular(n,l,eye,60.0));
+
+        return color;
+    }
+
+// tracing
+    static vec3 getNormal(vec3 p, float eps) {
+        vec3 n;
+        n.y() = map_detailed(p);
+        n.x() = map_detailed(vec3(p.x()+eps,p.y(),p.z())) - n.y();
+        n.z() = map_detailed(vec3(p.x(),p.y(),p.z()+eps)) - n.y();
+        n.y() = eps;
+        return normalize(n);
+    }
+
+    static float heightMapTracing(vec3 ori, vec3 dir, vec3& p) {
+        float tm = 0.0;
+        float tx = 1000.0;
+        float hx = map(ori + dir * tx);
+        if(hx > 0.0) return tx;
+        float hm = map(ori + dir * tm);
+        float tmid = 0.0;
+        for(int i = 0; i < NUM_STEPS; i++) {
+            tmid = VecLib::mix(tm,tx, hm/(hm-hx));
+            p = ori + dir * tmid;
+            float hmid = map(p);
+            if(hmid < 0.0) {
+                tx = tmid;
+                hx = hmid;
+            } else {
+                tm = tmid;
+                hm = hmid;
+            }
+        }
+        return tmid;
+    }
+
+// main
+    virtual void mainImage( vec4& fragColor, const vec2& fragCoord ) const {
+        vec2 uv = fragCoord.xy() / iResolution.xy();
+        uv = uv * 2.0f - 1.0f;
+        uv.x() *= iResolution.x() / iResolution.y();
+        float time = iGlobalTime * 0.3;// + iMouse.x*0.01;
+
+        // ray
+        vec3 ang = vec3(sin(time*3.0)*0.1,sin(time)*0.2+0.3,time);
+        vec3 ori = vec3(0.0,3.5,time*5.0);
+        vec3 dir = normalize(vec3(uv.xy(),-2.0)); dir.z() += length(uv) * 0.15;
+        dir = normalize(dir) * fromEuler(ang);
+
+        // tracing
+        vec3 p;
+        heightMapTracing(ori,dir,p);
+        vec3 dist = p - ori;
+        vec3 n = getNormal(p, dot(dist,dist) * EPSILON_NRM);
+        vec3 light = normalize(vec3(0.0,1.0,0.8));
+
+        // color
+        vec3 color = mix(
+                getSkyColor(dir),
+                getSeaColor(p,n,light,dir,dist),
+                pow(smoothstep(0.0,-0.05,dir.y()),0.3));
+
+        // post
+        fragColor = vec4(pow(color,vec3(0.75)), 1.0);
     }
 };
 
