@@ -819,10 +819,7 @@ public:
     static constexpr float SEA_CHOPPY = 4.0;
     static constexpr float SEA_SPEED = 0.8;
     static constexpr float SEA_FREQ = 0.16;
-    static const vec3 SEA_BASE = vec3(0.1,0.19,0.22);
-    static const vec3 SEA_WATER_COLOR = vec3(0.8,0.9,0.6);
-    static float SEA_TIME = iGlobalTime * SEA_SPEED;
-    mat2 octave_m = mat2(1.6,1.2,-1.2,1.6);
+
 
 // math
     static mat3 fromEuler(vec3 ang) {
@@ -877,7 +874,9 @@ public:
         return pow(1.0f-pow(wv.x() * wv.y(),0.65),choppy); //TODO
     }
 
-    static float map(vec3 p) {
+    float map(vec3 p) const {
+        const mat2 octave_m = mat2(1.6,1.2,-1.2,1.6);
+        const float SEA_TIME = iGlobalTime * SEA_SPEED;
         float freq = SEA_FREQ;
         float amp = SEA_HEIGHT;
         float choppy = SEA_CHOPPY;
@@ -894,7 +893,9 @@ public:
         return p.y() - h;
     }
 
-    static float map_detailed(vec3 p) {
+    float map_detailed(vec3 p) const {
+        const mat2 octave_m = mat2(1.6,1.2,-1.2,1.6);
+        const float SEA_TIME = iGlobalTime * SEA_SPEED;
         float freq = SEA_FREQ;
         float amp = SEA_HEIGHT;
         float choppy = SEA_CHOPPY;
@@ -912,6 +913,10 @@ public:
     }
 
     static vec3 getSeaColor(vec3 p, vec3 n, vec3 l, vec3 eye, vec3 dist) {
+        static const vec3 SEA_BASE = vec3(0.1,0.19,0.22);
+        static const vec3 SEA_WATER_COLOR = vec3(0.8,0.9,0.6);
+
+
         float fresnel = 1.0 - std::max(dot(n,-eye),0.0f); //TODO
         fresnel = pow(fresnel,3.0) * 0.65;
 
@@ -929,7 +934,7 @@ public:
     }
 
 // tracing
-    static vec3 getNormal(vec3 p, float eps) {
+    vec3 getNormal(vec3 p, float eps) const {
         vec3 n;
         n.y() = map_detailed(p);
         n.x() = map_detailed(vec3(p.x()+eps,p.y(),p.z())) - n.y();
@@ -938,7 +943,7 @@ public:
         return normalize(n);
     }
 
-    static float heightMapTracing(vec3 ori, vec3 dir, vec3& p) {
+    float heightMapTracing(vec3 ori, vec3 dir, vec3& p) const {
         float tm = 0.0;
         float tx = 1000.0;
         float hx = map(ori + dir * tx);
