@@ -56,7 +56,7 @@ inline Face parseFace(const std::string& str) {
 
     const int numberOfComponents = (numberOfSlashes / 3) + 1;
 
-    assert(numberOfComponents > 0 || numberOfComponents <= 3);
+    assert(numberOfComponents > 0 && numberOfComponents <= 3);
 
     std::istringstream ss(str);
 
