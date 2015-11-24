@@ -31,9 +31,7 @@ std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const V
     for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
-            VecLib::Vector4f v = VecLib::Vector4f::Ones(); //TODO
-            v = vertices[f.coords[i]];
-            m.emplace_back(v, color);
+            m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), color);
         }
     }
 
@@ -55,9 +53,7 @@ std::vector<PositionAndUv> loadMeshUv(const std::string &filename) {
     for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
-            VecLib::Vector4f v = VecLib::Vector4f::Ones(); //TODO
-            v = vertices[f.coords[i]];
-            m.emplace_back(v, uvs[f.uvs[i]]);
+            m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), uvs[f.uvs[i]]);
         }
     }
 
@@ -78,22 +74,8 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
 
     for(size_t j = 0; j < faces.size(); ++j) {
         const auto& f = faces[j];
-
-        VecLib::Vector3f vs[3];
-
         for(int i = 0; i < 3; ++i) {
-            vs[i] = vertices[f.coords[i]];
-        }
-
-        for(int i = 0; i < 3; ++i) {
-#if 0
-            const VecLib::Vector3f norm = (vs[1]-vs[0]).cross(vs[2]-vs[0]);
-#else
-            const VecLib::Vector3f norm = normals[f.coords[i]];
-#endif
-            VecLib::Vector4f v = VecLib::Vector4f::Ones(); //TODO
-            v = vs[i];
-            m.emplace_back(v, norm);
+            m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), normals[f.coords[i]]);
         }
     }
 
