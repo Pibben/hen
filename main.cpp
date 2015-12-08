@@ -148,19 +148,6 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
         tangents[j] = (t - n * dot(n, t));
         tangents[j].normalize();
         tangents[j].w() = (dot(cross(n, t), tan2[j]) < 0.0F) ? -1.0F : 1.0F;
-template <class PixelType>
-class Visitor {
-private:
-    cimg_library::CImg<unsigned char>& mImg;
-    int mCount;
-public:
-    Visitor(cimg_library::CImg<unsigned char>& img) : mImg(img), mCount(0) {}
-
-    void operator()(const PixelType& p) {
-        for(int j = 0; j < 3; ++j) {
-            mImg(mCount % mImg.width(), mImg.height() - 1 - mCount/mImg.width(), j) = p[j];
-        }
-        mCount++;
     }
 
     for(size_t j = 0; j < faces.size(); ++j) {
@@ -169,19 +156,6 @@ public:
             //std::cout <<  tangents[f.uvs[i]] << std::endl;
             m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), normals[f.coords[i]], uvs[f.uvs[i]], tangents[f.uvs[i]]);
         }
-};
-
-template <class PixelType>
-class DepthVisitor {
-private:
-    cimg_library::CImg<float>& mImg;
-    int mCount;
-public:
-    DepthVisitor(cimg_library::CImg<float>& img) : mImg(img), mCount(0) {}
-
-    void operator()(const PixelType& p) {
-        mImg(mCount % mImg.width(), mImg.height() - 1 - mCount/mImg.width()) = p;
-        mCount++;
     }
 
     //exit(0);
@@ -189,7 +163,6 @@ public:
     return m;
 }
 
-};
 
 template <class Mesh, class VertexShader, class FragmentShader>
 void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
