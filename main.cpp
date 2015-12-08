@@ -82,6 +82,72 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
     return m;
 }
 
+typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector2f, VecLib::Vector4f> PositionNormalAndTangent;
+static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& filename) {
+    std::vector<VecLib::Vector3f> vertices;
+    std::vector<VecLib::Vector2f> uvs;
+    std::vector<VecLib::Vector3f> normals;
+    std::vector<Face> faces;
+
+    loadObj(filename, vertices, uvs, normals, faces);
+    printf("Loaded %lu faces\n", faces.size());
+
+    std::vector<PositionNormalAndTangent> m;
+
+    std::vector<VecLib::Vector3f> tan1(vertices.size());
+    std::vector<VecLib::Vector3f> tan2(vertices.size());
+
+    for(size_t j = 0; j < faces.size(); ++j) {
+        const int i1 = faces[j].coords[0];
+        const int i2 = faces[j].coords[1];
+        const int i3 = faces[j].coords[2];
+
+        const VecLib::Vector3f& v1 = vertices[i1];
+        const VecLib::Vector3f& v2 = vertices[i2];
+        const VecLib::Vector3f& v3 = vertices[i3];
+
+        const VecLib::Vector2f& w1 = uvs[i1];
+        const VecLib::Vector2f& w2 = uvs[i2];
+        const VecLib::Vector2f& w3 = uvs[i3];
+
+        const float x1 = v2.x() - v1.x();
+        const float x2 = v3.x() - v1.x();
+        const float y1 = v2.y() - v1.y();
+        const float y2 = v3.y() - v1.y();
+        const float z1 = v2.z() - v1.z();
+        const float z2 = v3.z() - v1.z();
+
+        const float s1 = w2.x() - w1.x();
+        const float s2 = w3.x() - w1.x();
+        const float t1 = w2.y() - w1.y();
+        const float t2 = w3.y() - w1.y();
+
+        const float r = 1.0f / (s1 * t2 - s2 * t1);
+
+        const VecLib::Vector3f sdir((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+        const VecLib::Vector3f tdir((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+
+        tan1[i1] += sdir;
+        tan1[i2] += sdir;
+        tan1[i3] += sdir;
+
+        tan2[i1] += tdir;
+        tan2[i2] += tdir;
+        tan2[i3] += tdir;
+    }
+
+    std::vector<VecLib::Vector4f> tangents(vertices.size());
+
+    for(size_t j = 0; j < vertices.size(); ++j) {
+        const VecLib::Vector3f& n = normals[j];
+        const VecLib::Vector3f& t = tan1[j];
+
+        //std::cout << t << std::endl;
+        //std::cout << tan2[j] << std::endl;
+
+        tangents[j] = (t - n * dot(n, t));
+        tangents[j].normalize();
+        tangents[j].w() = (dot(cross(n, t), tan2[j]) < 0.0F) ? -1.0F : 1.0F;
 template <class PixelType>
 class Visitor {
 private:
@@ -96,6 +162,13 @@ public:
         }
         mCount++;
     }
+
+    for(size_t j = 0; j < faces.size(); ++j) {
+        const auto& f = faces[j];
+        for(int i = 0; i < 3; ++i) {
+            //std::cout <<  tangents[f.uvs[i]] << std::endl;
+            m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), normals[f.coords[i]], uvs[f.uvs[i]], tangents[f.uvs[i]]);
+        }
 };
 
 template <class PixelType>
@@ -110,6 +183,12 @@ public:
         mImg(mCount % mImg.width(), mImg.height() - 1 - mCount/mImg.width()) = p;
         mCount++;
     }
+
+    //exit(0);
+
+    return m;
+}
+
 };
 
 template <class Mesh, class VertexShader, class FragmentShader>
@@ -203,6 +282,15 @@ void texture() {
     TextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
 
     auto m = loadMeshUv("models/cow/cowTM08New00RTime02-tri-norm.obj");
+
+    animate(m, vertexShader, fragmentShader);
+}
+
+void normalMap() {
+    NormalMapVertexShader vertexShader(VecLib::Vector3f(100,100,100));
+    NormalMapFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCowBump.png");
+
+    auto m = loadMeshTangent("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
@@ -364,7 +452,7 @@ void libtest() {
 }
 
 int main(int argc, char** argv) {
-    shaderToy();
+    normalMap();
 }
 
 

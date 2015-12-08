@@ -12,6 +12,7 @@
 
 #include "../utils.h"
 #include "samplers.h"
+#include "../veclib.h"
 
 class ColorVertexShader {
 private:
@@ -993,6 +994,130 @@ public:
 
         // post
         fragColor = vec4(pow(color,vec3(0.75)), 1.0);
+    }
+};
+
+class NormalMapVertexShader {
+private:
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        NORMAL_INDEX = 1,
+        TEXTURE_INDEX = 2,
+        TANGENT_INDEX = 3,
+    };
+
+    struct Uniform {
+        VecLib::Matrix4f projMatrix;
+        VecLib::Matrix4f modelViewMatrix;
+        VecLib::Vector3f lightPos;
+    };
+    Uniform mUniform;
+
+public:
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector2f, VecLib::Vector4f> InType;
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float, VecLib::Vector3f, VecLib::Vector3f> OutType;
+
+    enum class Traits {
+        POSITION_INDEX = 0,
+        TEXTURE_INDEX = 1,
+        INV_DEPTH_INDEX = 2,
+        EYE_DIR_INDEX = 3,
+        LIGHT_DIR_INDEX = 4
+    };
+
+    NormalMapVertexShader(const VecLib::Vector3f& lightPos) {
+        mUniform.lightPos = lightPos;
+    }
+
+    OutType operator()(const InType& in) const {
+        const VecLib::Vector4f& P = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        const VecLib::Vector4f& tangent = std::get<static_cast<int>(InTraits::TANGENT_INDEX)>(in);
+        const VecLib::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
+
+        VecLib::Vector3f N = normalize(VecLib::Matrix3x3f(mUniform.modelViewMatrix) * normal);
+        VecLib::Vector3f T = normalize(VecLib::Matrix3x3f(mUniform.modelViewMatrix) * tangent.xyz());
+        VecLib::Vector3f B = cross(N, T);
+
+        VecLib::Vector3f L = mUniform.lightPos - P.xyz();
+        VecLib::Vector3f outLightDir = normalize(VecLib::Vector3f(L.dot(T), L.dot(B), L.dot(N)));
+
+        VecLib::Vector3f V = -P.xyz();
+        VecLib::Vector3f outEyeDir = normalize(VecLib::Vector3f(V.dot(T), V.dot(B), V.dot(N)));
+
+        const VecLib::Vector4f mvPos = mUniform.modelViewMatrix * P;
+        const VecLib::Vector4f outPos = mUniform.projMatrix * mvPos;
+
+        const float invDepth = 1.0 / mvPos[2];
+
+        //std::cout << "Eye: " << outEyeDir << std::endl;
+        //std::cout << "Light: " << outLightDir << std::endl;
+
+        return std::make_tuple(outPos, tex * invDepth, invDepth, outEyeDir, outLightDir);
+    }
+
+    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+};
+
+class NormalMapFragmentShader {
+private:
+    enum class InTraits {
+        POSITION_INDEX = 0,
+        TEXTURE_INDEX = 1,
+        INV_DEPTH_INDEX = 2,
+        EYE_DIR_INDEX = 3,
+        LIGHT_DIR_INDEX = 4
+    };
+
+    typedef RGBATextureSampler<VecLib::Vector4f> SamplerType;
+
+    struct Uniform {
+        SamplerType normalSampler;
+    };
+
+    Uniform mUniform;
+public:
+    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float, VecLib::Vector3f, VecLib::Vector3f> InType;
+    typedef std::tuple<VecLib::Vector4f, float> OutType;
+
+    enum class Traits {
+        COLOR_INDEX = 0,
+        DEPTH_INDEX = 1
+    };
+
+    NormalMapFragmentShader(const std::string& filename) {
+        cimg_library::CImg<unsigned char> texImg(filename.c_str());
+
+        mUniform = {SamplerType(texImg)};
+    }
+
+    OutType operator()(const InType& in) const {
+        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
+        const float invDepth = std::get<static_cast<int>(InTraits::INV_DEPTH_INDEX)>(in);
+        const auto eyeDir = std::get<static_cast<int>(InTraits::EYE_DIR_INDEX)>(in);
+        const auto lightDir = std::get<static_cast<int>(InTraits::LIGHT_DIR_INDEX)>(in);
+
+        const auto realTex = tex / invDepth;
+
+        //auto color = mUniform.textureSampler.get(realTex[0], realTex[1]);
+
+        VecLib::Vector3f V = normalize(eyeDir);
+        VecLib::Vector3f L = normalize(lightDir);
+        VecLib::Vector3f N = normalize(mUniform.normalSampler.get(realTex.x(), realTex.y()).xyz() * 2.0f - 256.0f);
+
+        VecLib::Vector3f R = reflect(-L, N);
+
+        //std::cout << "R: " << R << std::endl;
+        //std::cout << "V: " << V << std::endl;
+
+        const float intensity = std::max(0.0f, R.dot(V));
+        //printf("%f\n", intensity);
+
+        const VecLib::Vector4f color(255,255,255,255);
+
+        return std::make_tuple(color*intensity, pos[2]);
     }
 };
 

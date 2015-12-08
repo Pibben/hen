@@ -16,7 +16,11 @@ template <class T>
 class Vector2 {
     T m[2];
 public:
-    Vector2() { }
+    Vector2() : Vector2(T(0)) { }
+
+    Vector2(T val) {
+        m[0] = m[1] = val;
+    }
 
     Vector2(T v1, T v2) {
         m[0] = v1;
@@ -140,9 +144,7 @@ template <class T>
 class Vector3 {
     T m[3];
 public:
-    Vector3() {
-
-    }
+    Vector3() : Vector3(T(0)) {}
 
     Vector3(T v1, T v2, T v3) {
         m[0] = v1;
@@ -257,10 +259,15 @@ Vector3<T> operator-(const Vector3<T>& v1, const Vector3<T>& v2) {
 }
 
 template <class T>
+Vector3<T> operator-(const Vector3<T>& v, T s) {
+    return Vector3<T>(v[0]-s, v[1]-s, v[2]-s);
+}
+
+template <class T>
 class Vector4 {
     T m[4];
 public:
-    Vector4() {}
+    Vector4() : Vector4(T(0)) {}
 
     Vector4(T value) {
         m[0] = m[1] = m[2] = m[3] = value;
@@ -302,6 +309,21 @@ public:
         return m[idx];
     }
 
+#define GEN_ACCESS1(name, idx1) \
+    const T& name() const { \
+        return m[idx1]; \
+    } \
+\
+    T& name() { \
+        return m[idx1]; \
+    }
+
+    GEN_ACCESS1(x, 0);
+    GEN_ACCESS1(y, 1);
+    GEN_ACCESS1(z, 2);
+    GEN_ACCESS1(w, 3);
+#undef GEN_ACESS1
+
 #define GEN_ACCESS2(name, idx1, idx2) \
     Vector2<T> name() const { \
         return Vector2<T>(m[idx1], m[idx2]); \
@@ -332,6 +354,20 @@ public:
                        m[2]*o[2],
                        m[3]*o[3]);
     }
+
+    T length() {
+        return std::sqrt(dot(*this));
+    }
+
+    void normalize() {
+        const T len = length();
+
+        m[0] /= len;
+        m[1] /= len;
+        m[2] /= len;
+        m[3] /= len;
+    }
+
 
     void operator/=(T s) {
         m[0] /= s;
@@ -472,6 +508,12 @@ template <class T>
 auto dot(const T& v1, const T& v2) {
     return v1.dot(v2);
 }
+
+template <class T>
+auto cross(const T& v1, const T& v2) {
+    return v1.cross(v2);
+}
+
 
 template <class T>
 class Matrix2x2 {
