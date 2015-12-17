@@ -284,7 +284,7 @@ public:
 
     Vector4(const Vector3<T>& vec3, T v) : Vector4(vec3[0], vec3[1], vec3[2], v) {}
 
-    Vector4(const Vector3<T>& vec3) {
+    explicit Vector4(const Vector3<T>& vec3) {
         //TODO:
         assert(0);
     }

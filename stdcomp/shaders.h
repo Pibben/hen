@@ -1030,14 +1030,19 @@ public:
     }
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& P = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
         const VecLib::Vector4f& tangent = std::get<static_cast<int>(InTraits::TANGENT_INDEX)>(in);
         const VecLib::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
 
+        //assert(tangent.w() == 1.0f);
+        //printf("%f\n", tangent.w());
+
+        VecLib::Vector4f P = mUniform.modelViewMatrix * pos;
+
         VecLib::Vector3f N = normalize(VecLib::Matrix3x3f(mUniform.modelViewMatrix) * normal);
         VecLib::Vector3f T = normalize(VecLib::Matrix3x3f(mUniform.modelViewMatrix) * tangent.xyz());
-        VecLib::Vector3f B = cross(N, T);
+        VecLib::Vector3f B = cross(N, T) * tangent.w();
 
         VecLib::Vector3f L = mUniform.lightPos - P.xyz();
         VecLib::Vector3f outLightDir = normalize(VecLib::Vector3f(L.dot(T), L.dot(B), L.dot(N)));
@@ -1045,10 +1050,9 @@ public:
         VecLib::Vector3f V = -P.xyz();
         VecLib::Vector3f outEyeDir = normalize(VecLib::Vector3f(V.dot(T), V.dot(B), V.dot(N)));
 
-        const VecLib::Vector4f mvPos = mUniform.modelViewMatrix * P;
-        const VecLib::Vector4f outPos = mUniform.projMatrix * mvPos;
+        const VecLib::Vector4f outPos = mUniform.projMatrix * P;
 
-        const float invDepth = 1.0 / mvPos[2];
+        const float invDepth = 1.0 / P[2];
 
         //std::cout << "Eye: " << outEyeDir << std::endl;
         //std::cout << "Light: " << outLightDir << std::endl;
@@ -1105,7 +1109,7 @@ public:
 
         VecLib::Vector3f V = normalize(eyeDir);
         VecLib::Vector3f L = normalize(lightDir);
-        VecLib::Vector3f N = normalize(mUniform.normalSampler.get(realTex.x(), realTex.y()).xyz() * 2.0f - 256.0f);
+        VecLib::Vector3f N = normalize(mUniform.normalSampler.get(realTex.x(), realTex.y()).xyz() * 2.0f - 1.0f);
 
         VecLib::Vector3f R = reflect(-L, N);
 

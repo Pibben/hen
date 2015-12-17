@@ -84,6 +84,20 @@ T normalize(T val) {
     return val;
 }
 
+std::vector<std::tuple<VecLib::Vector2f>> unitQuad() {
+    VecLib::Vector2f v1(-1.0f, -1.0f);
+    VecLib::Vector2f v2(-1.0f, 1.0f);
+    VecLib::Vector2f v3(1.0f, 1.0f);
+    VecLib::Vector2f v4(1.0f, -1.0f);
+
+
+
+    std::vector<std::tuple<VecLib::Vector2f>> mesh { std::make_tuple(v1), std::make_tuple(v3), std::make_tuple(v2),
+                                                     std::make_tuple(v1), std::make_tuple(v4), std::make_tuple(v3) };
+
+    return mesh;
+}
+
 inline VecLib::Matrix4f lookAt(const VecLib::Vector3f& eye, const VecLib::Vector3f& center, const VecLib::Vector3f& up) {
     const VecLib::Vector3f F = center - eye;
     const VecLib::Vector3f f = normalize(F);

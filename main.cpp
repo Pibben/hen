@@ -102,13 +102,17 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
         const int i2 = faces[j].coords[1];
         const int i3 = faces[j].coords[2];
 
+        const int u1 = faces[j].uvs[0];
+        const int u2 = faces[j].uvs[1];
+        const int u3 = faces[j].uvs[2];
+
         const VecLib::Vector3f& v1 = vertices[i1];
         const VecLib::Vector3f& v2 = vertices[i2];
         const VecLib::Vector3f& v3 = vertices[i3];
 
-        const VecLib::Vector2f& w1 = uvs[i1];
-        const VecLib::Vector2f& w2 = uvs[i2];
-        const VecLib::Vector2f& w3 = uvs[i3];
+        const VecLib::Vector2f& w1 = uvs[u1];
+        const VecLib::Vector2f& w2 = uvs[u2];
+        const VecLib::Vector2f& w3 = uvs[u3];
 
         const float x1 = v2.x() - v1.x();
         const float x2 = v3.x() - v1.x();
@@ -154,7 +158,7 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
         const auto& f = faces[j];
         for(int i = 0; i < 3; ++i) {
             //std::cout <<  tangents[f.uvs[i]] << std::endl;
-            m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), normals[f.coords[i]], uvs[f.uvs[i]], tangents[f.uvs[i]]);
+            m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), normals[f.coords[i]], uvs[f.uvs[i]], tangents[f.coords[i]]);
         }
     }
 
@@ -261,7 +265,7 @@ void texture() {
 
 void normalMap() {
     NormalMapVertexShader vertexShader(VecLib::Vector3f(100,100,100));
-    NormalMapFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCowBump.png");
+    NormalMapFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCowNorm.png");
 
     auto m = loadMeshTangent("models/cow/cowTM08New00RTime02-tri-norm.obj");
 
@@ -362,15 +366,7 @@ void shaderToy() {
     cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
     cimg_library::CImg<float> zbuffer(width, height);
 
-    VecLib::Vector2f v1(-1.0f, -1.0f);
-    VecLib::Vector2f v2(-1.0f, 1.0f);
-    VecLib::Vector2f v3(1.0f, 1.0f);
-    VecLib::Vector2f v4(1.0f, -1.0f);
-
-    typedef std::vector<std::tuple<VecLib::Vector2f>> MeshType;
-
-    MeshType mesh { std::make_tuple(v1), std::make_tuple(v3), std::make_tuple(v2),
-                    std::make_tuple(v1), std::make_tuple(v4), std::make_tuple(v3) };
+    auto mesh = unitQuad();
 
     ShadertoyVertexShader vertexShader;
     ShadertoySeascapeFragmentShader fragmentShader;
@@ -381,7 +377,7 @@ void shaderToy() {
     while(true) {
         t.reset();
         fragmentShader.setTime(time());
-        renderer.render<typename MeshType::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
+        renderer.render<std::tuple<VecLib::Vector2f>>(mesh, vertexShader, fragmentShader, rasterShader);
         float us = t.getUS();
         printf("%2.2f fps\n", 1.0 / (us / 1000.0 / 1000.0));
 

@@ -32,10 +32,10 @@ public:
         assert(x >= 0 && x < (int)mSizeX);
         assert(y >= 0 && y < (int)mSizeY);
 
-        const float r = mImg(x, y, 0, 0);
-        const float g = mImg(x, y, 0, 1);
-        const float b = mImg(x, y, 0, 2);
-        const float a = 255.0;
+        const float r = mImg(x, y, 0, 0) / 255.0f;
+        const float g = mImg(x, y, 0, 1) / 255.0f;
+        const float b = mImg(x, y, 0, 2) / 255.0f;
+        const float a = 1.0f;
 
         return OutType(r, g, b, a);
     }
