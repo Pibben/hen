@@ -258,7 +258,7 @@ void texture() {
     TextureVertexShader vertexShader;
     TextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
 
-    auto m = loadMeshUv("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshUv("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
@@ -276,7 +276,7 @@ void color(const VecLib::Vector4f &color) {
     ColorVertexShader vertexShader;
     ColorFragmentShader fragmentShader;
 
-    auto m = loadMeshColor("models/sphere2.obj", color);
+    auto m = loadMeshColor("/home/per/code/hen/models/sphere2.obj", color);
 
     animate(m, vertexShader, fragmentShader);
 }
