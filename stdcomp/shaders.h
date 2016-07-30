@@ -750,7 +750,7 @@ public:
         mainImage(fragColor, fragCoord.xy());
 
 
-        return std::make_tuple(fragColor * 255.0f, 0.2f);
+        return std::make_tuple(fragColor, 0.2f);
     }
 
 };
@@ -1147,9 +1147,9 @@ public:
         const auto& color = std::get<ColorAttachment>(fragment);
 
         if(depth > 0.0 && depth < 1.0 && depth < mDepth(x, y)) {
-            mFrame(x, y, 0, 0) = color[0] <= 255 ? color[0] : 255;
-            mFrame(x, y, 0, 1) = color[1] <= 255 ? color[1] : 255;
-            mFrame(x, y, 0, 2) = color[2] <= 255 ? color[2] : 255;
+            mFrame(x, y, 0, 0) = color[0] <= 1.0f ? color[0]*255.0f : 255;
+            mFrame(x, y, 0, 1) = color[1] <= 1.0f ? color[1]*255.0f : 255;
+            mFrame(x, y, 0, 2) = color[2] <= 1.0f ? color[2]*255.0f : 255;
 
             mDepth(x, y) = depth;
         }
