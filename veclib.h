@@ -709,6 +709,66 @@ using Matrix4x4f = Matrix4x4<float>;
 
 }; //ns
 
+#include <functional>
+
+namespace veclib_test {
+
+struct Vec2Base {
+    float m[2];
+
+    Vec2Base(float& a, float& b) : m{a,b} {}
+
+    float& get(int idx) {
+        return m[idx];
+    }
+};
+
+struct Vec2ViewBase {
+    float* m[2] = {nullptr, nullptr};
+
+    Vec2ViewBase(float& a, float& b) : m{&a, &b} {}
+
+    template <class T>
+    Vec2ViewBase& operator=(const T& other) {
+        *m[0] = other.m[0];
+        *m[1] = other.m[1];
+
+        return *this;
+    }
+
+    float& get(int idx) {
+        return *m[idx];
+    }
+
+};
+
+template <class Base>
+struct Vec2Impl : public Base {
+    using Base::get;
+
+    Vec2Impl(float& a, float& b) : Base(a,b) {}
+
+    void normalize() {
+        const float ilen = 1.0f / std::sqrt(get(0)*get(0)+get(1)*get(1));
+        get(0) *= ilen;
+        get(1) *= ilen;
+    }
+};
+
+using Vec2 = Vec2Impl<Vec2Base>;
+using Vec2View = Vec2Impl<Vec2ViewBase>;
+
+struct Vec3 {
+    float m[3];
+
+    Vec2View top() {
+        return Vec2View{m[0], m[1]};
+    }
+};
+
+
+
+};// ns
 
 
 #endif //HEN_VECLIB_H
