@@ -70,6 +70,8 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
     loadObj(filename, vertices, uvs, normals, faces);
     printf("Loaded %lu faces\n", faces.size());
 
+    assert(faces.size() > 0);
+
     std::vector<PositionAndNormal> m;
 
     for(size_t j = 0; j < faces.size(); ++j) {
@@ -286,25 +288,25 @@ void multiTexture() {
     MultiTextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png",
                                               "/home/per/code/hen/models/cow/colorOpacityCowAO.png");
 
-    auto m = loadMeshUv("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshUv("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
 
 void flatShading() {
-    FlatVertexShader vertexShader(VecLib::Vector3f(100,100,100));
+    FlatVertexShader vertexShader(VecLib::Vector3f(100.0f, 100.0f, 100.0f));
     ColorFragmentShader fragmentShader;
 
-    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshNormal("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
 
 void phongShading() {
-    PhongVertexShader vertexShader(VecLib::Vector3f(100,100,100));
+    PhongVertexShader vertexShader(VecLib::Vector3f(100.0f, 100.0f, 100.0f));
     PhongFragmentShader fragmentShader;
 
-    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshNormal("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
@@ -313,7 +315,7 @@ void equiRectangular() {
 	NormalViewVertexShader vertexShader;
 	EquiRectFragmentShader fragmentShader("/home/per/code/hen/equirect.jpg");
 
-    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshNormal("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
@@ -322,7 +324,7 @@ void cubeMap() {
 	NormalViewVertexShader vertexShader;
 	CubemapFragmentShader fragmentShader("/home/per/code/hen/cubemap.jpg");
 
-    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshNormal("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animate(m, vertexShader, fragmentShader);
 }
@@ -340,7 +342,7 @@ void shadow() {
     ShadowTextureFragmentShader shadowTextureFragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
 
     //Animate
-    auto m = loadMeshUv("models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshUv("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
 
     animateShadow(m, shadowGenVertexShader, shadowGenFragmentShader, shadowTextureVertexShader, shadowTextureFragmentShader);
 }

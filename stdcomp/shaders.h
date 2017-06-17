@@ -21,12 +21,8 @@ private:
         COLOR_INDEX = 1
     };
 
-    struct Uniform {
-        VecLib::Matrix4f projMatrix;
-        VecLib::Matrix4f modelViewMatrix;
-    };
-
-    Uniform mUniform;
+    VecLib::Matrix4f mProjMatrix;
+    VecLib::Matrix4f mModelViewMatrix;
 
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> InType;
@@ -41,13 +37,13 @@ public:
         const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector4f& color = std::get<static_cast<int>(InTraits::COLOR_INDEX)>(in);
 
-        VecLib::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
+        VecLib::Vector4f outPos = mProjMatrix * mModelViewMatrix * pos;
 
         return std::make_tuple(outPos, color);
     }
 
-    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mProjMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mModelViewMatrix; }
 };
 
 class ColorFragmentShader {
@@ -82,11 +78,8 @@ private:
         TEXTURE_INDEX = 1
     };
 
-    struct Uniform {
-        VecLib::Matrix4f projMatrix;
-        VecLib::Matrix4f modelViewMatrix;
-    };
-    Uniform mUniform;
+    VecLib::Matrix4f mProjMatrix;
+    VecLib::Matrix4f mModelViewMatrix;
 
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f> InType;
@@ -102,16 +95,16 @@ public:
         const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector2f tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
 
-        const VecLib::Vector4f mvPos = mUniform.modelViewMatrix * pos;
-        const VecLib::Vector4f outPos = mUniform.projMatrix * mvPos;
+        const VecLib::Vector4f mvPos = mModelViewMatrix * pos;
+        const VecLib::Vector4f outPos = mProjMatrix * mvPos;
 
         const float invDepth = 1.0 / mvPos[2];
 
         return std::make_tuple(outPos, tex * invDepth, invDepth);
     }
 
-    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mProjMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mModelViewMatrix; }
 };
 
 class TextureFragmentShader {
@@ -122,13 +115,8 @@ private:
         INV_DEPTH_INDEX = 2
     };
 
-    typedef RGBATextureSampler<VecLib::Vector4f> SamplerType;
+    RGBATextureSampler<VecLib::Vector4f> mTextureSampler;
 
-    struct Uniform {
-        SamplerType textureSampler;
-    };
-
-    Uniform mUniform;
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float> InType;
     typedef std::tuple<VecLib::Vector4f, float> OutType;
@@ -138,11 +126,7 @@ public:
         DEPTH_INDEX = 1
     };
 
-    TextureFragmentShader(const std::string& filename) {
-        cimg_library::CImg<unsigned char> texImg(filename.c_str());
-
-        mUniform = {SamplerType(texImg)};
-    }
+    TextureFragmentShader(const std::string& filename) : mTextureSampler(filename) {}
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
@@ -151,7 +135,7 @@ public:
 
         const auto realTex = tex / invDepth;
 
-        auto color = mUniform.textureSampler.get(realTex[0], realTex[1]);
+        auto color = mTextureSampler.get(realTex[0], realTex[1]);
 
         return std::make_tuple(color, pos[2]);
     }
@@ -165,14 +149,9 @@ private:
         INV_DEPTH_INDEX = 2
     };
 
-    typedef RGBATextureSampler<VecLib::Vector4f> SamplerType;
+    RGBATextureSampler<VecLib::Vector4f> mTextureSampler;
+    SingleChannelTextureSampler<float> mAoSampler;
 
-    struct Uniform {
-        SamplerType textureSampler;
-        SamplerType aoSampler;
-    };
-
-    Uniform mUniform;
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float> InType;
     typedef std::tuple<VecLib::Vector4f, float> OutType;
@@ -182,24 +161,18 @@ public:
         DEPTH_INDEX = 1
     };
 
-    MultiTextureFragmentShader(const std::string& filename1, const std::string& filename2) {
-        cimg_library::CImg<unsigned char> texImg(filename1.c_str());
-        cimg_library::CImg<unsigned char> aoImg(filename2.c_str());
-
-        mUniform = {SamplerType(texImg), SamplerType(aoImg)};
-    }
+    MultiTextureFragmentShader(const std::string& filename1, const std::string& filename2)
+        : mTextureSampler(filename1), mAoSampler(filename2) {}
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
         const float invDepth = std::get<static_cast<int>(InTraits::INV_DEPTH_INDEX)>(in);
 
         const auto realTex = tex / invDepth;
 
-        auto color = mUniform.textureSampler.get(realTex[0], realTex[1]);
-        auto ao = mUniform.aoSampler.get(realTex[0], realTex[1]);
-
-        color = color.cwiseProduct(ao) / 255.0f;
+        auto color = mTextureSampler.get(realTex[0], realTex[1]);
+        auto ao = mAoSampler.get(realTex[0], realTex[1]);
 
         return std::make_tuple(color, pos[2]);
     }
@@ -212,13 +185,10 @@ private:
         NORMAL_INDEX = 1
     };
 
-    struct Uniform {
-        VecLib::Matrix4f projMatrix;
-        VecLib::Matrix4f modelViewMatrix;
-        VecLib::Vector3f lightPos;
-    };
+    VecLib::Matrix4f mProjMatrix;
+    VecLib::Matrix4f mModelViewMatrix;
+    VecLib::Vector3f mLightPos;
 
-    Uniform mUniform;
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> InType;
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> OutType;
@@ -229,18 +199,18 @@ public:
     };
 
     FlatVertexShader(const VecLib::Vector3f& lightPos) {
-        mUniform.lightPos = lightPos;
+        mLightPos = lightPos;
     }
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
-        const VecLib::Vector3f& lightPos = mUniform.lightPos;
+        const VecLib::Vector3f& lightPos = mLightPos;
 
-        const VecLib::Vector4f P = mUniform.modelViewMatrix * pos;
+        const VecLib::Vector4f P = mModelViewMatrix * pos;
 
-        VecLib::Vector3f N = VecLib::Matrix3f(mUniform.modelViewMatrix) * normal;
+        VecLib::Vector3f N = VecLib::Matrix3f(mModelViewMatrix) * normal;
         VecLib::Vector3f L = lightPos - P.xyz();
         VecLib::Vector3f V = -P.xyz();
 
@@ -252,14 +222,14 @@ public:
 
         const float intensity = std::max(0.0f, R.dot(V));
 
-        const VecLib::Vector4f color(255,255,255,255);
+        const VecLib::Vector4f color(1.0f, 1.0f, 1.0f, 1.0f);
 
-        const VecLib::Vector4f outPos = mUniform.projMatrix * P;
+        const VecLib::Vector4f outPos = mProjMatrix * P;
         return std::make_tuple(outPos, color*intensity);
     }
 
-    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mProjMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mModelViewMatrix; }
 };
 
 class PhongVertexShader {
@@ -269,13 +239,10 @@ private:
         NORMAL_INDEX = 1
     };
 
-    struct Uniform {
-        VecLib::Matrix4f projMatrix;
-        VecLib::Matrix4f modelViewMatrix;
-        VecLib::Vector3f lightPos;
-    };
+    VecLib::Matrix4f mProjMatrix;
+    VecLib::Matrix4f mModelViewMatrix;
+    VecLib::Vector3f mLightPos;
 
-    Uniform mUniform;
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> InType;
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f, VecLib::Vector3f> OutType;
@@ -288,27 +255,27 @@ public:
     };
 
     PhongVertexShader(const VecLib::Vector3f& lightPos) {
-        mUniform.lightPos = lightPos;
+        mLightPos = lightPos;
     }
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
-        const VecLib::Vector3f& lightPos = mUniform.lightPos;
+        const VecLib::Vector3f& lightPos = mLightPos;
 
-        const VecLib::Vector4f P = mUniform.modelViewMatrix * pos;
+        const VecLib::Vector4f P = mModelViewMatrix * pos;
 
-        const VecLib::Vector3f N = VecLib::Matrix3f(mUniform.modelViewMatrix) * normal;
+        const VecLib::Vector3f N = VecLib::Matrix3f(mModelViewMatrix) * normal;
         const VecLib::Vector3f L = lightPos - P.xyz();
         const VecLib::Vector3f V = -P.xyz();
 
-        const VecLib::Vector4f outPos = mUniform.projMatrix * P;
+        const VecLib::Vector4f outPos = mProjMatrix * P;
         return std::make_tuple(outPos, N, L, V);
     }
 
-    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mProjMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mModelViewMatrix; }
 };
 
 class PhongFragmentShader {
@@ -344,7 +311,7 @@ public:
 
         const float intensity = std::max(0.0f, R.dot(V));
 
-        const VecLib::Vector4f color(255,255,255,255);
+        const VecLib::Vector4f color(1.0f, 1.0f, 1.0f, 1.0f);
 
         return std::make_tuple(color*intensity, pos[2]);
     }
@@ -357,12 +324,9 @@ private:
         NORMAL_INDEX = 1
     };
 
-    struct Uniform {
-        VecLib::Matrix4f projMatrix;
-        VecLib::Matrix4f modelViewMatrix;
-    };
+    VecLib::Matrix4f mProjMatrix;
+    VecLib::Matrix4f mModelViewMatrix;
 
-    Uniform mUniform;
 public:
 	typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> InType;
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f> OutType;
@@ -377,17 +341,17 @@ public:
         const VecLib::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
-        const VecLib::Vector4f P = mUniform.modelViewMatrix * pos;
+        const VecLib::Vector4f P = mModelViewMatrix * pos;
 
-        const VecLib::Vector3f N = VecLib::Matrix3f(mUniform.modelViewMatrix) * normal;
+        const VecLib::Vector3f N = VecLib::Matrix3f(mModelViewMatrix) * normal;
         const VecLib::Vector3f V = P.xyz();
 
-        const VecLib::Vector4f outPos = mUniform.projMatrix * P;
+        const VecLib::Vector4f outPos = mProjMatrix * P;
         return std::make_tuple(outPos, N, V);
     }
 
-    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mProjMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mModelViewMatrix; }
 };
 
 class EquiRectFragmentShader {
@@ -398,11 +362,8 @@ private:
         VIEW_INDEX = 2
     };
 
-    struct Uniform {
-        RGBATextureSampler<VecLib::Vector4f> textureSampler;
-    };
+    RGBATextureSampler<VecLib::Vector4f> mTextureSampler;
 
-    Uniform mUniform;
 public:
 	typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f> InType;
     typedef std::tuple<VecLib::Vector4f, float> OutType;
@@ -412,7 +373,7 @@ public:
         DEPTH_INDEX = 1
     };
 
-    EquiRectFragmentShader(const std::string& filename) : mUniform{RGBATextureSampler<VecLib::Vector4f>(filename)} {}
+    EquiRectFragmentShader(const std::string& filename) : mTextureSampler(RGBATextureSampler<VecLib::Vector4f>(filename)) {}
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
@@ -441,7 +402,7 @@ public:
             tex[0] = 0.75 - tex[0]; // 0.5 .. 1.0
         }
 
-        auto color = mUniform.textureSampler.get(tex[0], tex[1]);
+        auto color = mTextureSampler.get(tex[0], tex[1]);
 
         return std::make_tuple(color, pos[2]);
     }
@@ -455,11 +416,8 @@ private:
         VIEW_INDEX = 2
     };
 
-    struct Uniform {
-        CubeSampler<VecLib::Vector4f> cubeSampler;
-    };
+    CubeSampler<VecLib::Vector4f> mCubeSampler;
 
-    Uniform mUniform;
 public:
 	typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f> InType;
     typedef std::tuple<VecLib::Vector4f, float> OutType;
@@ -469,7 +427,7 @@ public:
         DEPTH_INDEX = 1
     };
 
-    CubemapFragmentShader(const std::string& filename) : mUniform{CubeSampler<VecLib::Vector4f>(filename)} {}
+    CubemapFragmentShader(const std::string& filename) : mCubeSampler(CubeSampler<VecLib::Vector4f>(filename)) {}
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
@@ -482,7 +440,7 @@ public:
 
         auto R = reflect(V, N);
 
-        auto color = mUniform.cubeSampler.get(R[0], R[1], R[2]);
+        auto color = mCubeSampler.get(R[0], R[1], R[2]);
 
         return std::make_tuple(color, pos[2]);
     }
@@ -495,12 +453,9 @@ private:
         TEXTURE_INDEX = 1
     };
 
-    struct Uniform {
-        VecLib::Matrix4f projMatrix;
-        VecLib::Matrix4f modelViewMatrix;
-    };
+    VecLib::Matrix4f mProjMatrix;
+    VecLib::Matrix4f mModelViewMatrix;
 
-    Uniform mUniform;
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f> InType;
     typedef std::tuple<VecLib::Vector4f> OutType;
@@ -510,20 +465,20 @@ public:
     };
 
     ShadowGenVertexShader(const VecLib::Matrix4f& shadowProjectionMatrix, const VecLib::Matrix4f& shadowModelViewMatrix) {
-        mUniform.projMatrix = shadowProjectionMatrix;
-        mUniform.modelViewMatrix = shadowModelViewMatrix;
+        mProjMatrix = shadowProjectionMatrix;
+        mModelViewMatrix = shadowModelViewMatrix;
     }
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
 
-        const VecLib::Vector4f outPos = mUniform.projMatrix * mUniform.modelViewMatrix * pos;
+        const VecLib::Vector4f outPos = mProjMatrix * mModelViewMatrix * pos;
 
         return std::make_tuple(outPos);
     }
 
-    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mProjMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mModelViewMatrix; }
 };
 
 class ShadowGenFragmentShader {
@@ -531,6 +486,7 @@ private:
     enum class InTraits {
         POSITION_INDEX = 0
     };
+
 public:
     typedef std::tuple<VecLib::Vector4f> InType;
     typedef std::tuple<VecLib::Vector4f, float> OutType;
@@ -555,19 +511,15 @@ private:
         TEXTURE_INDEX = 1
     };
 
-    struct ShadowFragUniformType {
-        RGBATextureSampler<VecLib::Vector4f> textureSampler;
-        SingleChannelTextureSampler<float> shadowSampler;
-    };
+//    struct ShadowFragUniformType {
+//        RGBATextureSampler<VecLib::Vector4f> textureSampler;
+//        SingleChannelTextureSampler<float> shadowSampler;
+//    };
 
-    struct Uniform {
-        VecLib::Matrix4f projMatrix;
-        VecLib::Matrix4f modelViewMatrix;
-        VecLib::Matrix4f shadowMatrix;
-    };
+    VecLib::Matrix4f mProjMatrix;
+    VecLib::Matrix4f mModelViewMatrix;
+    VecLib::Matrix4f mShadowMatrix;
 
-
-    Uniform mUniform;
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f> InType;
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, VecLib::Vector4f, float> OutType;
@@ -580,25 +532,25 @@ public:
     };
 
     ShadowTextureVertexShader(const VecLib::Matrix4f& shadowMatrix) {
-        mUniform.shadowMatrix = shadowMatrix;
+        mShadowMatrix = shadowMatrix;
     }
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector2f tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
 
-        const VecLib::Vector4f mvPos = mUniform.modelViewMatrix * pos;
-        const VecLib::Vector4f outPos = mUniform.projMatrix * mvPos;
+        const VecLib::Vector4f mvPos = mModelViewMatrix * pos;
+        const VecLib::Vector4f outPos = mProjMatrix * mvPos;
 
         const float invDepth = 1.0 / mvPos[2];
 
-        const VecLib::Vector4f shadow_coord = mUniform.shadowMatrix * pos;
+        const VecLib::Vector4f shadow_coord = mShadowMatrix * pos;
 
         return std::make_tuple(outPos, tex * invDepth, shadow_coord, invDepth);
     }
 
-    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mProjMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mModelViewMatrix; }
 };
 
 class ShadowTextureFragmentShader {
@@ -610,12 +562,9 @@ private:
         INV_DEPTH_INDEX = 3,
     };
 
-    struct Uniform {
-        RGBATextureSampler<VecLib::Vector4f> textureSampler;
-        SingleChannelTextureSampler<float> shadowSampler;
-    };
+    RGBATextureSampler<VecLib::Vector4f> mTextureSampler;
+    SingleChannelTextureSampler<float, float> mShadowSampler;
 
-    Uniform mUniform;
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, VecLib::Vector4f, float> InType;
     typedef std::tuple<VecLib::Vector4f, float> OutType;
@@ -625,8 +574,8 @@ public:
         DEPTH_INDEX = 1
     };
 
-    ShadowTextureFragmentShader(const std::string& filename) : mUniform{RGBATextureSampler<VecLib::Vector4f>(filename),
-                                                        SingleChannelTextureSampler<float>(2048, 2048)} {}
+    ShadowTextureFragmentShader(const std::string& filename) : mTextureSampler(RGBATextureSampler<VecLib::Vector4f>(filename)),
+                                                               mShadowSampler(SingleChannelTextureSampler<float, float>(2048, 2048)) {}
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
@@ -636,9 +585,9 @@ public:
 
         const auto realTex = tex / invDepth;
 
-        auto color = mUniform.textureSampler.get(realTex[0], realTex[1]);
+        auto color = mTextureSampler.get(realTex[0], realTex[1]);
 
-        const float shadow_depth = mUniform.shadowSampler.get(shadow_coord[0] / shadow_coord[3], shadow_coord[1] / shadow_coord[3]);
+        const float shadow_depth = mShadowSampler.get(shadow_coord[0] / shadow_coord[3], shadow_coord[1] / shadow_coord[3]);
 
         float shade = 0.0;
 
@@ -651,7 +600,7 @@ public:
         return std::make_tuple(color * shade, pos[2]);
     }
 
-    cimg_library::CImg<float>& getDepthTexture() { return mUniform.shadowSampler.texture(); }
+    cimg_library::CImg<float>& getDepthTexture() { return mShadowSampler.texture(); }
 
 };
 
@@ -678,19 +627,19 @@ public:
 
 };
 
-float mod(float x, float y) {
+static float mod(float x, float y) {
     return std::fmod(x, y);
 }
 
-float step(float edge, float x) {
+static float step(float edge, float x) {
     return x < edge ? 0.0f : 1.0f;
 }
 
-float clamp(float val, float min, float max) {
+static float clamp(float val, float min, float max) {
     return val < min ? min : val > max ? max : val;
 }
 
-float smoothstep(float edge0, float edge1, float x)
+static float smoothstep(float edge0, float edge1, float x)
 {
     // Scale, bias and saturate x to 0..1 range
     x = clamp((x - edge0)/(edge1 - edge0), 0.0, 1.0);
@@ -700,7 +649,7 @@ float smoothstep(float edge0, float edge1, float x)
 
 
 
-VecLib::Vector3f mix(const VecLib::Vector3f& x, const VecLib::Vector3f& y, float a) {
+static VecLib::Vector3f mix(const VecLib::Vector3f& x, const VecLib::Vector3f& y, float a) {
     VecLib::Vector3f mx = x * (1.0f - a);
     VecLib::Vector3f my = y * a;
     return mx + my;
@@ -755,14 +704,6 @@ public:
 
 };
 
-inline float abs(float v) {
-    return std::abs(v);
-}
-
-inline double abs(double v) {
-    return std::abs(v);
-}
-
 class ShadertoyWaveFragmentShader : public ShadertoyFragmentShader {
 public:
     const vec3 COLOR1 = vec3(0.0, 0.0, 0.3);
@@ -794,7 +735,7 @@ public:
         for(float i = 0.0; i < 10.0; i++) {
 
             uv.y() += (0.07 * sin(uv.x() + i/7.0 + iGlobalTime ));
-            wave_width = abs(1.0 / (150.0 * uv.y()));
+            wave_width = std::abs(1.0 / (150.0 * uv.y()));
             wave_color += vec3(wave_width * 1.9, wave_width, wave_width * 1.5);
         }
 
@@ -1006,12 +947,9 @@ private:
         TANGENT_INDEX = 3,
     };
 
-    struct Uniform {
-        VecLib::Matrix4f projMatrix;
-        VecLib::Matrix4f modelViewMatrix;
-        VecLib::Vector3f lightPos;
-    };
-    Uniform mUniform;
+    VecLib::Matrix4f mProjMatrix;
+    VecLib::Matrix4f mModelViewMatrix;
+    VecLib::Vector3f mLightPos;
 
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector2f, VecLib::Vector4f> InType;
@@ -1026,7 +964,7 @@ public:
     };
 
     NormalMapVertexShader(const VecLib::Vector3f& lightPos) {
-        mUniform.lightPos = lightPos;
+        mLightPos = lightPos;
     }
 
     OutType operator()(const InType& in) const {
@@ -1038,19 +976,19 @@ public:
         //assert(tangent.w() == 1.0f);
         //printf("%f\n", tangent.w());
 
-        VecLib::Vector4f P = mUniform.modelViewMatrix * pos;
+        VecLib::Vector4f P = mModelViewMatrix * pos;
 
-        VecLib::Vector3f N = normalize(VecLib::Matrix3x3f(mUniform.modelViewMatrix) * normal);
-        VecLib::Vector3f T = normalize(VecLib::Matrix3x3f(mUniform.modelViewMatrix) * tangent.xyz());
+        VecLib::Vector3f N = normalize(VecLib::Matrix3x3f(mModelViewMatrix) * normal);
+        VecLib::Vector3f T = normalize(VecLib::Matrix3x3f(mModelViewMatrix) * tangent.xyz());
         VecLib::Vector3f B = cross(N, T) * tangent.w();
 
-        VecLib::Vector3f L = mUniform.lightPos - P.xyz();
+        VecLib::Vector3f L = mLightPos - P.xyz();
         VecLib::Vector3f outLightDir = normalize(VecLib::Vector3f(L.dot(T), L.dot(B), L.dot(N)));
 
         VecLib::Vector3f V = -P.xyz();
         VecLib::Vector3f outEyeDir = normalize(VecLib::Vector3f(V.dot(T), V.dot(B), V.dot(N)));
 
-        const VecLib::Vector4f outPos = mUniform.projMatrix * P;
+        const VecLib::Vector4f outPos = mProjMatrix * P;
 
         const float invDepth = 1.0 / P[2];
 
@@ -1060,8 +998,8 @@ public:
         return std::make_tuple(outPos, tex * invDepth, invDepth, outEyeDir, outLightDir);
     }
 
-    VecLib::Matrix4f& projMatrix() { return mUniform.projMatrix; }
-    VecLib::Matrix4f& modelViewMatrix() { return mUniform.modelViewMatrix; }
+    VecLib::Matrix4f& projMatrix() { return mProjMatrix; }
+    VecLib::Matrix4f& modelViewMatrix() { return mModelViewMatrix; }
 };
 
 class NormalMapFragmentShader {
@@ -1074,13 +1012,8 @@ private:
         LIGHT_DIR_INDEX = 4
     };
 
-    typedef RGBATextureSampler<VecLib::Vector4f> SamplerType;
+    RGBATextureSampler<VecLib::Vector4f> mNormalSampler;
 
-    struct Uniform {
-        SamplerType normalSampler;
-    };
-
-    Uniform mUniform;
 public:
     typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float, VecLib::Vector3f, VecLib::Vector3f> InType;
     typedef std::tuple<VecLib::Vector4f, float> OutType;
@@ -1093,7 +1026,7 @@ public:
     NormalMapFragmentShader(const std::string& filename) {
         cimg_library::CImg<unsigned char> texImg(filename.c_str());
 
-        mUniform = {SamplerType(texImg)};
+        mNormalSampler = RGBATextureSampler<VecLib::Vector4f>(texImg);
     }
 
     OutType operator()(const InType& in) const {
@@ -1109,7 +1042,7 @@ public:
 
         VecLib::Vector3f V = normalize(eyeDir);
         VecLib::Vector3f L = normalize(lightDir);
-        VecLib::Vector3f N = normalize(mUniform.normalSampler.get(realTex.x(), realTex.y()).xyz() * 2.0f - 1.0f);
+        VecLib::Vector3f N = normalize(mNormalSampler.get(realTex.x(), realTex.y()).xyz() * 2.0f - 1.0f);
 
         VecLib::Vector3f R = reflect(-L, N);
 
@@ -1119,7 +1052,7 @@ public:
         const float intensity = std::max(0.0f, R.dot(V));
         //printf("%f\n", intensity);
 
-        const VecLib::Vector4f color(255,255,255,255);
+        const VecLib::Vector4f color(1.0f, 1.0f, 1.0f, 1.0f);
 
         return std::make_tuple(color*intensity, pos[2]);
     }

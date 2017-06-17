@@ -44,7 +44,7 @@ public:
     unsigned int height() const { return mSizeY; }
 };
 
-template <class OutType, class StorageType=OutType>
+template <class OutType, class StorageType=uint8_t>
 class SingleChannelTextureSampler {
     cimg_library::CImg<StorageType> mImg;
     unsigned int mSizeX;
@@ -54,6 +54,12 @@ public:
     SingleChannelTextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
     SingleChannelTextureSampler(unsigned int sizeX, unsigned int sizeY) : mImg(cimg_library::CImg<StorageType>(sizeX, sizeY)), mSizeX(sizeX), mSizeY(sizeY) {}
     SingleChannelTextureSampler(cimg_library::CImg<StorageType>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
+    SingleChannelTextureSampler(const std::string& filename) {
+        mImg.load(filename.c_str());
+
+        mSizeX = mImg.width();
+        mSizeY = mImg.height();
+    }
 
     OutType get(float u, float v) const {
         int x = u * (mSizeX-1) + 0.5;
@@ -62,10 +68,10 @@ public:
         assert(x >= 0 && x < (int)mSizeX);
         assert(y >= 0 && y < (int)mSizeY);
 
-        return static_cast<OutType>(mImg(x, y, 0));
+        return static_cast<OutType>(mImg(x, y, 0)) / 255.0f;
     }
 
-    cimg_library::CImg<OutType>& texture() { return mImg; }
+    cimg_library::CImg<StorageType>& texture() { return mImg; }
 };
 
 template <class OutType>
