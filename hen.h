@@ -18,31 +18,24 @@
 
 #include "veclib.h"
 
-template<std::size_t I = 0, typename FuncT, typename ... Tp>
-inline typename std::enable_if<I == sizeof...(Tp), void>::type
-mytransform(const std::tuple<Tp...> &, const std::tuple<Tp...> &, std::tuple<Tp...> &, FuncT) // Unused arguments are given no names.
-{}
+template <typename... Tp, typename Func, std::size_t... Idx>
+std::tuple<Tp...> mytransformHelper(const std::tuple<Tp...>& t1, const std::tuple<Tp...>& t2, Func&& f, std::index_sequence<Idx...>) {
+    return std::tuple<Tp...>((f(std::get<Idx>(t1), std::get<Idx>(t2)))...);
+}
 
-template<std::size_t I = 0, typename FuncT, typename ... Tp>
-inline typename std::enable_if<I < sizeof...(Tp), void>::type
-mytransform(const std::tuple<Tp...>& t1, const std::tuple<Tp...>& t2, std::tuple<Tp...>& r, FuncT f)
-{
-    std::get<I>(r) = f(std::get<I>(t1), std::get<I>(t2));
-    mytransform<I + 1, FuncT, Tp...>(t1, t2, r, f);
+template<typename FuncT, typename... Tp>
+inline std::tuple<Tp...> mytransform(const std::tuple<Tp...>& t1, const std::tuple<Tp...>& t2, FuncT f) {
+    return mytransformHelper(t1, t2, f, std::index_sequence_for<Tp...>{});
 }
 
 template <class Tuple>
 Tuple tupleDiff(const Tuple& a, const Tuple& b) {
-    Tuple c;
-    mytransform(a, b, c, [](auto ta, auto tb) { return ta - tb; });
-    return c;
+    return mytransform(a, b, [](auto ta, auto tb) { return ta - tb; });
 }
 
 template <class Tuple>
 Tuple tupleAddScaled(const Tuple& a, const Tuple& b, float s) {
-    Tuple c;
-    mytransform(a, b, c, [s](auto ta, auto tb) { return ta + tb * s; });
-    return c;
+    return mytransform(a, b, [s](auto ta, auto tb) { return ta + tb * s; });
 }
 
 template <class Type>
