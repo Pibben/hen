@@ -1,0 +1,4 @@
+[submodule "cfw"]
+	path = cfw
+	url = https://github.com/Pibben/cfw.git
+	branch = master
