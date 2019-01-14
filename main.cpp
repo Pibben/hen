@@ -17,7 +17,7 @@
 
 
 typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> PositionAndColor;
-std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const VecLib::Vector4f& color) {
+static std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const VecLib::Vector4f& color) {
     std::vector<VecLib::Vector3f> vertices;
     std::vector<VecLib::Vector2f> uvs;
     std::vector<VecLib::Vector3f> normals;
@@ -39,7 +39,7 @@ std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const V
 }
 
 typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f> PositionAndUv;
-std::vector<PositionAndUv> loadMeshUv(const std::string &filename) {
+static std::vector<PositionAndUv> loadMeshUv(const std::string &filename) {
     std::vector<VecLib::Vector3f> vertices;
     std::vector<VecLib::Vector2f> uvs;
     std::vector<VecLib::Vector3f> normals;
@@ -171,7 +171,7 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
 
 
 template <class Mesh, class VertexShader, class FragmentShader>
-void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
+static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
 
     vertexShader.modelViewMatrix() = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0});
@@ -212,7 +212,7 @@ void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragm
 
 template <class Mesh, class VertexGenShader, class FragmentGenShader,
                       class VertexShader, class FragmentShader>
-void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentGenShader& fragmentGenShader,
+static void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentGenShader& fragmentGenShader,
                                      VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
 
@@ -256,7 +256,7 @@ void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentG
     }
 }
 
-void texture() {
+static void texture() {
     TextureVertexShader vertexShader;
     TextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
 
@@ -265,7 +265,7 @@ void texture() {
     animate(m, vertexShader, fragmentShader);
 }
 
-void normalMap() {
+static void normalMap() {
     NormalMapVertexShader vertexShader(VecLib::Vector3f(100,100,100));
     NormalMapFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCowNorm.png");
 
@@ -274,7 +274,7 @@ void normalMap() {
     animate(m, vertexShader, fragmentShader);
 }
 
-void color(const VecLib::Vector4f &color) {
+static void color(const VecLib::Vector4f &color) {
     ColorVertexShader vertexShader;
     ColorFragmentShader fragmentShader;
 
@@ -283,7 +283,7 @@ void color(const VecLib::Vector4f &color) {
     animate(m, vertexShader, fragmentShader);
 }
 
-void multiTexture() {
+static void multiTexture() {
     TextureVertexShader vertexShader;
     MultiTextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png",
                                               "/home/per/code/hen/models/cow/colorOpacityCowAO.png");
@@ -293,7 +293,7 @@ void multiTexture() {
     animate(m, vertexShader, fragmentShader);
 }
 
-void flatShading() {
+static void flatShading() {
     FlatVertexShader vertexShader(VecLib::Vector3f(100.0f, 100.0f, 100.0f));
     ColorFragmentShader fragmentShader;
 
@@ -302,7 +302,7 @@ void flatShading() {
     animate(m, vertexShader, fragmentShader);
 }
 
-void phongShading() {
+static void phongShading() {
     PhongVertexShader vertexShader(VecLib::Vector3f(100.0f, 100.0f, 100.0f));
     PhongFragmentShader fragmentShader;
 
@@ -311,7 +311,7 @@ void phongShading() {
     animate(m, vertexShader, fragmentShader);
 }
 
-void equiRectangular() {
+static void equiRectangular() {
 	NormalViewVertexShader vertexShader;
 	EquiRectFragmentShader fragmentShader("/home/per/code/hen/equirect.jpg");
 
@@ -320,7 +320,7 @@ void equiRectangular() {
     animate(m, vertexShader, fragmentShader);
 }
 
-void cubeMap() {
+static void cubeMap() {
 	NormalViewVertexShader vertexShader;
 	CubemapFragmentShader fragmentShader("/home/per/code/hen/cubemap.jpg");
 
@@ -329,7 +329,7 @@ void cubeMap() {
     animate(m, vertexShader, fragmentShader);
 }
 
-void shadow() {
+static void shadow() {
     const auto lightPos = VecLib::Vector3f(5,5,5);
     const auto shadowProjectionMatrix = proj(-1, 1, -1, 1, 1, 1000);
     const auto shadowModelViewMatrix  = lookAt(lightPos, {0, 0, 0}, {0, 1, 0});
@@ -347,7 +347,7 @@ void shadow() {
     animateShadow(m, shadowGenVertexShader, shadowGenFragmentShader, shadowTextureVertexShader, shadowTextureFragmentShader);
 }
 
-float time() {
+static float time() {
     std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(
             std::chrono::system_clock::now().time_since_epoch()
     );
@@ -392,7 +392,7 @@ void shaderToy() {
     }
 }
 
-void libtest() {
+static void libtest() {
 //    Eigen::Matrix4f m = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0});
 //    std::cout << m * Eigen::Vector4f(1, 0, 0, 0) << std::endl;
 //    std::cout << m * Eigen::Vector4f(0, 1, 0, 0) << std::endl;
