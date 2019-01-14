@@ -731,18 +731,18 @@ public:
         // To create the waves
         float wave_width = 0.01;
         uv  = -1.0f + 2.0f * uv;
-        uv.y() += 0.1;
-        for(float i = 0.0; i < 10.0; i++) {
+        uv.y() += 0.1f;
+        for(float i = 0.0f; i < 10.0f; i++) {
 
-            uv.y() += (0.07 * sin(uv.x() + i/7.0 + iGlobalTime ));
-            wave_width = std::abs(1.0 / (150.0 * uv.y()));
-            wave_color += vec3(wave_width * 1.9, wave_width, wave_width * 1.5);
+            uv.y() += (0.07f * sin(uv.x() + i/7.0f + iGlobalTime ));
+            wave_width = std::abs(1.0f / (150.0f * uv.y()));
+            wave_color += vec3(wave_width * 1.9f, wave_width, wave_width * 1.5f);
         }
 
         final_color = bg_color + wave_color;
 
 
-        fragColor = vec4(final_color, 1.0);
+        fragColor = vec4(final_color, 1.0f);
     }
 };
 
