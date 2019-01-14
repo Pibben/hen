@@ -9,7 +9,7 @@
 #define STDCOMP_SAMPLERS_H_
 
 //TODO: Share code
-
+#if 0
 template <class OutType>
 class RGBATextureSampler {
     cimg_library::CImg<unsigned char> mImg;
@@ -138,7 +138,7 @@ public:
     }
 };
 
-
+#endif
 
 
 #endif /* STDCOMP_SAMPLERS_H_ */

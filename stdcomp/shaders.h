@@ -13,7 +13,7 @@
 #include "../utils.h"
 #include "samplers.h"
 #include "../veclib.h"
-
+#if 0
 class ColorVertexShader {
 private:
     enum class InTraits {
@@ -603,7 +603,7 @@ public:
     cimg_library::CImg<float>& getDepthTexture() { return mShadowSampler.texture(); }
 
 };
-
+#endif
 class ShadertoyVertexShader {
 private:
     enum class InTraits {
@@ -937,7 +937,7 @@ public:
         fragColor = vec4(pow(color,vec3(0.75)), 1.0);
     }
 };
-
+#if 0
 class NormalMapVertexShader {
 private:
     enum class InTraits {
@@ -1057,7 +1057,8 @@ public:
         return std::make_tuple(color*intensity, pos[2]);
     }
 };
-
+#endif
+template <uint16_t WIDTH, uint16_t HEIGHT>
 class CImgColorRasterShader {
 private:
     enum class InTraits {
@@ -1065,12 +1066,12 @@ private:
         DEPTH_INDEX = 1
     };
 
-    cimg_library::CImg<unsigned char>& mFrame;
-    cimg_library::CImg<float>& mDepth;
+    PixelBuffer<unsigned char, WIDTH, HEIGHT, 3>& mFrame;
+    PixelBuffer<float, WIDTH, HEIGHT>& mDepth;
 public:
     typedef std::tuple<VecLib::Vector4f, float> InType;
 
-    CImgColorRasterShader(cimg_library::CImg<unsigned char>& frame, cimg_library::CImg<float>& depth) : mFrame(frame), mDepth(depth) {}
+    CImgColorRasterShader(PixelBuffer<unsigned char, WIDTH, HEIGHT, 3>& frame, PixelBuffer<float, WIDTH, HEIGHT>& depth) : mFrame(frame), mDepth(depth) {}
 
     void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
         constexpr int ColorAttachment = static_cast<int>(InTraits::COLOR_INDEX);
@@ -1080,9 +1081,9 @@ public:
         const auto& color = std::get<ColorAttachment>(fragment);
 
         if(depth > 0.0 && depth < 1.0 && depth < mDepth(x, y)) {
-            mFrame(x, y, 0, 0) = color[0] <= 1.0f ? color[0]*255.0f : 255;
-            mFrame(x, y, 0, 1) = color[1] <= 1.0f ? color[1]*255.0f : 255;
-            mFrame(x, y, 0, 2) = color[2] <= 1.0f ? color[2]*255.0f : 255;
+            mFrame(x, y, 0) = color[0] <= 1.0f ? color[0]*255.0f : 255;
+            mFrame(x, y, 1) = color[1] <= 1.0f ? color[1]*255.0f : 255;
+            mFrame(x, y, 2) = color[2] <= 1.0f ? color[2]*255.0f : 255;
 
             mDepth(x, y) = depth;
         }
@@ -1096,7 +1097,7 @@ public:
     unsigned int getXResolution() const { return mFrame.width(); }
     unsigned int getYResolution() const { return mFrame.height(); }
 };
-
+#if 0
 class CImgDepthRasterShader {
 private:
     enum class InTraits {
@@ -1128,5 +1129,5 @@ public:
     unsigned int getYResolution() const { return mDepth.height(); }
 
 };
-
+#endif
 #endif /* SHADERS_H_ */

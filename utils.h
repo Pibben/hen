@@ -10,8 +10,6 @@
 
 #include "veclib.h"
 
-#include "CImg.h"
-
 struct EmptyUniform {};
 
 inline VecLib::Vector3f reflect(const VecLib::Vector3f& R, const VecLib::Vector3f& N) {
@@ -135,7 +133,7 @@ inline VecLib::Matrix4f lookAt(const VecLib::Vector3f& eye, const VecLib::Vector
 
     return M * tm;
 }
-
+#if 0
 inline cimg_library::CImg<unsigned char> normalizeDepth(cimg_library::CImg<float>& depth) {
     const int width = depth.width();
     const int height = depth.height();
@@ -155,7 +153,7 @@ inline cimg_library::CImg<unsigned char> normalizeDepth(cimg_library::CImg<float
 
     return ret;
 }
-
+#endif
 template <int enable>
 struct Timer {
     void report(const std::string&) {}
@@ -183,6 +181,23 @@ struct Timer<1> {
     void reset() {
         latest = std::chrono::steady_clock::now();
     }
+};
+
+template<class T, uint16_t WIDTH, uint16_t HEIGHT, uint16_t DEPTH = 1>
+class PixelBuffer {
+private:
+    T* mData;
+public:
+    PixelBuffer() : mData(new T[WIDTH*HEIGHT*DEPTH]) {}
+    ~PixelBuffer() { delete[] mData; }
+    PixelBuffer(const PixelBuffer&) = delete;
+    T& operator()(uint_fast16_t x, uint_fast16_t y, uint_fast16_t z = 0) {
+        return mData[(x + (HEIGHT - y) * WIDTH) * DEPTH + z];
+    }
+    T* data() { return mData; }
+    constexpr uint16_t width() { return WIDTH; }
+    constexpr uint16_t height() { return HEIGHT; }
+    void fill(T value) { std::fill(mData, mData+WIDTH*HEIGHT*DEPTH, value); };
 };
 
 

@@ -12,9 +12,7 @@
 #include "stdcomp/shaders.h"
 #include "utils.h"
 #include "veclib.h"
-
-#include "CImg.h"
-
+#include "cfw/cfw.h"
 
 typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> PositionAndColor;
 static std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const VecLib::Vector4f& color) {
@@ -169,7 +167,7 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
     return m;
 }
 
-
+#if 0
 template <class Mesh, class VertexShader, class FragmentShader>
 static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
@@ -346,6 +344,7 @@ static void shadow() {
 
     animateShadow(m, shadowGenVertexShader, shadowGenFragmentShader, shadowTextureVertexShader, shadowTextureFragmentShader);
 }
+#endif
 
 static float time() {
     std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(
@@ -357,38 +356,43 @@ static float time() {
     return (int)ms.count() / 1000.0f;
 }
 
-void shaderToy() {
-    const int width = 640;
-    const int height = 480;
+static void shaderToy() {
+    constexpr int width = 640;
+    constexpr int height = 480;
 
     //Renderer
     Renderer renderer;
 
-    cimg_library::CImgDisplay disp;
-    cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
-    cimg_library::CImg<float> zbuffer(width, height);
+    cfw::Window disp(width, height);// cimg_library::CImgDisplay disp;
+    PixelBuffer<unsigned char, width, height, 3> framebuffer;//cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
+    PixelBuffer<float, width, height> zbuffer; //cimg_library::CImg<float> zbuffer(width, height);
 
     auto mesh = unitQuad();
 
     ShadertoyVertexShader vertexShader;
-    ShadertoySeascapeFragmentShader fragmentShader;
-    CImgColorRasterShader rasterShader(framebuffer, zbuffer);
+    ShadertoyWaveFragmentShader fragmentShader;
+    CImgColorRasterShader<width, height> rasterShader(framebuffer, zbuffer);
 
     Timer<1> t;
 
-    while(true) {
+    bool going = true;
+
+    disp.setCloseCallback([&going]() { going = false; });
+
+    while(going) {
         t.reset();
-        fragmentShader.setTime(time());
+        fragmentShader.setTime(time()); //TODO: Start time from 0.0
         renderer.render<std::tuple<VecLib::Vector2f>>(mesh, vertexShader, fragmentShader, rasterShader);
         float us = t.getUS();
         printf("%2.2f fps\n", 1.0 / (us / 1000.0 / 1000.0));
 
-        framebuffer.mirror('y'); //TODO: Investigate
-        disp.display(framebuffer);
+        //framebuffer.mirror('y'); //TODO: Investigate
+        disp.render(framebuffer.data(), width, height); //disp.display(framebuffer);
+        disp.paint();
 
-        if(disp.is_closed()) {
-            break;
-        }
+        //if(disp.is_closed()) {
+        //    break;
+        //}
     }
 }
 
@@ -423,7 +427,7 @@ static void libtest() {
 }
 
 int main(int argc, char** argv) {
-    normalMap();
+    shaderToy();
 }
 
 
