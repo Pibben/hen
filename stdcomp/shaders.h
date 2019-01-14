@@ -675,7 +675,7 @@ public:
     typedef std::tuple<VecLib::Vector4f> InType;
     typedef std::tuple<VecLib::Vector4f, float> OutType;
 
-    ShadertoyFragmentShader() : iResolution(640, 480) {}
+    ShadertoyFragmentShader() : iGlobalTime(0.0f), iResolution(640, 480) {}
 
     enum class Traits {
         COLOR_INDEX = 0,
