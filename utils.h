@@ -36,9 +36,9 @@ inline VecLib::Matrix4f ortho(float left, float right,
                              float bottom, float top,
                              float near, float far) {
     VecLib::Matrix4f m = VecLib::Matrix4f::Identity();
-    m[0][0] = 2.0/(right - left);
-    m[1][1] = 2.0/(top - bottom);
-    m[2][2] = 2.0/(near - far);
+    m[0][0] = 2.0f/(right - left);
+    m[1][1] = 2.0f/(top - bottom);
+    m[2][2] = 2.0f/(near - far);
 
     m[3][0] = (left+right)/(left-right);
     m[3][1] = (bottom+top)/(bottom-top);

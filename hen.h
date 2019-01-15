@@ -49,8 +49,8 @@ public:
     }
 
     Type run(float val) {
-        assert(val >= 0.0);
-        assert(val <= 1.0);
+        assert(val >= 0.0f);
+        assert(val <= 1.0f);
         
         return tupleAddScaled(mStart, mDelta, val);
     }
@@ -100,7 +100,7 @@ private:
         const float dy = std::abs(y1-y0);
 
         const float inpDist = std::sqrt(dx*dx+dy*dy);
-        const float inpStep = 1.0 / inpDist;
+        const float inpStep = 1.0f / inpDist;
         float inpPos = 0.0f;
 
         float error = dx / 2.0f;
@@ -152,7 +152,7 @@ private:
         TupleInterpolator<Vertex> inpl(v1, v3);
         TupleInterpolator<Vertex> inpr(v2, v3);
 
-        float ypos = (y0 - p1[1] + 0.5) / yDistF;
+        float ypos = (y0 - p1[1] + 0.5f) / yDistF;
         float ystep = yStep / yDistF;
 
         for(int y = y0; yStep*(y - y2) < 0; y+=yStep) {
@@ -192,7 +192,7 @@ private:
     template <class Vertex>
     bool isBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3) {
         auto c = cross3(v2-v1, v3-v1);
-        return c[2] < 0.0;
+        return c[2] < 0.0f;
     }
 
 public:

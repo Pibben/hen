@@ -494,7 +494,7 @@ app_v2(pow, std::pow)
     } \
 
 float mix(float x, float y, float a) {
-    return x * (1.0 - a) + y * a;
+    return x * (1.0f - a) + y * a;
 }
 
 app_v3(mix)

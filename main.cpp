@@ -384,7 +384,7 @@ static void shaderToy() {
         fragmentShader.setTime(time()); //TODO: Start time from 0.0
         renderer.render<std::tuple<VecLib::Vector2f>>(mesh, vertexShader, fragmentShader, rasterShader);
         float us = t.getUS();
-        printf("%2.2f fps\n", 1.0 / (us / 1000.0 / 1000.0));
+        printf("%2.2f fps\n", 1.0 / (static_cast<double>(us) / 1000.0 / 1000.0));
 
         //framebuffer.mirror('y'); //TODO: Investigate
         disp.render(framebuffer.data(), width, height); //disp.display(framebuffer);
