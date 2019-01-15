@@ -5,7 +5,7 @@ set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_EXTENSIONS OFF)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
-add_compile_options("-march=native" "-Wdouble-promotion")
+add_compile_options("-march=native" "-Wdouble-promotion" "-fno-math-errno")
 
 set(SOURCE_FILES
     stdcomp/samplers.h
