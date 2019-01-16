@@ -11,8 +11,8 @@
 #include <cmath>
 
 #include "../utils.h"
-#include "samplers.h"
 #include "../veclib.h"
+#include "samplers.h"
 #if 0
 class ColorVertexShader {
 private:
@@ -606,48 +606,34 @@ public:
 #endif
 class ShadertoyVertexShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0
-    };
+    enum class InTraits { POSITION_INDEX = 0 };
 
 public:
     typedef std::tuple<VecLib::Vector2f> InType;
     typedef std::tuple<VecLib::Vector4f> OutType;
 
-    enum class Traits {
-        POSITION_INDEX = 0
-    };
+    enum class Traits { POSITION_INDEX = 0 };
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector2f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector2f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         VecLib::Vector4f outPos(pos, 0.0f, 1.0f);
 
         return std::make_tuple(outPos);
     }
-
 };
 
-static float mod(float x, float y) {
-    return std::fmod(x, y);
-}
+static float mod(float x, float y) { return std::fmod(x, y); }
 
-static float step(float edge, float x) {
-    return x < edge ? 0.0f : 1.0f;
-}
+static float step(float edge, float x) { return x < edge ? 0.0f : 1.0f; }
 
-static float clamp(float val, float min, float max) {
-    return val < min ? min : val > max ? max : val;
-}
+static float clamp(float val, float min, float max) { return val < min ? min : val > max ? max : val; }
 
-static float smoothstep(float edge0, float edge1, float x)
-{
+static float smoothstep(float edge0, float edge1, float x) {
     // Scale, bias and saturate x to 0..1 range
-    x = clamp((x - edge0)/(edge1 - edge0), 0.0, 1.0);
+    x = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
     // Evaluate polynomial
-    return x*x*(3 - 2*x);
+    return x * x * (3 - 2 * x);
 }
-
-
 
 static VecLib::Vector3f mix(const VecLib::Vector3f& x, const VecLib::Vector3f& y, float a) {
     VecLib::Vector3f mx = x * (1.0f - a);
@@ -664,9 +650,7 @@ protected:
     using mat3 = VecLib::Matrix3f;
     using mat4 = VecLib::Matrix4f;
 
-    enum class InTraits {
-        POSITION_INDEX = 0
-    };
+    enum class InTraits { POSITION_INDEX = 0 };
 
     float iGlobalTime;
     VecLib::Vector2f iResolution;
@@ -677,31 +661,24 @@ public:
 
     ShadertoyFragmentShader() : iGlobalTime(0.0f), iResolution(640, 480) {}
 
-    enum class Traits {
-        COLOR_INDEX = 0,
-        DEPTH_INDEX = 1
-    };
+    enum class Traits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
     void setTime(float t) {
         iGlobalTime = t;
-        //printf("%f\n", iGlobalTime);
+        // printf("%f\n", iGlobalTime);
     }
 
     virtual void mainImage(vec4& fragColor, const vec2& fragCoord) const = 0;
 
     OutType operator()(const InType& in) const {
-
-
         const VecLib::Vector4f& fragCoord = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
 
         VecLib::Vector4f fragColor;
 
         mainImage(fragColor, fragCoord.xy());
 
-
         return std::make_tuple(fragColor, 0.2f);
     }
-
 };
 
 class ShadertoyWaveFragmentShader : public ShadertoyFragmentShader {
@@ -710,9 +687,8 @@ public:
     const vec3 COLOR2 = vec3(0.5, 0.0, 0.0);
     static constexpr float BLOCK_WIDTH = 0.01;
 
-    //https://www.shadertoy.com/view/4dsGzH
+    // https://www.shadertoy.com/view/4dsGzH
     virtual void mainImage(vec4& fragColor, const vec2& fragCoord) const {
-
         vec2 uv = fragCoord.xy() / iResolution.xy();
 
         // To create the BG pattern
@@ -730,31 +706,29 @@ public:
 
         // To create the waves
         float wave_width = 0.01f;
-        uv  = -1.0f + 2.0f * uv;
+        uv = -1.0f + 2.0f * uv;
         uv.y() += 0.1f;
-        for(float i = 0.0f; i < 10.0f; i++) {
-
-            uv.y() += (0.07f * std::sin(uv.x() + i/7.0f + iGlobalTime )); //TODO
+        for (float i = 0.0f; i < 10.0f; i++) {
+            uv.y() += (0.07f * std::sin(uv.x() + i / 7.0f + iGlobalTime));  // TODO
             wave_width = std::abs(1.0f / (150.0f * uv.y()));
             wave_color += vec3(wave_width * 1.9f, wave_width, wave_width * 1.5f);
         }
 
         final_color = bg_color + wave_color;
 
-
         fragColor = vec4(final_color, 1.0f);
     }
 };
 
 class ShadertoySeascapeFragmentShader : public ShadertoyFragmentShader {
-    //https://www.shadertoy.com/view/Ms2SD1
+    // https://www.shadertoy.com/view/Ms2SD1
 public:
     static const int NUM_STEPS = 8;
-    static constexpr float PI	 	= 3.1415f;
-    static constexpr float EPSILON	= 1e-3f;
-    float EPSILON_NRM	= 0.1f / iResolution.x();
+    static constexpr float PI = 3.1415f;
+    static constexpr float EPSILON = 1e-3f;
+    float EPSILON_NRM = 0.1f / iResolution.x();
 
-// sea
+    // sea
     static const int ITER_GEOMETRY = 3;
     static const int ITER_FRAGMENT = 5;
     static constexpr float SEA_HEIGHT = 0.6f;
@@ -762,58 +736,57 @@ public:
     static constexpr float SEA_SPEED = 0.8f;
     static constexpr float SEA_FREQ = 0.16f;
 
-
-// math
+    // math
     static mat3 fromEuler(vec3 ang) {
         vec2 a1 = vec2(std::sin(ang.x()), std::cos(ang.x()));
         vec2 a2 = vec2(std::sin(ang.y()), std::cos(ang.y()));
         vec2 a3 = vec2(std::sin(ang.z()), std::cos(ang.z()));
         mat3 m;
-        m[0] = vec3(a1.y()*a3.y()+a1.x()*a2.x()*a3.x(),a1.y()*a2.x()*a3.x()+a3.y()*a1.x(),-a2.y()*a3.x());
-        m[1] = vec3(-a2.y()*a1.x(),a1.y()*a2.y(),a2.x());
-        m[2] = vec3(a3.y()*a1.x()*a2.x()+a1.y()*a3.x(),a1.x()*a3.x()-a1.y()*a3.y()*a2.x(),a2.y()*a3.y());
+        m[0] = vec3(a1.y() * a3.y() + a1.x() * a2.x() * a3.x(), a1.y() * a2.x() * a3.x() + a3.y() * a1.x(),
+                    -a2.y() * a3.x());
+        m[1] = vec3(-a2.y() * a1.x(), a1.y() * a2.y(), a2.x());
+        m[2] = vec3(a3.y() * a1.x() * a2.x() + a1.y() * a3.x(), a1.x() * a3.x() - a1.y() * a3.y() * a2.x(),
+                    a2.y() * a3.y());
         return m;
     }
-    static float hash( vec2 p ) {
+    static float hash(vec2 p) {
         float h = dot(p, vec2(127.1f, 311.7f));
-        return VecLib::fract(std::sin(h)*43758.5453123f); //TODO
+        return VecLib::fract(std::sin(h) * 43758.5453123f);  // TODO
     }
-    static float noise(  vec2 p ) {
-        vec2 i = floor( p );
-        vec2 f = fract( p );
-        vec2 u = f*f*(3.0f-2.0f*f); //TODO
-        return -1.0f+2.0f*VecLib::mix( VecLib::mix( hash( i + vec2(0.0f, 0.0f) ), //TODO
-                                  hash( i + vec2(1.0f, 0.0f) ), u.x()),
-                                     VecLib::mix( hash( i + vec2(0.0f, 1.0f) ),
-                                  hash( i + vec2(1.0f, 1.0f) ), u.x()), u.y());
+    static float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f * f * (3.0f - 2.0f * f);                                        // TODO
+        return -1.0f + 2.0f * VecLib::mix(VecLib::mix(hash(i + vec2(0.0f, 0.0f)),  // TODO
+                                                      hash(i + vec2(1.0f, 0.0f)), u.x()),
+                                          VecLib::mix(hash(i + vec2(0.0f, 1.0f)), hash(i + vec2(1.0f, 1.0f)), u.x()),
+                                          u.y());
     }
 
-// lighting
-    static float diffuse(vec3 n,vec3 l,float p) {
-        return std::pow(dot(n,l) * 0.4f + 0.6f, p);
-    }
-    static float specular(vec3 n,vec3 l,vec3 e,float s) {
+    // lighting
+    static float diffuse(vec3 n, vec3 l, float p) { return std::pow(dot(n, l) * 0.4f + 0.6f, p); }
+    static float specular(vec3 n, vec3 l, vec3 e, float s) {
         float nrm = (s + 8.0f) / (3.1415f * 8.0f);
-        return std::pow(std::max(dot(reflect(e, n), l), 0.0f), s) * nrm; //TODO
+        return std::pow(std::max(dot(reflect(e, n), l), 0.0f), s) * nrm;  // TODO
     }
 
-// sky
+    // sky
     static vec3 getSkyColor(vec3 e) {
-        e.y() = std::max(e.y(),0.0f); //TODO
+        e.y() = std::max(e.y(), 0.0f);  // TODO
         vec3 ret;
-        ret.x() = std::pow(1.0f-e.y(), 2.0f); //TODO
-        ret.y() = 1.0f-e.y();
-        ret.z() = 0.6f+(1.0f-e.y())*0.4f;
+        ret.x() = std::pow(1.0f - e.y(), 2.0f);  // TODO
+        ret.y() = 1.0f - e.y();
+        ret.z() = 0.6f + (1.0f - e.y()) * 0.4f;
         return ret;
     }
 
-// sea
+    // sea
     static float sea_octave(vec2 uv, float choppy) {
         uv += noise(uv);
-        vec2 wv = 1.0f-abs(sin(uv)); //TODO
+        vec2 wv = 1.0f - abs(sin(uv));  // TODO
         vec2 swv = abs(cos(uv));
-        wv = mix(wv,swv,wv);
-        return std::pow(1.0f-std::pow(wv.x() * wv.y(), 0.65f), choppy); //TODO
+        wv = mix(wv, swv, wv);
+        return std::pow(1.0f - std::pow(wv.x() * wv.y(), 0.65f), choppy);  // TODO
     }
 
     float map(vec3 p) const {
@@ -822,15 +795,18 @@ public:
         float freq = SEA_FREQ;
         float amp = SEA_HEIGHT;
         float choppy = SEA_CHOPPY;
-        vec2 uv = p.xz(); uv.x() *= 0.75f;
+        vec2 uv = p.xz();
+        uv.x() *= 0.75f;
 
         float d, h = 0.0f;
-        for(int i = 0; i < ITER_GEOMETRY; i++) {
-            d = sea_octave((uv+SEA_TIME)*freq,choppy);
-            d += sea_octave((uv-SEA_TIME)*freq,choppy);
+        for (int i = 0; i < ITER_GEOMETRY; i++) {
+            d = sea_octave((uv + SEA_TIME) * freq, choppy);
+            d += sea_octave((uv - SEA_TIME) * freq, choppy);
             h += d * amp;
-            uv *= octave_m; freq *= 1.9f; amp *= 0.22f;
-            choppy = VecLib::mix(choppy, 1.0f, 0.2f); //TODO
+            uv *= octave_m;
+            freq *= 1.9f;
+            amp *= 0.22f;
+            choppy = VecLib::mix(choppy, 1.0f, 0.2f);  // TODO
         }
         return p.y() - h;
     }
@@ -841,33 +817,35 @@ public:
         float freq = SEA_FREQ;
         float amp = SEA_HEIGHT;
         float choppy = SEA_CHOPPY;
-        vec2 uv = p.xz(); uv.x() *= 0.75f;
+        vec2 uv = p.xz();
+        uv.x() *= 0.75f;
 
         float d, h = 0.0f;
-        for(int i = 0; i < ITER_FRAGMENT; i++) {
-            d = sea_octave((uv+SEA_TIME)*freq,choppy);
-            d += sea_octave((uv-SEA_TIME)*freq,choppy);
+        for (int i = 0; i < ITER_FRAGMENT; i++) {
+            d = sea_octave((uv + SEA_TIME) * freq, choppy);
+            d += sea_octave((uv - SEA_TIME) * freq, choppy);
             h += d * amp;
-            uv *= octave_m; freq *= 1.9f; amp *= 0.22f;
+            uv *= octave_m;
+            freq *= 1.9f;
+            amp *= 0.22f;
             choppy = VecLib::mix(choppy, 1.0f, 0.2f);
         }
         return p.y() - h;
     }
 
     static vec3 getSeaColor(vec3 p, vec3 n, vec3 l, vec3 eye, vec3 dist) {
-        static const vec3 SEA_BASE = vec3(0.1f ,0.19f ,0.22f);
-        static const vec3 SEA_WATER_COLOR = vec3(0.8f ,0.9f ,0.6f);
+        static const vec3 SEA_BASE = vec3(0.1f, 0.19f, 0.22f);
+        static const vec3 SEA_WATER_COLOR = vec3(0.8f, 0.9f, 0.6f);
 
+        float fresnel = 1.0f - std::max(dot(n, -eye), 0.0f);  // TODO
+        fresnel = std::pow(fresnel, 3.0f) * 0.65f;            // TODO
 
-        float fresnel = 1.0f - std::max(dot(n,-eye), 0.0f); //TODO
-        fresnel = std::pow(fresnel, 3.0f) * 0.65f; //TODO
-
-        vec3 reflected = getSkyColor(reflect(eye,n));
+        vec3 reflected = getSkyColor(reflect(eye, n));
         vec3 refracted = SEA_BASE + diffuse(n, l, 80.0f) * SEA_WATER_COLOR * 0.12f;
 
-        vec3 color = mix(refracted,reflected,fresnel);
+        vec3 color = mix(refracted, reflected, fresnel);
 
-        float atten = std::max(1.0f - dot(dist,dist) * 0.001f, 0.0f); //TODO
+        float atten = std::max(1.0f - dot(dist, dist) * 0.001f, 0.0f);  // TODO
         color += SEA_WATER_COLOR * (p.y() - SEA_HEIGHT) * 0.18f * atten;
 
         color += vec3(specular(n, l, eye, 60.0f));
@@ -875,12 +853,12 @@ public:
         return color;
     }
 
-// tracing
+    // tracing
     vec3 getNormal(vec3 p, float eps) const {
         vec3 n;
         n.y() = map_detailed(p);
-        n.x() = map_detailed(vec3(p.x()+eps,p.y(),p.z())) - n.y();
-        n.z() = map_detailed(vec3(p.x(),p.y(),p.z()+eps)) - n.y();
+        n.x() = map_detailed(vec3(p.x() + eps, p.y(), p.z())) - n.y();
+        n.z() = map_detailed(vec3(p.x(), p.y(), p.z() + eps)) - n.y();
         n.y() = eps;
         return normalize(n);
     }
@@ -889,14 +867,14 @@ public:
         float tm = 0.0f;
         float tx = 1000.0f;
         float hx = map(ori + dir * tx);
-        if(hx > 0.0f) return tx;
+        if (hx > 0.0f) return tx;
         float hm = map(ori + dir * tm);
         float tmid = 0.0f;
-        for(int i = 0; i < NUM_STEPS; i++) {
-            tmid = VecLib::mix(tm,tx, hm/(hm-hx));
+        for (int i = 0; i < NUM_STEPS; i++) {
+            tmid = VecLib::mix(tm, tx, hm / (hm - hx));
             p = ori + dir * tmid;
             float hmid = map(p);
-            if(hmid < 0.0f) {
+            if (hmid < 0.0f) {
                 tx = tmid;
                 hx = hmid;
             } else {
@@ -907,34 +885,33 @@ public:
         return tmid;
     }
 
-// main
-    virtual void mainImage( vec4& fragColor, const vec2& fragCoord ) const {
+    // main
+    virtual void mainImage(vec4& fragColor, const vec2& fragCoord) const {
         vec2 uv = fragCoord.xy() / iResolution.xy();
         uv = uv * 2.0f - 1.0f;
         uv.x() *= iResolution.x() / iResolution.y();
-        float time = iGlobalTime * 0.3f;// + iMouse.x*0.01;
+        float time = iGlobalTime * 0.3f;  // + iMouse.x*0.01;
 
         // ray
-        vec3 ang = vec3(std::sin(time*3.0f)*0.1f, std::sin(time)*0.2f+0.3f, time);
-        vec3 ori = vec3(0.0f, 3.5f, time*5.0f);
-        vec3 dir = normalize(vec3(uv.xy(), -2.0f)); dir.z() += length(uv) * 0.15f;
+        vec3 ang = vec3(std::sin(time * 3.0f) * 0.1f, std::sin(time) * 0.2f + 0.3f, time);
+        vec3 ori = vec3(0.0f, 3.5f, time * 5.0f);
+        vec3 dir = normalize(vec3(uv.xy(), -2.0f));
+        dir.z() += length(uv) * 0.15f;
         dir = normalize(dir) * fromEuler(ang);
 
         // tracing
         vec3 p;
-        heightMapTracing(ori,dir,p);
+        heightMapTracing(ori, dir, p);
         vec3 dist = p - ori;
-        vec3 n = getNormal(p, dot(dist,dist) * EPSILON_NRM);
+        vec3 n = getNormal(p, dot(dist, dist) * EPSILON_NRM);
         vec3 light = normalize(vec3(0.0f, 1.0f, 0.8));
 
         // color
-        vec3 color = mix(
-                getSkyColor(dir),
-                getSeaColor(p,n,light,dir,dist),
-                std::pow(smoothstep(0.0f, -0.05f, dir.y()), 0.3f));
+        vec3 color = mix(getSkyColor(dir), getSeaColor(p, n, light, dir, dist),
+                         std::pow(smoothstep(0.0f, -0.05f, dir.y()), 0.3f));
 
         // post
-        fragColor = vec4(pow(color,vec3(0.75f)), 1.0f);
+        fragColor = vec4(pow(color, vec3(0.75f)), 1.0f);
     }
 };
 #if 0
@@ -1061,17 +1038,16 @@ public:
 template <uint16_t WIDTH, uint16_t HEIGHT>
 class CImgColorRasterShader {
 private:
-    enum class InTraits {
-        COLOR_INDEX = 0,
-        DEPTH_INDEX = 1
-    };
+    enum class InTraits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
     PixelBuffer<unsigned char, WIDTH, HEIGHT, 3>& mFrame;
     PixelBuffer<float, WIDTH, HEIGHT>& mDepth;
+
 public:
     typedef std::tuple<VecLib::Vector4f, float> InType;
 
-    CImgColorRasterShader(PixelBuffer<unsigned char, WIDTH, HEIGHT, 3>& frame, PixelBuffer<float, WIDTH, HEIGHT>& depth) : mFrame(frame), mDepth(depth) {}
+    CImgColorRasterShader(PixelBuffer<unsigned char, WIDTH, HEIGHT, 3>& frame, PixelBuffer<float, WIDTH, HEIGHT>& depth)
+        : mFrame(frame), mDepth(depth) {}
 
     void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
         constexpr int ColorAttachment = static_cast<int>(InTraits::COLOR_INDEX);
@@ -1080,10 +1056,10 @@ public:
         const auto& depth = std::get<DepthAttachment>(fragment);
         const auto& color = std::get<ColorAttachment>(fragment);
 
-        if(depth > 0.0f && depth < 1.0f && depth < mDepth(x, y)) {
-            mFrame(x, y, 0) = color[0] <= 1.0f ? color[0]*255.0f : 255;
-            mFrame(x, y, 1) = color[1] <= 1.0f ? color[1]*255.0f : 255;
-            mFrame(x, y, 2) = color[2] <= 1.0f ? color[2]*255.0f : 255;
+        if (depth > 0.0f && depth < 1.0f && depth < mDepth(x, y)) {
+            mFrame(x, y, 0) = color[0] <= 1.0f ? color[0] * 255.0f : 255;
+            mFrame(x, y, 1) = color[1] <= 1.0f ? color[1] * 255.0f : 255;
+            mFrame(x, y, 2) = color[2] <= 1.0f ? color[2] * 255.0f : 255;
 
             mDepth(x, y) = depth;
         }

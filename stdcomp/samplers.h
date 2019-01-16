@@ -8,7 +8,7 @@
 #ifndef STDCOMP_SAMPLERS_H_
 #define STDCOMP_SAMPLERS_H_
 
-//TODO: Share code
+// TODO: Share code
 #if 0
 template <class OutType>
 class RGBATextureSampler {
@@ -139,6 +139,5 @@ public:
 };
 
 #endif
-
 
 #endif /* STDCOMP_SAMPLERS_H_ */
