@@ -14,20 +14,19 @@
 #include "utils.h"
 #include "veclib.h"
 
-typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> PositionAndColor;
+using PositionAndColor = std::tuple<VecLib::Vector4f, VecLib::Vector4f>;
 static std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const VecLib::Vector4f& color) {
     std::vector<VecLib::Vector3f> vertices;
     std::vector<VecLib::Vector2f> uvs;
     std::vector<VecLib::Vector3f> normals;
     std::vector<Face> faces;
 
-    loadObj(filename, vertices, uvs, normals, faces);
+    loadObj(filename, &vertices, &uvs, &normals, &faces);
     printf("Loaded %lu faces\n", faces.size());
 
     std::vector<PositionAndColor> m;
 
-    for (size_t j = 0; j < faces.size(); ++j) {
-        const auto& f = faces[j];
+    for (const auto& f : faces) {
         for (int i = 0; i < 3; ++i) {
             m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), color);
         }
@@ -36,20 +35,19 @@ static std::vector<PositionAndColor> loadMeshColor(const std::string& filename, 
     return m;
 }
 
-typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f> PositionAndUv;
+using PositionAndUv = std::tuple<VecLib::Vector4f, VecLib::Vector2f>;
 static std::vector<PositionAndUv> loadMeshUv(const std::string& filename) {
     std::vector<VecLib::Vector3f> vertices;
     std::vector<VecLib::Vector2f> uvs;
     std::vector<VecLib::Vector3f> normals;
     std::vector<Face> faces;
 
-    loadObj(filename, vertices, uvs, normals, faces);
+    loadObj(filename, &vertices, &uvs, &normals, &faces);
     printf("Loaded %lu faces\n", faces.size());
 
     std::vector<PositionAndUv> m;
 
-    for (size_t j = 0; j < faces.size(); ++j) {
-        const auto& f = faces[j];
+    for (const auto& f : faces) {
         for (int i = 0; i < 3; ++i) {
             m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), uvs[f.uvs[i]]);
         }
@@ -58,22 +56,21 @@ static std::vector<PositionAndUv> loadMeshUv(const std::string& filename) {
     return m;
 }
 
-typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> PositionAndNormal;
+using PositionAndNormal = std::tuple<VecLib::Vector4f, VecLib::Vector3f>;
 static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename) {
     std::vector<VecLib::Vector3f> vertices;
     std::vector<VecLib::Vector2f> uvs;
     std::vector<VecLib::Vector3f> normals;
     std::vector<Face> faces;
 
-    loadObj(filename, vertices, uvs, normals, faces);
+    loadObj(filename, &vertices, &uvs, &normals, &faces);
     printf("Loaded %lu faces\n", faces.size());
 
-    assert(faces.size() > 0);
+    assert(!faces.empty());
 
     std::vector<PositionAndNormal> m;
 
-    for (size_t j = 0; j < faces.size(); ++j) {
-        const auto& f = faces[j];
+    for (const auto& f : faces) {
         for (int i = 0; i < 3; ++i) {
             m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), normals[f.coords[i]]);
         }
@@ -82,14 +79,14 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
     return m;
 }
 
-typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector2f, VecLib::Vector4f> PositionNormalAndTangent;
+using PositionNormalAndTangent = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector2f, VecLib::Vector4f>;
 static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& filename) {
     std::vector<VecLib::Vector3f> vertices;
     std::vector<VecLib::Vector2f> uvs;
     std::vector<VecLib::Vector3f> normals;
     std::vector<Face> faces;
 
-    loadObj(filename, vertices, uvs, normals, faces);
+    loadObj(filename, &vertices, &uvs, &normals, &faces);
     printf("Loaded %lu faces\n", faces.size());
 
     std::vector<PositionNormalAndTangent> m;
@@ -97,14 +94,14 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
     std::vector<VecLib::Vector3f> tan1(vertices.size());
     std::vector<VecLib::Vector3f> tan2(vertices.size());
 
-    for (size_t j = 0; j < faces.size(); ++j) {
-        const int i1 = faces[j].coords[0];
-        const int i2 = faces[j].coords[1];
-        const int i3 = faces[j].coords[2];
+    for (auto& face : faces) {
+        const int i1 = face.coords[0];
+        const int i2 = face.coords[1];
+        const int i3 = face.coords[2];
 
-        const int u1 = faces[j].uvs[0];
-        const int u2 = faces[j].uvs[1];
-        const int u3 = faces[j].uvs[2];
+        const int u1 = face.uvs[0];
+        const int u2 = face.uvs[1];
+        const int u3 = face.uvs[2];
 
         const VecLib::Vector3f& v1 = vertices[i1];
         const VecLib::Vector3f& v2 = vertices[i2];
@@ -154,8 +151,7 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
         tangents[j].w() = (dot(cross(n, t), tan2[j]) < 0.0F) ? -1.0F : 1.0F;
     }
 
-    for (size_t j = 0; j < faces.size(); ++j) {
-        const auto& f = faces[j];
+    for (const auto& f : faces) {
         for (int i = 0; i < 3; ++i) {
             // std::cout <<  tangents[f.uvs[i]] << std::endl;
             m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), normals[f.coords[i]], uvs[f.uvs[i]],
@@ -353,7 +349,7 @@ static float time() {
 
     // printf("%d %f\n", ms.count(), (int)ms.count() / 1000.0f);
 
-    return (int)ms.count() / 1000.0f;
+    return static_cast<int>(ms.count()) / 1000.0f;
 }
 
 static void shaderToy() {
@@ -427,4 +423,4 @@ static void libtest() {
      */
 }
 
-int main(int argc, char** argv) { shaderToy(); }
+int main(int /*argc*/, char** /*argv*/) { shaderToy(); }

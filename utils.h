@@ -77,7 +77,7 @@ T normalize(T val) {
     return val;
 }
 
-std::vector<std::tuple<VecLib::Vector2f>> unitQuad() {
+inline std::vector<std::tuple<VecLib::Vector2f>> unitQuad() {
     VecLib::Vector2f v1(-1.0f, -1.0f);
     VecLib::Vector2f v2(-1.0f, 1.0f);
     VecLib::Vector2f v3(1.0f, 1.0f);
@@ -150,7 +150,7 @@ inline cimg_library::CImg<unsigned char> normalizeDepth(cimg_library::CImg<float
 #endif
 template <int enable>
 struct Timer {
-    void report(const std::string&) {}
+    void report(const std::string& /*unused*/) {}
     float getUS() { return 0; }
     void reset() {}
 };
@@ -180,6 +180,9 @@ public:
     PixelBuffer() : mData(new T[WIDTH * HEIGHT * DEPTH]) {}
     ~PixelBuffer() { delete[] mData; }
     PixelBuffer(const PixelBuffer&) = delete;
+    PixelBuffer(PixelBuffer&&) = delete;
+    PixelBuffer& operator=(const PixelBuffer&) = delete;
+    PixelBuffer& operator=(PixelBuffer&&) = delete;
     T& operator()(uint_fast16_t x, uint_fast16_t y, uint_fast16_t z = 0) {
         return mData[(x + (HEIGHT - y) * WIDTH) * DEPTH + z];
     }

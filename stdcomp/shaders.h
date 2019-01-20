@@ -609,8 +609,8 @@ private:
     enum class InTraits { POSITION_INDEX = 0 };
 
 public:
-    typedef std::tuple<VecLib::Vector2f> InType;
-    typedef std::tuple<VecLib::Vector4f> OutType;
+    using InType = std::tuple<VecLib::Vector2f>;
+    using OutType = std::tuple<VecLib::Vector4f>;
 
     enum class Traits { POSITION_INDEX = 0 };
 
@@ -652,14 +652,14 @@ protected:
 
     enum class InTraits { POSITION_INDEX = 0 };
 
-    float iGlobalTime;
+    float iGlobalTime{0.0f};
     VecLib::Vector2f iResolution;
 
 public:
-    typedef std::tuple<VecLib::Vector4f> InType;
-    typedef std::tuple<VecLib::Vector4f, float> OutType;
+    using InType = std::tuple<VecLib::Vector4f>;
+    using OutType = std::tuple<VecLib::Vector4f, float>;
 
-    ShadertoyFragmentShader() : iGlobalTime(0.0f), iResolution(640, 480) {}
+    ShadertoyFragmentShader() : iResolution(640, 480) {}
 
     enum class Traits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
@@ -668,7 +668,7 @@ public:
         // printf("%f\n", iGlobalTime);
     }
 
-    virtual void mainImage(vec4& fragColor, const vec2& fragCoord) const = 0;
+    virtual void mainImage(vec4& fragColor, const vec2& fragCoord) const = 0;  // NOLINT
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& fragCoord = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
@@ -688,13 +688,13 @@ public:
     static constexpr float BLOCK_WIDTH = 0.01;
 
     // https://www.shadertoy.com/view/4dsGzH
-    virtual void mainImage(vec4& fragColor, const vec2& fragCoord) const {
+    void mainImage(vec4& fragColor, const vec2& fragCoord) const override {
         vec2 uv = fragCoord.xy() / iResolution.xy();
 
         // To create the BG pattern
-        vec3 final_color = vec3(1.0f);
-        vec3 bg_color = vec3(0.0f);
-        vec3 wave_color = vec3(0.0f);
+        auto final_color = vec3(1.0f);
+        auto bg_color = vec3(0.0f);
+        auto wave_color = vec3(0.0f);
 
         float c1 = mod(uv.x(), 2.0f * BLOCK_WIDTH);
         c1 = step(BLOCK_WIDTH, c1);
@@ -708,7 +708,7 @@ public:
         float wave_width = 0.01f;
         uv = -1.0f + 2.0f * uv;
         uv.y() += 0.1f;
-        for (float i = 0.0f; i < 10.0f; i++) {
+        for (float i = 0.0f; i < 10.0f; i++) {                              // NOLINT
             uv.y() += (0.07f * std::sin(uv.x() + i / 7.0f + iGlobalTime));  // TODO
             wave_width = std::abs(1.0f / (150.0f * uv.y()));
             wave_color += vec3(wave_width * 1.9f, wave_width, wave_width * 1.5f);
@@ -863,11 +863,13 @@ public:
         return normalize(n);
     }
 
-    float heightMapTracing(vec3 ori, vec3 dir, vec3& p) const {
+    float heightMapTracing(vec3 ori, vec3 dir, vec3& p) const {  // NOLINT
         float tm = 0.0f;
         float tx = 1000.0f;
         float hx = map(ori + dir * tx);
-        if (hx > 0.0f) return tx;
+        if (hx > 0.0f) {
+            return tx;
+        }
         float hm = map(ori + dir * tm);
         float tmid = 0.0f;
         for (int i = 0; i < NUM_STEPS; i++) {
@@ -886,7 +888,7 @@ public:
     }
 
     // main
-    virtual void mainImage(vec4& fragColor, const vec2& fragCoord) const {
+    void mainImage(vec4& fragColor, const vec2& fragCoord) const override {
         vec2 uv = fragCoord.xy() / iResolution.xy();
         uv = uv * 2.0f - 1.0f;
         uv.x() *= iResolution.x() / iResolution.y();
@@ -1044,14 +1046,14 @@ private:
     PixelBuffer<float, WIDTH, HEIGHT>& mDepth;
 
 public:
-    typedef std::tuple<VecLib::Vector4f, float> InType;
+    using InType = std::tuple<VecLib::Vector4f, float>;
 
     CImgColorRasterShader(PixelBuffer<unsigned char, WIDTH, HEIGHT, 3>& frame, PixelBuffer<float, WIDTH, HEIGHT>& depth)
         : mFrame(frame), mDepth(depth) {}
 
     void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
-        constexpr int ColorAttachment = static_cast<int>(InTraits::COLOR_INDEX);
-        constexpr int DepthAttachment = static_cast<int>(InTraits::DEPTH_INDEX);
+        constexpr auto ColorAttachment = static_cast<int>(InTraits::COLOR_INDEX);
+        constexpr auto DepthAttachment = static_cast<int>(InTraits::DEPTH_INDEX);
 
         const auto& depth = std::get<DepthAttachment>(fragment);
         const auto& color = std::get<ColorAttachment>(fragment);

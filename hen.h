@@ -20,7 +20,7 @@
 
 template <typename... Tp, typename Func, std::size_t... Idx>
 std::tuple<Tp...> mytransformHelper(const std::tuple<Tp...>& t1, const std::tuple<Tp...>& t2, Func&& f,
-                                    std::index_sequence<Idx...>) {
+                                    std::index_sequence<Idx...> /*unused*/) {
     return std::tuple<Tp...>((f(std::get<Idx>(t1), std::get<Idx>(t2)))...);
 }
 
@@ -63,8 +63,8 @@ private:
     template <class Vertex, class FragmentShader, class RasterShader>
     void rasterizeFragment(const Vertex& v, const FragmentShader& fragmentShader, const RasterShader& rasterShader,
                            unsigned int x, unsigned int y) {
-        constexpr int ColorAttachment = static_cast<int>(FragmentShader::Traits::COLOR_INDEX);
-        constexpr int DepthAttachment = static_cast<int>(FragmentShader::Traits::DEPTH_INDEX);
+        constexpr auto ColorAttachment = static_cast<int>(FragmentShader::Traits::COLOR_INDEX);
+        constexpr auto DepthAttachment = static_cast<int>(FragmentShader::Traits::DEPTH_INDEX);
 
         const auto fragment = fragmentShader(v);
 
@@ -102,11 +102,11 @@ private:
 
         float error = dx / 2.0f;
         const int ystep = (y0 < y1) ? 1 : -1;
-        int y = (int)y0;
+        auto y = static_cast<int>(y0);
 
-        const int maxX = (int)x1;
+        const auto maxX = static_cast<int>(x1);
 
-        for (int x = (int)x0; x < maxX; x++) {
+        for (auto x = static_cast<int>(x0); x < maxX; x++) {
             inpPos += inpStep;
             if (steep) {
                 rasterizeFragment(inp.run(inpPos), fragmentShader, y, x);
@@ -174,8 +174,8 @@ private:
 
     template <class Vertex>
     VecLib::Vector3f cross3(const Vertex& v1, const Vertex& v2) {
-        VecLib::Vector3f p1 = v1;
-        VecLib::Vector3f p2 = v2;
+        VecLib::Vector3f p1(v1);
+        VecLib::Vector3f p2(v2);
         return p1.cross(p2);
     }
 
@@ -200,9 +200,15 @@ public:
             return std::get<PositionAttachment>(a)[1] <= std::get<PositionAttachment>(b)[1];
         };
 
-        if (!compareVertexY(v1, v3)) std::swap(v1, v3);
-        if (!compareVertexY(v1, v2)) std::swap(v1, v2);
-        if (!compareVertexY(v2, v3)) std::swap(v2, v3);
+        if (!compareVertexY(v1, v3)) {
+            std::swap(v1, v3);
+        }
+        if (!compareVertexY(v1, v2)) {
+            std::swap(v1, v2);
+        }
+        if (!compareVertexY(v2, v3)) {
+            std::swap(v2, v3);
+        }
 
         Vertex& topVertex = v1;
         Vertex& middleVertex = v2;
@@ -242,7 +248,7 @@ public:
         static_assert(std::is_same<typename VertexShader::OutType, typename FragmentShader::InType>::value, "Error");
         static_assert(std::is_same<typename FragmentShader::OutType, typename RasterShader::InType>::value, "Error");
 
-        typedef typename VertexShader::OutType VertOutFragInType;
+        using VertOutFragInType = typename VertexShader::OutType;
         std::vector<VertOutFragInType> immStore;
 
         // Vertex stage
@@ -250,8 +256,8 @@ public:
 
         // Now in clip space
         // Perspective divide
-        constexpr int POSITION_INDEX = static_cast<int>(VertexShader::Traits::POSITION_INDEX);
-        typedef typename std::tuple_element<POSITION_INDEX, VertOutFragInType>::type ScreenPosType;
+        constexpr auto POSITION_INDEX = static_cast<int>(VertexShader::Traits::POSITION_INDEX);
+        using ScreenPosType = typename std::tuple_element<POSITION_INDEX, VertOutFragInType>::type;
 
         std::for_each(immStore.begin(), immStore.end(), [](VertOutFragInType& vert) {
             auto& pos = std::get<POSITION_INDEX>(vert);
