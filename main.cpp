@@ -170,19 +170,19 @@ static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader
 
     vertexShader.modelViewMatrix() = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0});
 
-    const int width = 640*2;
-    const int height = 480*2;
+    const int width = 640 * 2;
+    const int height = 480 * 2;
 
-    //Renderer
+    // Renderer
     Renderer renderer;
 
     cfw::Window disp(width, height);
     PixelBuffer<uint8_t> framebuffer(width, height, 3);
     PixelBuffer<float> zbuffer(width, height);
 
-    VecLib::Matrix4f rotMatrix(rotateY(1/180.0*M_PI));
+    VecLib::Matrix4f rotMatrix(rotateY(1 / 180.0 * M_PI));
 
-    CImgColorRasterShader rasterShader(framebuffer, zbuffer);
+    CImgColorRasterShader rasterShader(&framebuffer, &zbuffer);
 
     Timer<1> t;
 
@@ -190,7 +190,7 @@ static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader
 
     disp.setCloseCallback([&going]() { going = false; });
 
-    while(going) {
+    while (going) {
         vertexShader.modelViewMatrix() *= rotMatrix;
 
         t.reset();
@@ -367,7 +367,7 @@ static void shaderToy() {
 
     ShadertoyVertexShader vertexShader;
     ShadertoyWaveFragmentShader fragmentShader;
-    CImgColorRasterShader rasterShader(framebuffer, zbuffer);
+    CImgColorRasterShader rasterShader(&framebuffer, &zbuffer);
 
     Timer<1> t;
 

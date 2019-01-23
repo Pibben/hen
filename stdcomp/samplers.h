@@ -17,13 +17,15 @@ class RGBATextureSampler {
     unsigned int mSizeY;
 
 public:
-    //RGBATextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
-    RGBATextureSampler(PixelBuffer<uint8_t>& img) : mImg(std::move(img)), mSizeX(img.width()), mSizeY(img.height()) {}
-    RGBATextureSampler(const std::string& filename) : mImg(loadPng(filename)), mSizeX(mImg.width()), mSizeY(mImg.height()) {}
+    // RGBATextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
+    // explicit RGBATextureSampler(PixelBuffer<uint8_t>& img) : mImg(std::move(img)), mSizeX(img.width()),
+    // mSizeY(img.height()) {}
+    explicit RGBATextureSampler(const std::string& filename)
+        : mImg(loadPng(filename)), mSizeX(mImg.width()), mSizeY(mImg.height()) {}
 
     OutType get(float u, float v) const {
-        int x = u * (mSizeX-1) + 0.5f;
-        int y = mSizeY - (v * (mSizeY-1) + 0.5f);
+        int x = std::lround(u * (mSizeX - 1));
+        int y = std::lround(mSizeY - (v * (mSizeY - 1)));
 
         assert(x >= 0 && x < (int)mSizeX);
         assert(y >= 0 && y < (int)mSizeY);

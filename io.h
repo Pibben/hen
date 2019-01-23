@@ -18,8 +18,8 @@
 
 #include "png.h"
 
-#include "veclib.h"
 #include "utils.h"
+#include "veclib.h"
 
 inline VecLib::Vector3f parseVertex(const std::string& str) {
     VecLib::Vector3f v;
@@ -151,12 +151,12 @@ inline void loadObj(const std::string& filename, std::vector<VecLib::Vector3f>* 
 
 class FileWrapper {
 public:
-    FileWrapper(const std::string& filename) {
-        mFile = fopen(filename.c_str(), "rb");
+    explicit FileWrapper(const std::string& filename) {
+        mFile = fopen(filename.c_str(), "rbe");  // NOLINT
     }
     ~FileWrapper() {
-        if(mFile) {
-            fclose(mFile);
+        if (mFile != nullptr) {
+            fclose(mFile);  // NOLINT
         }
     }
     FileWrapper(const FileWrapper&) = delete;
@@ -164,17 +164,12 @@ public:
     FileWrapper& operator=(const FileWrapper&) = delete;
     FileWrapper& operator=(FileWrapper&&) = delete;
 
-    size_t read(char* ptr, size_t size) {
-        return fread(ptr, 1, size, mFile);
-    }
+    size_t read(char* ptr, size_t size) { return fread(ptr, 1, size, mFile); }
 
-    FILE* getFile() {
-        return mFile;
-    }
+    FILE* getFile() { return mFile; }
 
-    operator bool() {
-        return mFile != nullptr;
-    }
+    explicit operator bool() { return mFile != nullptr; }
+
 private:
     FILE* mFile{nullptr};
 };
@@ -183,12 +178,12 @@ inline PixelBuffer<uint8_t> loadPng(const std::string& filename) {
     FileWrapper ifs(filename);
     assert(ifs);
     std::vector<unsigned char> ingress(8);
-    ifs.read((char*)ingress.data(), 8);
+    ifs.read(reinterpret_cast<char*>(ingress.data()), 8);
     assert(!png_sig_cmp(ingress.data(), 0, 8));
 
-    png_voidp user_error_ptr = 0;
-    png_error_ptr user_error_fn = 0;
-    png_error_ptr user_warning_fn = 0;
+    png_voidp user_error_ptr = nullptr;
+    png_error_ptr user_error_fn = nullptr;
+    png_error_ptr user_warning_fn = nullptr;
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, user_error_ptr, user_error_fn, user_warning_fn);
     assert(png_ptr);
 
@@ -198,7 +193,7 @@ inline PixelBuffer<uint8_t> loadPng(const std::string& filename) {
     png_infop end_info = png_create_info_struct(png_ptr);
     assert(end_info);
 
-    const bool ok = !setjmp(png_jmpbuf(png_ptr));
+    const bool ok = !setjmp(png_jmpbuf(png_ptr));  // NOLINT
     assert(ok);
 
     png_init_io(png_ptr, ifs.getFile());
@@ -222,7 +217,7 @@ inline PixelBuffer<uint8_t> loadPng(const std::string& filename) {
         bit_depth = 8;
     }
 
-    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS) != 0u) {
         png_set_tRNS_to_alpha(png_ptr);
         color_type |= PNG_COLOR_MASK_ALPHA;
     }
@@ -243,9 +238,9 @@ inline PixelBuffer<uint8_t> loadPng(const std::string& filename) {
 
     const int byte_depth = bit_depth >> 3;
 
-    png_bytep* const imgData = new png_bytep[H];
+    auto* const imgData = new png_bytep[H];  // NOLINT
     for (unsigned int row = 0; row < H; ++row) {
-        imgData[row] = new png_byte[(size_t)byte_depth * 4 * W];
+        imgData[row] = new png_byte[static_cast<size_t>(byte_depth) * 4 * W];  // NOLINT
     }
     png_read_image(png_ptr, imgData);
     png_read_end(png_ptr, end_info);
@@ -260,7 +255,7 @@ inline PixelBuffer<uint8_t> loadPng(const std::string& filename) {
     PixelBuffer<uint8_t> pb(W, H, byte_depth * 4);
 
     for (uint_fast16_t y = 0; y < H; ++y) {
-        const unsigned char *ptrs = (unsigned char*)imgData[y];
+        const unsigned char* ptrs = static_cast<unsigned char*>(imgData[y]);
         for (uint_fast16_t x = 0; x < W; ++x) {
             pb(x, y, 0) = *ptrs++;
             pb(x, y, 1) = *ptrs++;
@@ -272,10 +267,10 @@ inline PixelBuffer<uint8_t> loadPng(const std::string& filename) {
     png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 
     for (uint_fast16_t y = 0; y < H; ++y) {
-        delete[] imgData[y];
+        delete[] imgData[y];  // NOLINT
     }
 
-    delete[] imgData;
+    delete[] imgData;  // NOLINT
 
     return std::move(pb);
 }

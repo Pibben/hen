@@ -73,10 +73,7 @@ public:
 #endif
 class TextureVertexShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0,
-        TEXTURE_INDEX = 1
-    };
+    enum class InTraits { POSITION_INDEX = 0, TEXTURE_INDEX = 1 };
 
     VecLib::Matrix4f mProjMatrix;
     VecLib::Matrix4f mModelViewMatrix;
@@ -85,14 +82,10 @@ public:
     using InType = typename std::tuple<VecLib::Vector4f, VecLib::Vector2f>;
     using OutType = typename std::tuple<VecLib::Vector4f, VecLib::Vector2f, float>;
 
-    enum class Traits {
-        POSITION_INDEX = 0,
-        TEXTURE_INDEX = 1,
-        INV_DEPTH_INDEX = 2
-    };
+    enum class Traits { POSITION_INDEX = 0, TEXTURE_INDEX = 1, INV_DEPTH_INDEX = 2 };
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector2f tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
 
         const VecLib::Vector4f mvPos = mModelViewMatrix * pos;
@@ -109,11 +102,7 @@ public:
 
 class TextureFragmentShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0,
-        TEXTURE_INDEX = 1,
-        INV_DEPTH_INDEX = 2
-    };
+    enum class InTraits { POSITION_INDEX = 0, TEXTURE_INDEX = 1, INV_DEPTH_INDEX = 2 };
 
     RGBATextureSampler<VecLib::Vector4f> mTextureSampler;
 
@@ -121,15 +110,12 @@ public:
     using InType = std::tuple<VecLib::Vector4f, VecLib::Vector2f, float>;
     using OutType = std::tuple<VecLib::Vector4f, float>;
 
-    enum class Traits {
-        COLOR_INDEX = 0,
-        DEPTH_INDEX = 1
-    };
+    enum class Traits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
-    TextureFragmentShader(const std::string& filename) : mTextureSampler(filename) {}
+    explicit TextureFragmentShader(const std::string& filename) : mTextureSampler(filename) {}
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
         const float invDepth = std::get<static_cast<int>(InTraits::INV_DEPTH_INDEX)>(in);
 
@@ -1041,13 +1027,13 @@ class CImgColorRasterShader {
 private:
     enum class InTraits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
-    PixelBuffer<unsigned char>& mFrame;
-    PixelBuffer<float>& mDepth;
+    PixelBuffer<unsigned char>* mFrame;
+    PixelBuffer<float>* mDepth;
 
 public:
     using InType = std::tuple<VecLib::Vector4f, float>;
 
-    CImgColorRasterShader(PixelBuffer<unsigned char>& frame, PixelBuffer<float>& depth)
+    CImgColorRasterShader(PixelBuffer<unsigned char>* frame, PixelBuffer<float>* depth)
         : mFrame(frame), mDepth(depth) {}
 
     void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
@@ -1057,22 +1043,22 @@ public:
         const auto& depth = std::get<DepthAttachment>(fragment);
         const auto& color = std::get<ColorAttachment>(fragment);
 
-        if (depth > 0.0f && depth < 1.0f && depth < mDepth(x, y)) {
-            mFrame(x, y, 0) = color[0] <= 1.0f ? color[0] * 255.0f : 255;
-            mFrame(x, y, 1) = color[1] <= 1.0f ? color[1] * 255.0f : 255;
-            mFrame(x, y, 2) = color[2] <= 1.0f ? color[2] * 255.0f : 255;
+        if (depth > 0.0f && depth < 1.0f && depth < mDepth->at(x, y)) {
+            mFrame->at(x, y, 0) = color[0] <= 1.0f ? color[0] * 255.0f : 255;
+            mFrame->at(x, y, 1) = color[1] <= 1.0f ? color[1] * 255.0f : 255;
+            mFrame->at(x, y, 2) = color[2] <= 1.0f ? color[2] * 255.0f : 255;
 
-            mDepth(x, y) = depth;
+            mDepth->at(x, y) = depth;
         }
     }
 
     void clear() const {
-        mFrame.fill(0);
-        mDepth.fill(std::numeric_limits<float>::max());
+        mFrame->fill(0);
+        mDepth->fill(std::numeric_limits<float>::max());
     }
 
-    unsigned int getXResolution() const { return mFrame.width(); }
-    unsigned int getYResolution() const { return mFrame.height(); }
+    unsigned int getXResolution() const { return mFrame->width(); }
+    unsigned int getYResolution() const { return mFrame->height(); }
 };
 #if 0
 class CImgDepthRasterShader {

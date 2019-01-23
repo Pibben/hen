@@ -179,14 +179,13 @@ private:
     uint16_t mDepth;
     T* mData;
 
-
 public:
-    PixelBuffer(uint16_t width, uint16_t height, uint16_t depth = 1) : mWidth(width), mHeight(height),
-    mDepth(depth), mData(new T[mWidth * mHeight * mDepth]) {}
+    PixelBuffer(uint16_t width, uint16_t height, uint16_t depth = 1)
+        : mWidth(width), mHeight(height), mDepth(depth), mData(new T[mWidth * mHeight * mDepth]) {}
     ~PixelBuffer() { delete[] mData; }
     PixelBuffer(const PixelBuffer&) = delete;
-    PixelBuffer(PixelBuffer&& other) : mWidth(other.mWidth), mHeight(other.mHeight), mDepth(other.mDepth),
-    mData(other.mData) {
+    PixelBuffer(PixelBuffer&& other) noexcept
+        : mWidth(other.mWidth), mHeight(other.mHeight), mDepth(other.mDepth), mData(other.mData) {
         other.mWidth = 0;
         other.mHeight = 0;
         other.mDepth = 0;
@@ -194,15 +193,23 @@ public:
     }
     PixelBuffer& operator=(const PixelBuffer&) = delete;
     PixelBuffer& operator=(PixelBuffer&&) = delete;
-    T& operator()(uint_fast16_t x, uint_fast16_t y, uint_fast16_t z = 0) {
+
+    T& at(uint_fast16_t x, uint_fast16_t y, uint_fast16_t z = 0) {
         size_t pos = (x + (mHeight - y - 1) * mWidth) * mDepth + z;
         return mData[pos];
     }
-    const T& operator()(uint_fast16_t x, uint_fast16_t y, uint_fast16_t z = 0) const {
+
+    const T& at(uint_fast16_t x, uint_fast16_t y, uint_fast16_t z = 0) const {
         size_t pos = (x + (mHeight - y - 1) * mWidth) * mDepth + z;
         return mData[pos];
     }
+
+    T& operator()(uint_fast16_t x, uint_fast16_t y, uint_fast16_t z = 0) { return at(x, y, z); }
+
+    const T& operator()(uint_fast16_t x, uint_fast16_t y, uint_fast16_t z = 0) const { return at(x, y, z); }
+
     T* data() { return mData; }
+
     constexpr uint16_t width() { return mWidth; }
     constexpr uint16_t height() { return mHeight; }
     void fill(T value) { std::fill(mData, mData + mWidth * mHeight * mDepth, value); };
