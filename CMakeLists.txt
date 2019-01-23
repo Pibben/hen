@@ -19,3 +19,7 @@ add_executable(hen ${SOURCE_FILES})
 
 add_subdirectory(cfw)
 target_link_libraries(hen PRIVATE cfw_lib)
+
+find_package(PNG REQUIRED)
+include_directories(${PNG_INCLUDE_DIR})
+target_link_libraries(hen PRIVATE ${PNG_LIBRARY})
