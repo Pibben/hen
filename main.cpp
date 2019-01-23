@@ -359,16 +359,15 @@ static void shaderToy() {
     // Renderer
     Renderer renderer;
 
-    cfw::Window disp(width, height);                           // cimg_library::CImgDisplay disp;
-    PixelBuffer<unsigned char, width, height, 3> framebuffer;  // cimg_library::CImg<unsigned char> framebuffer(width,
-                                                               // height, 1, 3);
-    PixelBuffer<float, width, height> zbuffer;                 // cimg_library::CImg<float> zbuffer(width, height);
+    cfw::Window disp(width, height);
+    PixelBuffer<unsigned char> framebuffer(width, height, 3);
+    PixelBuffer<float> zbuffer(width, height);
 
     auto mesh = unitQuad();
 
     ShadertoyVertexShader vertexShader;
     ShadertoyWaveFragmentShader fragmentShader;
-    CImgColorRasterShader<width, height> rasterShader(framebuffer, zbuffer);
+    CImgColorRasterShader rasterShader(framebuffer, zbuffer);
 
     Timer<1> t;
 

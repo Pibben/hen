@@ -1037,18 +1037,17 @@ public:
     }
 };
 #endif
-template <uint16_t WIDTH, uint16_t HEIGHT>
 class CImgColorRasterShader {
 private:
     enum class InTraits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
-    PixelBuffer<unsigned char, WIDTH, HEIGHT, 3>& mFrame;
-    PixelBuffer<float, WIDTH, HEIGHT>& mDepth;
+    PixelBuffer<unsigned char>& mFrame;
+    PixelBuffer<float>& mDepth;
 
 public:
     using InType = std::tuple<VecLib::Vector4f, float>;
 
-    CImgColorRasterShader(PixelBuffer<unsigned char, WIDTH, HEIGHT, 3>& frame, PixelBuffer<float, WIDTH, HEIGHT>& depth)
+    CImgColorRasterShader(PixelBuffer<unsigned char>& frame, PixelBuffer<float>& depth)
         : mFrame(frame), mDepth(depth) {}
 
     void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
