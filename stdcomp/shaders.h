@@ -70,7 +70,7 @@ public:
         return std::make_tuple(color, pos[2]);
     }
 };
-
+#endif
 class TextureVertexShader {
 private:
     enum class InTraits {
@@ -82,8 +82,8 @@ private:
     VecLib::Matrix4f mModelViewMatrix;
 
 public:
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f> InType;
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float> OutType;
+    using InType = typename std::tuple<VecLib::Vector4f, VecLib::Vector2f>;
+    using OutType = typename std::tuple<VecLib::Vector4f, VecLib::Vector2f, float>;
 
     enum class Traits {
         POSITION_INDEX = 0,
@@ -98,7 +98,7 @@ public:
         const VecLib::Vector4f mvPos = mModelViewMatrix * pos;
         const VecLib::Vector4f outPos = mProjMatrix * mvPos;
 
-        const float invDepth = 1.0 / mvPos[2];
+        const float invDepth = 1.0f / mvPos[2];
 
         return std::make_tuple(outPos, tex * invDepth, invDepth);
     }
@@ -118,8 +118,8 @@ private:
     RGBATextureSampler<VecLib::Vector4f> mTextureSampler;
 
 public:
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float> InType;
-    typedef std::tuple<VecLib::Vector4f, float> OutType;
+    using InType = std::tuple<VecLib::Vector4f, VecLib::Vector2f, float>;
+    using OutType = std::tuple<VecLib::Vector4f, float>;
 
     enum class Traits {
         COLOR_INDEX = 0,
@@ -140,7 +140,7 @@ public:
         return std::make_tuple(color, pos[2]);
     }
 };
-
+#if 0
 class MultiTextureFragmentShader {
 private:
     enum class InTraits {

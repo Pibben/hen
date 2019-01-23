@@ -164,7 +164,6 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
     return m;
 }
 
-#if 0
 template <class Mesh, class VertexShader, class FragmentShader>
 static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
@@ -177,34 +176,34 @@ static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader
     //Renderer
     Renderer renderer;
 
-    cimg_library::CImgDisplay disp;
-    cimg_library::CImg<unsigned char> framebuffer(width, height, 1, 3);
-    cimg_library::CImg<float> zbuffer(width, height);
+    cfw::Window disp(width, height);
+    PixelBuffer<uint8_t> framebuffer(width, height, 3);
+    PixelBuffer<float> zbuffer(width, height);
 
-    VecLib::Matrix4f rotMatrix = rotateY(1/180.0*M_PI);
+    VecLib::Matrix4f rotMatrix(rotateY(1/180.0*M_PI));
 
     CImgColorRasterShader rasterShader(framebuffer, zbuffer);
 
     Timer<1> t;
 
-    while(true) {
+    bool going = true;
+
+    disp.setCloseCallback([&going]() { going = false; });
+
+    while(going) {
         vertexShader.modelViewMatrix() *= rotMatrix;
 
         t.reset();
         renderer.render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
         float us = t.getUS();
-        printf("%2.2f fps\n", 1.0 / (us / 1000.0 / 1000.0));
+        printf("%2.2f fps\n", 1.0 / (static_cast<double>(us) / 1000.0 / 1000.0));
 
-        framebuffer.mirror('y'); //TODO: Investigate
-        disp.display(framebuffer);
-
-        if(disp.is_closed()) {
-            break;
-        }
+        disp.render(framebuffer.data(), width, height);
+        disp.paint();
     }
 }
 
-
+#if 0
 template <class Mesh, class VertexGenShader, class FragmentGenShader,
                       class VertexShader, class FragmentShader>
 static void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, FragmentGenShader& fragmentGenShader,
@@ -250,16 +249,17 @@ static void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, Fr
         }
     }
 }
-
+#endif
 static void texture() {
     TextureVertexShader vertexShader;
     TextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
 
     auto m = loadMeshUv("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
+    assert(!m.empty());
 
     animate(m, vertexShader, fragmentShader);
 }
-
+#if 0
 static void normalMap() {
     NormalMapVertexShader vertexShader(VecLib::Vector3f(100,100,100));
     NormalMapFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCowNorm.png");

@@ -9,32 +9,28 @@
 #define STDCOMP_SAMPLERS_H_
 
 // TODO: Share code
-#if 0
+
 template <class OutType>
 class RGBATextureSampler {
-    cimg_library::CImg<unsigned char> mImg;
+    PixelBuffer<uint8_t> mImg;
     unsigned int mSizeX;
     unsigned int mSizeY;
 
 public:
-    RGBATextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
-    RGBATextureSampler(cimg_library::CImg<unsigned char>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
-    RGBATextureSampler(const std::string& filename) {
-        mImg.load(filename.c_str());
-        mSizeX = mImg.width();
-        mSizeY = mImg.height();
-    }
+    //RGBATextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
+    RGBATextureSampler(PixelBuffer<uint8_t>& img) : mImg(std::move(img)), mSizeX(img.width()), mSizeY(img.height()) {}
+    RGBATextureSampler(const std::string& filename) : mImg(loadPng(filename)), mSizeX(mImg.width()), mSizeY(mImg.height()) {}
 
     OutType get(float u, float v) const {
-        int x = u * (mSizeX-1) + 0.5;
-        int y = mSizeY - (v * (mSizeY-1) + 0.5);
+        int x = u * (mSizeX-1) + 0.5f;
+        int y = mSizeY - (v * (mSizeY-1) + 0.5f);
 
         assert(x >= 0 && x < (int)mSizeX);
         assert(y >= 0 && y < (int)mSizeY);
 
-        const float r = mImg(x, y, 0, 0) / 255.0f;
-        const float g = mImg(x, y, 0, 1) / 255.0f;
-        const float b = mImg(x, y, 0, 2) / 255.0f;
+        const float r = mImg(x, y, 0) / 255.0f;
+        const float g = mImg(x, y, 1) / 255.0f;
+        const float b = mImg(x, y, 2) / 255.0f;
         const float a = 1.0f;
 
         return OutType(r, g, b, a);
@@ -43,7 +39,7 @@ public:
     unsigned int width() const { return mSizeX; }
     unsigned int height() const { return mSizeY; }
 };
-
+#if 0
 template <class OutType, class StorageType=uint8_t>
 class SingleChannelTextureSampler {
     cimg_library::CImg<StorageType> mImg;
