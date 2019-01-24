@@ -451,7 +451,7 @@ public:
 
     explicit Matrix3x3(const Matrix4x4<T>& m4) {
         for (int i = 0; i < 3; ++i) {
-            m[i] = m4[i];
+            m[i] = static_cast<Vector3<T>>(m4[i]);
         }
     }
 

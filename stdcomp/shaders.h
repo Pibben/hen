@@ -45,7 +45,7 @@ public:
     VecLib::Matrix4f& projMatrix() { return mProjMatrix; }
     VecLib::Matrix4f& modelViewMatrix() { return mModelViewMatrix; }
 };
-
+#endif
 class ColorFragmentShader {
 private:
     enum class InTraits {
@@ -70,7 +70,7 @@ public:
         return std::make_tuple(color, pos[2]);
     }
 };
-#endif
+
 class TextureVertexShader {
 private:
     enum class InTraits { POSITION_INDEX = 0, TEXTURE_INDEX = 1 };
@@ -126,7 +126,7 @@ public:
         return std::make_tuple(color, pos[2]);
     }
 };
-#if 0
+
 class MultiTextureFragmentShader {
 private:
     enum class InTraits {
@@ -160,7 +160,7 @@ public:
         auto color = mTextureSampler.get(realTex[0], realTex[1]);
         auto ao = mAoSampler.get(realTex[0], realTex[1]);
 
-        return std::make_tuple(color, pos[2]);
+        return std::make_tuple(VecLib::Vector4(color * (ao + 0.5f)), pos[2]);
     }
 };
 
@@ -377,15 +377,15 @@ public:
         VecLib::Vector2f tex;
 
         tex[1] = R[1]; // -1 .. 1
-        R[1] = 0.0;
-        tex[0] = normalize(R)[2] * 0.25; // -0.25 .. 0.25
+        R[1] = 0.0f;
+        tex[0] = normalize(R)[2] * 0.25f; // -0.25 .. 0.25
 
-        tex[1] = (tex[1] + 1.0) * 0.5; // 0 .. 1
+        tex[1] = (tex[1] + 1.0f) * 0.5f; // 0 .. 1
 
-        if(R[0] >= 0) {
-            tex[0] = 0.25 + tex[0]; // 0 .. 0.5
+        if(R[0] >= 0.f) {
+            tex[0] = 0.25f + tex[0]; // 0 .. 0.5
         } else {
-            tex[0] = 0.75 - tex[0]; // 0.5 .. 1.0
+            tex[0] = 0.75f - tex[0]; // 0.5 .. 1.0
         }
 
         auto color = mTextureSampler.get(tex[0], tex[1]);
@@ -431,7 +431,7 @@ public:
         return std::make_tuple(color, pos[2]);
     }
 };
-
+#if 0
 class ShadowGenVertexShader {
 private:
     enum class InTraits {

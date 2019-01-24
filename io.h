@@ -247,10 +247,7 @@ inline PixelBuffer<uint8_t> loadPng(const std::string& filename) {
 
     assert(color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_RGB_ALPHA);
 
-    const bool is_alpha = (color_type == PNG_COLOR_TYPE_RGBA);
-
     assert(!is_gray);
-    assert(is_alpha);
 
     PixelBuffer<uint8_t> pb(W, H, byte_depth * 4);
 

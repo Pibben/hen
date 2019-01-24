@@ -12,23 +12,21 @@
 
 template <class OutType>
 class RGBATextureSampler {
+private:
     PixelBuffer<uint8_t> mImg;
-    unsigned int mSizeX;
-    unsigned int mSizeY;
 
 public:
-    // RGBATextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
-    // explicit RGBATextureSampler(PixelBuffer<uint8_t>& img) : mImg(std::move(img)), mSizeX(img.width()),
-    // mSizeY(img.height()) {}
-    explicit RGBATextureSampler(const std::string& filename)
-        : mImg(loadPng(filename)), mSizeX(mImg.width()), mSizeY(mImg.height()) {}
+    explicit RGBATextureSampler(const std::string& filename) : mImg(loadPng(filename)) {}
 
     OutType get(float u, float v) const {
-        int x = std::lround(u * (mSizeX - 1));
-        int y = std::lround(mSizeY - (v * (mSizeY - 1)));
+        const uint_fast16_t sizeX = mImg.width();
+        const uint_fast16_t sizeY = mImg.height();
 
-        assert(x >= 0 && x < (int)mSizeX);
-        assert(y >= 0 && y < (int)mSizeY);
+        const int x =         std::lrintf(u * (sizeX - 1));
+        const int y = sizeY - std::lrintf(v * (sizeY - 1)) - 1;
+
+        assert(x >= 0 && x < (int)sizeX);
+        assert(y >= 0 && y < (int)sizeY);
 
         const float r = mImg(x, y, 0) / 255.0f;
         const float g = mImg(x, y, 1) / 255.0f;
@@ -37,39 +35,27 @@ public:
 
         return OutType(r, g, b, a);
     }
-
-    unsigned int width() const { return mSizeX; }
-    unsigned int height() const { return mSizeY; }
 };
-#if 0
+
 template <class OutType, class StorageType=uint8_t>
 class SingleChannelTextureSampler {
-    cimg_library::CImg<StorageType> mImg;
-    unsigned int mSizeX;
-    unsigned int mSizeY;
+    PixelBuffer<StorageType> mImg;
 
 public:
-    SingleChannelTextureSampler() : mImg(), mSizeX(-1), mSizeY(-1) {}
-    SingleChannelTextureSampler(unsigned int sizeX, unsigned int sizeY) : mImg(cimg_library::CImg<StorageType>(sizeX, sizeY)), mSizeX(sizeX), mSizeY(sizeY) {}
-    SingleChannelTextureSampler(cimg_library::CImg<StorageType>& img) : mImg(img), mSizeX(img.width()), mSizeY(img.height()) {}
-    SingleChannelTextureSampler(const std::string& filename) {
-        mImg.load(filename.c_str());
-
-        mSizeX = mImg.width();
-        mSizeY = mImg.height();
-    }
+    explicit SingleChannelTextureSampler(const std::string& filename) : mImg(loadPng(filename)) {}
 
     OutType get(float u, float v) const {
-        int x = u * (mSizeX-1) + 0.5;
-        int y = mSizeY - (v * (mSizeY-1) + 0.5);
+        const uint_fast16_t sizeX = mImg.width();
+        const uint_fast16_t sizeY = mImg.height();
 
-        assert(x >= 0 && x < (int)mSizeX);
-        assert(y >= 0 && y < (int)mSizeY);
+        const int x =         std::lrintf(u * (sizeX - 1));
+        const int y = sizeY - std::lrintf(v * (sizeY - 1));
+
+        assert(x >= 0 && x < (int)sizeX);
+        assert(y >= 0 && y < (int)sizeY);
 
         return static_cast<OutType>(mImg(x, y, 0)) / 255.0f;
     }
-
-    cimg_library::CImg<StorageType>& texture() { return mImg; }
 };
 
 template <class OutType>
@@ -78,8 +64,6 @@ private:
     RGBATextureSampler<OutType> mTextureMap;
 
 public:
-    CubeSampler() : mTextureMap() {}
-    CubeSampler(cimg_library::CImg<unsigned char>& img) : mTextureMap(img) {}
     CubeSampler(const std::string& filename) : mTextureMap(filename) {}
 
     OutType get(float vx, float vy, float vz) const {
@@ -87,55 +71,53 @@ public:
         const float ay = std::abs(vy);
         const float az = std::abs(vz);
 
-        float uOffset = 0;
-        float vOffset = 0;
+        float uOffset = 0.0f;
+        float vOffset = 0.0f;
 
-        float u = 0;
-        float v = 0;
+        float u = 0.0f;
+        float v = 0.0f;
 
         if(ax >= ay && ax >= az) {
             //X biggest
 
-            if(vx > 0) {
-                uOffset = 2.0;
-                vOffset = 1.0 ;
+            if(vx > 0.0f) {
+                uOffset = 2.0f;
+                vOffset = 1.0f ;
             } else {
-                uOffset = 0;
-                vOffset = 1.0;
+                uOffset = 0.0f;
+                vOffset = 1.0f;
             }
 
-            u = (vz / -vx + 1.0 + uOffset * 2.0) / 8.0;
-            v = (vy / ax + 1.0 + vOffset * 2.0) / 6.0;
+            u = (vz / -vx + 1.0f + uOffset * 2.0f) / 8.0f;
+            v = (vy /  ax + 1.0f + vOffset * 2.0f) / 6.0f;
         } else if(ay >= ax && ay >= az) {
             //Y biggest
 
-            uOffset = 1.0;
-            if(vy > 0) {
-                vOffset = 2.0;
+            uOffset = 1.0f;
+            if(vy > 0.0f) {
+                vOffset = 2.0f;
             } else {
-                vOffset = 0;
+                vOffset = 0.0f;
             }
 
-            u = (vx / ay + 1.0 + uOffset * 2.0) / 8.0;
-            v = (vz / -vy + 1.0 + vOffset * 2.0) / 6.0;
+            u = (vx /  ay + 1.0f + uOffset * 2.0f) / 8.0f;
+            v = (vz / -vy + 1.0f + vOffset * 2.0f) / 6.0f;
         } else if(az >= ax && az >= ay) {
             //Z biggest
 
-            vOffset = 1.0;
-            if(vz > 0) {
-                uOffset = 1.0;
+            vOffset = 1.0f;
+            if(vz > 0.0f) {
+                uOffset = 1.0f;
             } else {
-                uOffset = 3.0;
+                uOffset = 3.0f;
             }
 
-            u = (vx / vz + 1.0 + uOffset * 2.0) / 8.0;
-            v = (vy / az + 1.0 + vOffset * 2.0) / 6.0;
+            u = (vx / vz + 1.0f + uOffset * 2.0f) / 8.0f;
+            v = (vy / az + 1.0f + vOffset * 2.0f) / 6.0f;
         }
 
         return mTextureMap.get(u, v);
     }
 };
-
-#endif
 
 #endif /* STDCOMP_SAMPLERS_H_ */

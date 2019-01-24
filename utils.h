@@ -210,8 +210,8 @@ public:
 
     T* data() { return mData; }
 
-    constexpr uint16_t width() { return mWidth; }
-    constexpr uint16_t height() { return mHeight; }
+    constexpr uint16_t width() const { return mWidth; }
+    constexpr uint16_t height() const { return mHeight; }
     void fill(T value) { std::fill(mData, mData + mWidth * mHeight * mDepth, value); };
 };
 
