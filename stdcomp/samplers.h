@@ -22,7 +22,7 @@ public:
         const uint_fast16_t sizeX = mImg.width();
         const uint_fast16_t sizeY = mImg.height();
 
-        const int x =         std::lrintf(u * (sizeX - 1));
+        const int x = std::lrintf(u * (sizeX - 1));
         const int y = sizeY - std::lrintf(v * (sizeY - 1)) - 1;
 
         assert(x >= 0 && x < (int)sizeX);
@@ -37,7 +37,7 @@ public:
     }
 };
 
-template <class OutType, class StorageType=uint8_t>
+template <class OutType, class StorageType = uint8_t>
 class SingleChannelTextureSampler {
     PixelBuffer<StorageType> mImg;
 
@@ -48,7 +48,7 @@ public:
         const uint_fast16_t sizeX = mImg.width();
         const uint_fast16_t sizeY = mImg.height();
 
-        const int x =         std::lrintf(u * (sizeX - 1));
+        const int x = std::lrintf(u * (sizeX - 1));
         const int y = sizeY - std::lrintf(v * (sizeY - 1));
 
         assert(x >= 0 && x < (int)sizeX);
@@ -64,49 +64,49 @@ private:
     RGBATextureSampler<OutType> mTextureMap;
 
 public:
-    CubeSampler(const std::string& filename) : mTextureMap(filename) {}
+    explicit CubeSampler(const std::string& filename) : mTextureMap(filename) {}
 
     OutType get(float vx, float vy, float vz) const {
         const float ax = std::abs(vx);
         const float ay = std::abs(vy);
         const float az = std::abs(vz);
 
-        float uOffset = 0.0f;
-        float vOffset = 0.0f;
+        float uOffset;
+        float vOffset;
 
         float u = 0.0f;
         float v = 0.0f;
 
-        if(ax >= ay && ax >= az) {
-            //X biggest
+        if (ax >= ay && ax >= az) {
+            // X biggest
 
-            if(vx > 0.0f) {
+            if (vx > 0.0f) {
                 uOffset = 2.0f;
-                vOffset = 1.0f ;
+                vOffset = 1.0f;
             } else {
                 uOffset = 0.0f;
                 vOffset = 1.0f;
             }
 
             u = (vz / -vx + 1.0f + uOffset * 2.0f) / 8.0f;
-            v = (vy /  ax + 1.0f + vOffset * 2.0f) / 6.0f;
-        } else if(ay >= ax && ay >= az) {
-            //Y biggest
+            v = (vy / ax + 1.0f + vOffset * 2.0f) / 6.0f;
+        } else if (ay >= ax && ay >= az) {
+            // Y biggest
 
             uOffset = 1.0f;
-            if(vy > 0.0f) {
+            if (vy > 0.0f) {
                 vOffset = 2.0f;
             } else {
                 vOffset = 0.0f;
             }
 
-            u = (vx /  ay + 1.0f + uOffset * 2.0f) / 8.0f;
+            u = (vx / ay + 1.0f + uOffset * 2.0f) / 8.0f;
             v = (vz / -vy + 1.0f + vOffset * 2.0f) / 6.0f;
-        } else if(az >= ax && az >= ay) {
-            //Z biggest
+        } else if (az >= ax && az >= ay) {
+            // Z biggest
 
             vOffset = 1.0f;
-            if(vz > 0.0f) {
+            if (vz > 0.0f) {
                 uOffset = 1.0f;
             } else {
                 uOffset = 3.0f;

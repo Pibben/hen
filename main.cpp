@@ -307,8 +307,8 @@ static void phongShading() {
 }
 
 static void equiRectangular() {
-	NormalViewVertexShader vertexShader;
-	EquiRectFragmentShader fragmentShader("/home/per/code/hen/equirect.png");
+    NormalViewVertexShader vertexShader;
+    EquiRectFragmentShader fragmentShader("/home/per/code/hen/equirect.png");
 
     auto m = loadMeshNormal("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
 
@@ -316,8 +316,8 @@ static void equiRectangular() {
 }
 
 static void cubeMap() {
-	NormalViewVertexShader vertexShader;
-	CubemapFragmentShader fragmentShader("/home/per/code/hen/cubemap.png");
+    NormalViewVertexShader vertexShader;
+    CubemapFragmentShader fragmentShader("/home/per/code/hen/cubemap.png");
 
     auto m = loadMeshNormal("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
 

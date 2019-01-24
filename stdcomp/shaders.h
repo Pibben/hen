@@ -48,24 +48,18 @@ public:
 #endif
 class ColorFragmentShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0,
-        COLOR_INDEX = 1
-    };
+    enum class InTraits { POSITION_INDEX = 0, COLOR_INDEX = 1 };
 
 public:
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> InType;
-    typedef std::tuple<VecLib::Vector4f, float> OutType;
+    using InType = std::tuple<VecLib::Vector4f, VecLib::Vector4f>;
+    using OutType = std::tuple<VecLib::Vector4f, float>;
 
-    enum class Traits {
-        COLOR_INDEX = 0,
-        DEPTH_INDEX = 1
-    };
+    enum class Traits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector4f& color = std::get<static_cast<int>(InTraits::COLOR_INDEX)>(in);
-        //assert(pos[2] < 0.0);
+        // assert(pos[2] < 0.0);
 
         return std::make_tuple(color, pos[2]);
     }
@@ -129,23 +123,16 @@ public:
 
 class MultiTextureFragmentShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0,
-        TEXTURE_INDEX = 1,
-        INV_DEPTH_INDEX = 2
-    };
+    enum class InTraits { POSITION_INDEX = 0, TEXTURE_INDEX = 1, INV_DEPTH_INDEX = 2 };
 
     RGBATextureSampler<VecLib::Vector4f> mTextureSampler;
     SingleChannelTextureSampler<float> mAoSampler;
 
 public:
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector2f, float> InType;
-    typedef std::tuple<VecLib::Vector4f, float> OutType;
+    using InType = std::tuple<VecLib::Vector4f, VecLib::Vector2f, float>;
+    using OutType = std::tuple<VecLib::Vector4f, float>;
 
-    enum class Traits {
-        COLOR_INDEX = 0,
-        DEPTH_INDEX = 1
-    };
+    enum class Traits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
     MultiTextureFragmentShader(const std::string& filename1, const std::string& filename2)
         : mTextureSampler(filename1), mAoSampler(filename2) {}
@@ -166,30 +153,22 @@ public:
 
 class FlatVertexShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0,
-        NORMAL_INDEX = 1
-    };
+    enum class InTraits { POSITION_INDEX = 0, NORMAL_INDEX = 1 };
 
     VecLib::Matrix4f mProjMatrix;
     VecLib::Matrix4f mModelViewMatrix;
     VecLib::Vector3f mLightPos;
 
 public:
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> InType;
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector4f> OutType;
+    using InType = std::tuple<VecLib::Vector4f, VecLib::Vector3f>;
+    using OutType = std::tuple<VecLib::Vector4f, VecLib::Vector4f>;
 
-    enum class Traits {
-        POSITION_INDEX = 0,
-        COLOR_INDEX = 1
-    };
+    enum class Traits { POSITION_INDEX = 0, COLOR_INDEX = 1 };
 
-    FlatVertexShader(const VecLib::Vector3f& lightPos) {
-        mLightPos = lightPos;
-    }
+    explicit FlatVertexShader(const VecLib::Vector3f& lightPos) { mLightPos = lightPos; }
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
         const VecLib::Vector3f& lightPos = mLightPos;
@@ -211,7 +190,7 @@ public:
         const VecLib::Vector4f color(1.0f, 1.0f, 1.0f, 1.0f);
 
         const VecLib::Vector4f outPos = mProjMatrix * P;
-        return std::make_tuple(outPos, color*intensity);
+        return std::make_tuple(outPos, color * intensity);
     }
 
     VecLib::Matrix4f& projMatrix() { return mProjMatrix; }
@@ -220,32 +199,22 @@ public:
 
 class PhongVertexShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0,
-        NORMAL_INDEX = 1
-    };
+    enum class InTraits { POSITION_INDEX = 0, NORMAL_INDEX = 1 };
 
     VecLib::Matrix4f mProjMatrix;
     VecLib::Matrix4f mModelViewMatrix;
     VecLib::Vector3f mLightPos;
 
 public:
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> InType;
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f, VecLib::Vector3f> OutType;
+    using InType = std::tuple<VecLib::Vector4f, VecLib::Vector3f>;
+    using OutType = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f, VecLib::Vector3f>;
 
-    enum class Traits {
-        POSITION_INDEX = 0,
-        NORMAL_INDEX = 1,
-        LIGHT_INDEX = 2,
-        VIEW_INDEX = 3
-    };
+    enum class Traits { POSITION_INDEX = 0, NORMAL_INDEX = 1, LIGHT_INDEX = 2, VIEW_INDEX = 3 };
 
-    PhongVertexShader(const VecLib::Vector3f& lightPos) {
-        mLightPos = lightPos;
-    }
+    explicit PhongVertexShader(const VecLib::Vector3f& lightPos) { mLightPos = lightPos; }
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
         const VecLib::Vector3f& lightPos = mLightPos;
@@ -266,28 +235,20 @@ public:
 
 class PhongFragmentShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0,
-        NORMAL_INDEX = 1,
-        LIGHT_INDEX = 2,
-        VIEW_INDEX = 3
-    };
+    enum class InTraits { POSITION_INDEX = 0, NORMAL_INDEX = 1, LIGHT_INDEX = 2, VIEW_INDEX = 3 };
 
 public:
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f, VecLib::Vector3f> InType;
-    typedef std::tuple<VecLib::Vector4f, float> OutType;
+    using InType = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f, VecLib::Vector3f>;
+    using OutType = std::tuple<VecLib::Vector4f, float>;
 
-    enum class Traits {
-        COLOR_INDEX = 0,
-        DEPTH_INDEX = 1
-    };
+    enum class Traits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        VecLib::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
-        VecLib::Vector3f L     = std::get<static_cast<int>(InTraits::LIGHT_INDEX)>(in);
-        VecLib::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
-        //assert(pos[2] < 0.0);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        VecLib::Vector3f N = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        VecLib::Vector3f L = std::get<static_cast<int>(InTraits::LIGHT_INDEX)>(in);
+        VecLib::Vector3f V = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
+        // assert(pos[2] < 0.0);
 
         N.normalize();
         L.normalize();
@@ -299,32 +260,25 @@ public:
 
         const VecLib::Vector4f color(1.0f, 1.0f, 1.0f, 1.0f);
 
-        return std::make_tuple(color*intensity, pos[2]);
+        return std::make_tuple(color * intensity, pos[2]);
     }
 };
 
 class NormalViewVertexShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0,
-        NORMAL_INDEX = 1
-    };
+    enum class InTraits { POSITION_INDEX = 0, NORMAL_INDEX = 1 };
 
     VecLib::Matrix4f mProjMatrix;
     VecLib::Matrix4f mModelViewMatrix;
 
 public:
-	typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f> InType;
-    typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f> OutType;
+    using InType = std::tuple<VecLib::Vector4f, VecLib::Vector3f>;
+    using OutType = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f>;
 
-    enum class Traits {
-        POSITION_INDEX = 0,
-        NORMAL_INDEX = 1,
-        VIEW_INDEX = 2
-    };
+    enum class Traits { POSITION_INDEX = 0, NORMAL_INDEX = 1, VIEW_INDEX = 2 };
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos    = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
         const VecLib::Vector4f P = mModelViewMatrix * pos;
@@ -342,30 +296,24 @@ public:
 
 class EquiRectFragmentShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0,
-        NORMAL_INDEX = 1,
-        VIEW_INDEX = 2
-    };
+    enum class InTraits { POSITION_INDEX = 0, NORMAL_INDEX = 1, VIEW_INDEX = 2 };
 
     RGBATextureSampler<VecLib::Vector4f> mTextureSampler;
 
 public:
-	typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f> InType;
-    typedef std::tuple<VecLib::Vector4f, float> OutType;
+    using InType = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f>;
+    using OutType = std::tuple<VecLib::Vector4f, float>;
 
-    enum class Traits {
-        COLOR_INDEX = 0,
-        DEPTH_INDEX = 1
-    };
+    enum class Traits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
-    EquiRectFragmentShader(const std::string& filename) : mTextureSampler(RGBATextureSampler<VecLib::Vector4f>(filename)) {}
+    explicit EquiRectFragmentShader(const std::string& filename)
+        : mTextureSampler(RGBATextureSampler<VecLib::Vector4f>(filename)) {}
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        VecLib::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
-        VecLib::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
-        //assert(pos[2] < 0.0);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        VecLib::Vector3f N = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        VecLib::Vector3f V = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
+        // assert(pos[2] < 0.0);
 
         N.normalize();
         V.normalize();
@@ -376,16 +324,16 @@ public:
 
         VecLib::Vector2f tex;
 
-        tex[1] = R[1]; // -1 .. 1
+        tex[1] = R[1];  // -1 .. 1
         R[1] = 0.0f;
-        tex[0] = normalize(R)[2] * 0.25f; // -0.25 .. 0.25
+        tex[0] = normalize(R)[2] * 0.25f;  // -0.25 .. 0.25
 
-        tex[1] = (tex[1] + 1.0f) * 0.5f; // 0 .. 1
+        tex[1] = (tex[1] + 1.0f) * 0.5f;  // 0 .. 1
 
-        if(R[0] >= 0.f) {
-            tex[0] = 0.25f + tex[0]; // 0 .. 0.5
+        if (R[0] >= 0.f) {
+            tex[0] = 0.25f + tex[0];  // 0 .. 0.5
         } else {
-            tex[0] = 0.75f - tex[0]; // 0.5 .. 1.0
+            tex[0] = 0.75f - tex[0];  // 0.5 .. 1.0
         }
 
         auto color = mTextureSampler.get(tex[0], tex[1]);
@@ -396,30 +344,24 @@ public:
 
 class CubemapFragmentShader {
 private:
-    enum class InTraits {
-        POSITION_INDEX = 0,
-        NORMAL_INDEX = 1,
-        VIEW_INDEX = 2
-    };
+    enum class InTraits { POSITION_INDEX = 0, NORMAL_INDEX = 1, VIEW_INDEX = 2 };
 
     CubeSampler<VecLib::Vector4f> mCubeSampler;
 
 public:
-	typedef std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f> InType;
-    typedef std::tuple<VecLib::Vector4f, float> OutType;
+    using InType = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f>;
+    using OutType = std::tuple<VecLib::Vector4f, float>;
 
-    enum class Traits {
-        COLOR_INDEX = 0,
-        DEPTH_INDEX = 1
-    };
+    enum class Traits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
-    CubemapFragmentShader(const std::string& filename) : mCubeSampler(CubeSampler<VecLib::Vector4f>(filename)) {}
+    explicit CubemapFragmentShader(const std::string& filename)
+        : mCubeSampler(CubeSampler<VecLib::Vector4f>(filename)) {}
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos   = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        VecLib::Vector3f N     = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
-        VecLib::Vector3f V     = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
-        //assert(pos[2] < 0.0);
+        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        VecLib::Vector3f N = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
+        VecLib::Vector3f V = std::get<static_cast<int>(InTraits::VIEW_INDEX)>(in);
+        // assert(pos[2] < 0.0);
 
         N.normalize();
         V.normalize();
