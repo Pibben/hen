@@ -9,3 +9,4 @@ Header-only programmable C++14 software 3D renderer.
 * http://graphics-software-engineer.blogspot.com/2012/04/rasterization-rules.html
 * https://docs.microsoft.com/en-us/windows/desktop/direct3d11/d3d10-graphics-programming-guide-rasterizer-stage-rules
 * https://docs.microsoft.com/en-us/windows/desktop/direct3d10/d3d10-graphics-programming-guide-resources-coordinates
+* https://fgiesen.wordpress.com/2013/02/17/optimizing-sw-occlusion-culling-index/
