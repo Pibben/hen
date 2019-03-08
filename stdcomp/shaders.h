@@ -98,7 +98,7 @@ class TextureFragmentShader {
 private:
     enum class InTraits { POSITION_INDEX = 0, TEXTURE_INDEX = 1, INV_DEPTH_INDEX = 2 };
 
-    RGBATextureSampler<VecLib::Vector4f> mTextureSampler;
+    RGBTextureSampler<VecLib::Vector3f> mTextureSampler;
 
 public:
     using InType = std::tuple<VecLib::Vector4f, VecLib::Vector2f, float>;
@@ -117,7 +117,7 @@ public:
 
         auto color = mTextureSampler.get(realTex[0], realTex[1]);
 
-        return std::make_tuple(color, pos[2]);
+        return std::make_tuple(VecLib::Vector4f(color, 1.0f), pos[2]);
     }
 };
 

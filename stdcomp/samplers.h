@@ -10,20 +10,23 @@
 
 // TODO: Share code
 
+#include <io.h>
+
 template <class OutType>
-class RGBATextureSampler {
+class RGBTextureSampler {
 private:
     PixelBuffer<uint8_t> mImg;
 
 public:
-    explicit RGBATextureSampler(const std::string& filename) : mImg(loadPng(filename)) {}
+    explicit RGBTextureSampler(const std::string& filename) : mImg(loadPng(filename)) {}
+    explicit RGBTextureSampler(uint8_t* pixels, uint16_t width, uint16_t height) : mImg(pixels, width, height, 4) {}
 
     OutType get(float u, float v) const {
         const uint_fast16_t sizeX = mImg.width();
         const uint_fast16_t sizeY = mImg.height();
 
-        const int x = std::lrintf(u * (sizeX - 1));
-        const int y = sizeY - std::lrintf(v * (sizeY - 1)) - 1;
+        const int x = u * sizeX;
+        const int y = sizeY - v * sizeY;
 
         assert(x >= 0 && x < (int)sizeX);
         assert(y >= 0 && y < (int)sizeY);
@@ -31,7 +34,34 @@ public:
         const float r = mImg(x, y, 0) / 255.0f;
         const float g = mImg(x, y, 1) / 255.0f;
         const float b = mImg(x, y, 2) / 255.0f;
-        const float a = 1.0f;
+
+        return OutType(r, g, b);
+    }
+};
+
+template <class OutType>
+class RGBATextureSampler {
+private:
+    PixelBuffer<uint8_t> mImg;
+
+public:
+    explicit RGBATextureSampler(const std::string& filename) : mImg(loadPng(filename)) {}
+    explicit RGBATextureSampler(uint8_t* pixels, uint16_t width, uint16_t height) : mImg(pixels, width, height, 4) {}
+
+    OutType get(float u, float v) const {
+        const uint_fast16_t sizeX = mImg.width();
+        const uint_fast16_t sizeY = mImg.height();
+
+        const int x = u * sizeX;
+        const int y = sizeY - v * sizeY;
+
+        assert(x >= 0 && x < (int)sizeX);
+        assert(y >= 0 && y < (int)sizeY);
+
+        const float r = mImg(x, y, 0) / 255.0f;
+        const float g = mImg(x, y, 1) / 255.0f;
+        const float b = mImg(x, y, 2) / 255.0f;
+        const float a = mImg(x, y, 3) / 255.0f;
 
         return OutType(r, g, b, a);
     }
@@ -48,8 +78,8 @@ public:
         const uint_fast16_t sizeX = mImg.width();
         const uint_fast16_t sizeY = mImg.height();
 
-        const int x = std::lrintf(u * (sizeX - 1));
-        const int y = sizeY - std::lrintf(v * (sizeY - 1));
+        const int x = u * sizeX;
+        const int y = sizeY - v * sizeY;
 
         assert(x >= 0 && x < (int)sizeX);
         assert(y >= 0 && y < (int)sizeY);
