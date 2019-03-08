@@ -29,3 +29,7 @@ target_link_libraries(test PRIVATE hen_lib)
 add_executable(shadertoy examples/shadertoy.cpp)
 set_target_properties(shadertoy PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples")
 target_link_libraries(shadertoy PRIVATE hen_lib)
+
+add_executable(imgui examples/imgui/imgui_impl.cpp examples/imgui/imgui/imgui.cpp examples/imgui/imgui/imgui_draw.cpp examples/imgui/imgui/imgui_widgets.cpp examples/imgui/imgui/imgui_demo.cpp)
+set_target_properties(imgui PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples")
+target_link_libraries(imgui PRIVATE hen_lib)

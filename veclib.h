@@ -6,6 +6,8 @@
 #define HEN_VECLIB_H
 
 #include <algorithm>
+#include <cassert>
+#include <cmath>
 
 namespace VecLib {
 
@@ -224,6 +226,11 @@ Vector3<T> operator-(const Vector3<T>& v, T s) {
 }
 
 template <class T>
+Vector3<T> operator*(const Vector3<T>& v1, const Vector3<T>& v2) {
+    return Vector3<T>(v1[0] * v2[0], v1[1] * v2[1], v1[2] * v2[2]);
+}
+
+template <class T>
 class Vector4 {
     T m[4];
 
@@ -335,8 +342,13 @@ Vector4<T> operator*(T s, const Vector4<T>& v) {
 }
 
 template <class T>
-Vector4<T> operator/(const Vector4<T>& /*v*/, T s) {
-    Vector4<T> retval;
+Vector4<T> operator*(const Vector4<T>& v1, const Vector4<T>& v2) {
+    return Vector4<T>(v1[0] * v2[0], v1[1] * v2[1], v1[2] * v2[2], v1[3] * v2[3]);
+}
+
+template <class T>
+Vector4<T> operator/(const Vector4<T>& v, T s) {
+    Vector4<T> retval = v;
     retval /= s;
     return retval;
 }

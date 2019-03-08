@@ -2,3 +2,6 @@
 	path = cfw
 	url = https://github.com/Pibben/cfw.git
 	branch = master
+[submodule "examples/imgui/imgui"]
+	path = examples/imgui/imgui
+	url = https://github.com/ocornut/imgui.git

@@ -10,6 +10,8 @@
 
 #include "veclib.h"
 
+#include <chrono>
+
 struct EmptyUniform {};
 
 inline VecLib::Vector3f reflect(const VecLib::Vector3f& R, const VecLib::Vector3f& N) {
@@ -178,11 +180,14 @@ private:
     uint16_t mHeight;
     uint16_t mDepth;
     T* mData;
+    bool mAllocated = true;
 
 public:
+    PixelBuffer(T* pixels, uint16_t width, uint16_t height, uint16_t depth = 1)
+        : mWidth(width), mHeight(height), mDepth(depth), mData(pixels), mAllocated(false) {}
     PixelBuffer(uint16_t width, uint16_t height, uint16_t depth = 1)
-        : mWidth(width), mHeight(height), mDepth(depth), mData(new T[mWidth * mHeight * mDepth]) {}
-    ~PixelBuffer() { delete[] mData; }
+        : PixelBuffer(new T[width * height * depth], width, height, depth) {}
+    ~PixelBuffer() { if (mAllocated) delete[] mData; }
     PixelBuffer(const PixelBuffer&) = delete;
     PixelBuffer(PixelBuffer&& other) noexcept
         : mWidth(other.mWidth), mHeight(other.mHeight), mDepth(other.mDepth), mData(other.mData) {

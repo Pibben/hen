@@ -52,7 +52,7 @@ public:
 
     Type run(float val) {
         assert(val >= 0.0f);
-        assert(val <= 1.0f);
+        assert(val <= 1.00001f);
 
         return tupleAddScaled(mStart, mDelta, val);
     }
@@ -60,6 +60,8 @@ public:
 
 class Renderer {
 private:
+    bool mCullingEnabled = true;
+
     template <class Vertex, class FragmentShader, class RasterShader>
     void rasterizeFragment(const Vertex& v, const FragmentShader& fragmentShader, const RasterShader& rasterShader,
                            unsigned int x, unsigned int y) {
@@ -295,7 +297,7 @@ public:
             const auto& p3 = std::get<POSITION_INDEX>(v3);
 
             // Backface culling
-            if (isBackface(p1, p2, p3)) {
+            if (mCullingEnabled && isBackface(p1, p2, p3)) {
                 continue;
             }
 
@@ -303,6 +305,8 @@ public:
             rasterizeTriangle<POSITION_INDEX>(v1, v2, v3, fragmentShader, rasterShader);
         }
     }
+
+    void setCulling(bool enabled) { mCullingEnabled = enabled; }
 };
 
 #endif

@@ -1002,6 +1002,47 @@ public:
     unsigned int getXResolution() const { return mFrame->width(); }
     unsigned int getYResolution() const { return mFrame->height(); }
 };
+
+static VecLib::Vector3f alphaBlend(const VecLib::Vector3f& dst, const VecLib::Vector4f& src) {
+    return src.w() * src.xyz() + VecLib::Vector3f(1.0f - src.w()) * dst;
+}
+
+class AlphaRasterShader {
+private:
+    enum class InTraits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
+
+    PixelBuffer<unsigned char>* mFrame;
+
+public:
+    using InType = std::tuple<VecLib::Vector4f>;
+
+    AlphaRasterShader(PixelBuffer<unsigned char>* frame)
+            : mFrame(frame) {}
+
+    void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
+        constexpr auto ColorAttachment = static_cast<int>(InTraits::COLOR_INDEX);
+
+        const auto& color = std::get<ColorAttachment>(fragment);
+
+        const VecLib::Vector3f dst(mFrame->at(x, y, 0) / 255.0f,
+                                   mFrame->at(x, y, 1) / 255.0f,
+                                   mFrame->at(x, y, 2) / 255.0f);
+
+        const auto final = alphaBlend(dst, color);
+
+        mFrame->at(x, y, 0) = final[0] <= 1.0f ? final[0] * 255.0f : 255;
+        mFrame->at(x, y, 1) = final[1] <= 1.0f ? final[1] * 255.0f : 255;
+        mFrame->at(x, y, 2) = final[2] <= 1.0f ? final[2] * 255.0f : 255;
+    }
+
+    void clear() const {
+        mFrame->fill(0);
+    }
+
+    unsigned int getXResolution() const { return mFrame->width(); }
+    unsigned int getYResolution() const { return mFrame->height(); }
+};
+
 #if 0
 class CImgDepthRasterShader {
 private:
