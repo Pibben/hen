@@ -63,8 +63,6 @@ private:
     template <class Vertex, class FragmentShader, class RasterShader>
     void rasterizeFragment(const Vertex& v, const FragmentShader& fragmentShader, const RasterShader& rasterShader,
                            unsigned int x, unsigned int y) {
-        constexpr auto ColorAttachment = static_cast<int>(FragmentShader::Traits::COLOR_INDEX);
-        constexpr auto DepthAttachment = static_cast<int>(FragmentShader::Traits::DEPTH_INDEX);
 
         const auto fragment = fragmentShader(v);
 
@@ -138,27 +136,33 @@ private:
 
         assert(roundAwayFromZero(p1[1]) == roundAwayFromZero(p2[1]));
 
-        const int y0 = yStep == 1 ? roundTowardsZero(p1[1]) : roundAwayFromZero(p1[1] - 1.0f);
-        const int y2 = yStep == 1 ? roundTowardsZero(p3[1]) : roundAwayFromZero(p3[1] - 1.0f);
+        //                                          Flat side up              Flat side Down
+        const int yFirst         = yStep == 1 ? roundTowardsZero(p1[1]) : roundTowardsZero(p1[1] - 1.0f);  // Flat side
+        const int yOneBeyondLast = yStep == 1 ? roundTowardsZero(p3[1]) : roundAwayFromZero(p3[1] - 1.0f); // Pointy side
 
         const float yDistF = p3[1] - p1[1];
 
         TupleInterpolator<Vertex> inpl(v1, v3);
         TupleInterpolator<Vertex> inpr(v2, v3);
 
-        float ypos = (y0 - p1[1] + 0.5f) / yDistF;
-        float ystep = yStep / yDistF;
+        const float yCenter = yFirst + 0.5f;
+        float ypos = (yCenter - p1[1]) / yDistF;
+        const float ystep = yStep / yDistF;
 
-        for (int y = y0; yStep * (y - y2) < 0; y += yStep) {
+        for (int y = yFirst; yStep * (y - yOneBeyondLast) < 0; y += yStep) {
             Vertex vx0 = inpl.run(ypos);
             Vertex vx1 = inpr.run(ypos);
 
             TupleInterpolator<Vertex> inpx(vx0, vx1);
-            int xBegin = roundTowardsZero(std::get<PositionAttachment>(vx0)[0]);
-            int xEnd = roundTowardsZero(std::get<PositionAttachment>(vx1)[0]);
+            const auto& posBegin = std::get<PositionAttachment>(vx0);
+            const auto& posEnd   = std::get<PositionAttachment>(vx1);
+            const int xBegin = roundTowardsZero(posBegin[0]);
+            const int xEnd = roundTowardsZero(posEnd[0]);
 
-            const float xstep = 1.0 / (xEnd - xBegin + 1);
-            float xpos = 0.0f;
+            const float xDistF = posEnd[0] - posBegin[0];
+            const float xCenter = xBegin + 0.5f;
+            float xpos = (xCenter - posBegin[0]) / xDistF;
+            const float xstep = 1.0 / xDistF;
 
             for (int x = xBegin; x < xEnd; ++x) {
                 rasterizeFragment(inpx.run(xpos), fragmentShader, rasterShader, x, y);

@@ -22,6 +22,10 @@ add_executable(cow examples/cow.cpp)
 set_target_properties(cow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples")
 target_link_libraries(cow PRIVATE hen_lib)
 
+add_executable(test examples/test.cpp)
+set_target_properties(test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples")
+target_link_libraries(test PRIVATE hen_lib)
+
 add_executable(shadertoy examples/shadertoy.cpp)
 set_target_properties(shadertoy PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples")
 target_link_libraries(shadertoy PRIVATE hen_lib)
