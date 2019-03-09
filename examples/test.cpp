@@ -147,17 +147,14 @@ static void testRasterization() {
     verts.push_back(Vertex({15.5f, 5.5f}));
     verts.push_back(Vertex({13.5f, 7.5f}));
 
-    //Error
     verts.push_back(Vertex({15.5f, 5.5f}));
     verts.push_back(Vertex({15.5f, 7.5f}));
     verts.push_back(Vertex({13.5f, 7.5f}));
-#if 0
+
     // Clipping
     verts.push_back(Vertex({ 9.5f, 7.5f}));
-    verts.push_back(Vertex({19.5f, 7.5f}));
+    verts.push_back(Vertex({10.5f, 7.5f}));
     verts.push_back(Vertex({ 9.5f, 9.0f}));
-#endif
-
 
     renderer.render(verts, vertexShader, fragmentShader, rasterShader);
 #if 0

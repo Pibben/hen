@@ -136,10 +136,13 @@ private:
             std::swap(v1, v2);
         }
 
-        assert(roundAwayFromZero(p1[1]) == roundAwayFromZero(p2[1]));
+        //assert(roundAwayFromZero(p1[1]) == roundAwayFromZero(p2[1]));  // ??
+
+        const uint16_t width  = rasterShader.getXResolution();
+        const uint16_t height = rasterShader.getYResolution();
 
         //                                          Flat side up              Flat side Down
-        const int yFirst         = yStep == 1 ? roundTowardsZero(p1[1]) : roundTowardsZero(p1[1] - 1.0f);  // Flat side
+        const int yFirst         = yStep == 1 ? roundTowardsZero(p1[1]) :  roundTowardsZero(p1[1] - 1.0f);  // Flat side
         const int yOneBeyondLast = yStep == 1 ? roundTowardsZero(p3[1]) : roundAwayFromZero(p3[1] - 1.0f); // Pointy side
 
         const float yDistF = p3[1] - p1[1];
@@ -152,23 +155,25 @@ private:
         const float ystep = yStep / yDistF;
 
         for (int y = yFirst; yStep * (y - yOneBeyondLast) < 0; y += yStep) {
-            Vertex vx0 = inpl.run(ypos);
-            Vertex vx1 = inpr.run(ypos);
+            if (y >= 0 && y < height) {
+                Vertex vx0 = inpl.run(ypos);
+                Vertex vx1 = inpr.run(ypos);
 
-            TupleInterpolator<Vertex> inpx(vx0, vx1);
-            const auto& posBegin = std::get<PositionAttachment>(vx0);
-            const auto& posEnd   = std::get<PositionAttachment>(vx1);
-            const int xBegin = roundTowardsZero(posBegin[0]);
-            const int xEnd = roundTowardsZero(posEnd[0]);
+                TupleInterpolator<Vertex> inpx(vx0, vx1);
+                const auto &posBegin = std::get<PositionAttachment>(vx0);
+                const auto &posEnd = std::get<PositionAttachment>(vx1);
+                const int xBegin = std::max(0, roundTowardsZero(posBegin[0]));
+                const int xEnd = std::min((int) width, roundTowardsZero(posEnd[0]));
 
-            const float xDistF = posEnd[0] - posBegin[0];
-            const float xCenter = xBegin + 0.5f;
-            float xpos = (xCenter - posBegin[0]) / xDistF;
-            const float xstep = 1.0 / xDistF;
+                const float xDistF = posEnd[0] - posBegin[0];
+                const float xCenter = xBegin + 0.5f;
+                float xpos = (xCenter - posBegin[0]) / xDistF;
+                const float xstep = 1.0f / xDistF;
 
-            for (int x = xBegin; x < xEnd; ++x) {
-                rasterizeFragment(inpx.run(xpos), fragmentShader, rasterShader, x, y);
-                xpos += xstep;
+                for (int x = xBegin; x < xEnd; ++x) {
+                    rasterizeFragment(inpx.run(xpos), fragmentShader, rasterShader, x, y);
+                    xpos += xstep;
+                }
             }
             ypos += ystep;
         }
