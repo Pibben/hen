@@ -97,6 +97,13 @@ int main() {
 
     bool going = true;
 
+    disp.setMouseCallback([&io](uint32_t x, uint32_t y, uint32_t keys, int32_t wheel){
+        io.MousePos = ImVec2((float)x, (float)y);
+        io.MouseDown[0] = (keys & 1) != 0;
+        io.MouseDown[1] = (keys & 2) != 0;
+        io.MouseDown[2] = (keys & 4) != 0;
+    });
+
     disp.setCloseCallback([&going]() { going = false; });
 
     Renderer renderer;
