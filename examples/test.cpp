@@ -7,6 +7,8 @@
 #include <cstring>
 #include <cassert>
 
+struct Empty {};
+
 class TestVertexShader {
 private:
     enum class InTraits {
@@ -37,12 +39,12 @@ private:
 
 public:
     using InType = std::tuple<VecLib::Vector4f>;
-    using OutType = std::tuple<uint8_t>;
+    using OutType = Empty;
 
     enum class Traits { COLOR_INDEX = 0 };
 
-    OutType operator()(const InType& in) const {
-        return OutType(0xff);
+    OutType operator()(const InType& /*in*/) const {
+        return {};
     }
 };
 
@@ -53,14 +55,12 @@ private:
     PixelBuffer<unsigned char>* mFrame;
 
 public:
-    using InType = std::tuple<uint8_t>;
+    using InType = Empty;
 
     TestRasterShader(PixelBuffer<uint8_t>* frame)
             : mFrame(frame) {}
 
-    void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
-        assert(x >= 0 && x < mFrame->width());
-        assert(y >= 0 && y < mFrame->height());
+    void operator()(const InType /*fragment*/, unsigned int x, unsigned int y) const {
         mFrame->at(x, y) += 1;
     }
 

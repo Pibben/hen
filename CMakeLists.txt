@@ -5,7 +5,7 @@ set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_EXTENSIONS OFF)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
-add_compile_options("-march=native" "-fno-math-errno" "-Wall")
+add_compile_options("-march=native" "-fno-math-errno" "-Wall" -Wextra)
 
 add_library(hen_lib INTERFACE)
 
