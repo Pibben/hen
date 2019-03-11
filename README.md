@@ -3,16 +3,12 @@ hen
 
 Header-only programmable C++14 software 3D renderer.
 
-### New fold expression tuple transform
-```c++
-template <typename... Tp, typename Func, std::size_t... Idx>
-std::tuple<Tp...> mytransformHelper(const std::tuple<Tp...>& t1, const std::tuple<Tp...>& t2, Func&& f, std::index_sequence<Idx...>) {
-    return std::tuple<Tp...>((f(std::get<Idx>(t1), std::get<Idx>(t2)))...);
-}
-
-template<typename FuncT, typename... Tp>
-inline void
-mytransform(const std::tuple<Tp...>& t1, const std::tuple<Tp...>& t2, std::tuple<Tp...>& r, FuncT f) {
-    r = mytransformHelper(t1, t2, f, std::index_sequence_for<Tp...>{});
-}
-```
+###  References
+* https://stackoverflow.com/questions/25457323/how-to-rasterize-opengl-triangle-on-half-integer-pixels-centers
+* https://stackoverflow.com/questions/45785957/opengl-line-rasterization-with-integer-endpoints
+* http://graphics-software-engineer.blogspot.com/2012/04/rasterization-rules.html
+* https://docs.microsoft.com/en-us/windows/desktop/direct3d11/d3d10-graphics-programming-guide-rasterizer-stage-rules
+* https://docs.microsoft.com/en-us/windows/desktop/direct3d10/d3d10-graphics-programming-guide-resources-coordinates
+* https://fgiesen.wordpress.com/2013/02/17/optimizing-sw-occlusion-culling-index/
+* https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation
+* https://kitsunegames.com/post/development/2016/07/28/software-3d-rendering-in-javascript-pt2/
