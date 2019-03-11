@@ -64,7 +64,7 @@ private:
 
     template <class Vertex, class FragmentShader, class RasterShader>
     void rasterizeFragment(const Vertex& v, const FragmentShader& fragmentShader, const RasterShader& rasterShader,
-                           unsigned int x, unsigned int y) {
+                           uint16_t x, uint16_t y) {
 
         const auto fragment = fragmentShader(v);
 
@@ -162,16 +162,16 @@ private:
                 TupleInterpolator<Vertex> inpx(vx0, vx1);
                 const auto &posBegin = std::get<PositionAttachment>(vx0);
                 const auto &posEnd = std::get<PositionAttachment>(vx1);
-                const int xBegin = std::max(0, roundTowardsZero(posBegin[0]));
-                const int xEnd = std::min((int) width, roundTowardsZero(posEnd[0]));
+                const auto xBegin = static_cast<uint_fast16_t >(std::max(0, roundTowardsZero(posBegin[0])));
+                const auto xEnd = static_cast<uint_fast16_t >(std::min(static_cast<int>(width), roundTowardsZero(posEnd[0])));
 
                 const float xDistF = posEnd[0] - posBegin[0];
                 const float xCenter = xBegin + 0.5f;
                 float xpos = (xCenter - posBegin[0]) / xDistF;
                 const float xstep = 1.0f / xDistF;
 
-                for (int x = xBegin; x < xEnd; ++x) {
-                    rasterizeFragment(inpx.run(xpos), fragmentShader, rasterShader, x, y);
+                for (uint_fast16_t x = xBegin; x < xEnd; ++x) {
+                    rasterizeFragment(inpx.run(xpos), fragmentShader, rasterShader, x, static_cast<uint32_t>(y));
                     xpos += xstep;
                 }
             }
@@ -179,9 +179,9 @@ private:
         }
     }
 
-    inline int roundAwayFromZero(float f) { return std::floor(f + 0.5f); }
+    inline int roundAwayFromZero(float f) { return static_cast<int>(std::floor(f + 0.5f)); }
 
-    inline int roundTowardsZero(float f) { return std::ceil(f - 0.5f); }
+    inline int roundTowardsZero(float f) { return static_cast<int>(std::ceil(f - 0.5f)); }
 
     template <class Vertex>
     VecLib::Vector3f cross3(const Vertex& v1, const Vertex& v2) {
@@ -279,7 +279,7 @@ public:
 
         const unsigned int xres = rasterShader.getXResolution();
         const unsigned int yres = rasterShader.getYResolution();
-        std::for_each(immStore.begin(), immStore.end(), [this, xres, yres](VertOutFragInType& vert) {
+        std::for_each(immStore.begin(), immStore.end(), [xres, yres](VertOutFragInType& vert) {
             auto& pos = std::get<POSITION_INDEX>(vert);
             pos = pos + ScreenPosType(1.0, 1.0, 1.0, 0.0);  // TODO: Fix
             pos = pos / ScreenPosType(2.0, 2.0, 2.0, 1.0);

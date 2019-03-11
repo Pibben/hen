@@ -209,7 +209,7 @@ public:
     using InType = std::tuple<VecLib::Vector4f, VecLib::Vector3f>;
     using OutType = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f, VecLib::Vector3f>;
 
-    enum class Traits { POSITION_INDEX = 0, NORMAL_INDEX = 1, LIGHT_INDEX = 2, VIEW_INDEX = 3 };
+    enum class Traits { POSITION_INDEX = 0, NORMAL_INDEX = 1/*, LIGHT_INDEX = 2, VIEW_INDEX = 3*/ };
 
     explicit PhongVertexShader(const VecLib::Vector3f& lightPos) { mLightPos = lightPos; }
 
@@ -275,7 +275,7 @@ public:
     using InType = std::tuple<VecLib::Vector4f, VecLib::Vector3f>;
     using OutType = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f>;
 
-    enum class Traits { POSITION_INDEX = 0, NORMAL_INDEX = 1, VIEW_INDEX = 2 };
+    enum class Traits { POSITION_INDEX = 0, NORMAL_INDEX = 1, /*VIEW_INDEX = 2*/ };
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
@@ -633,7 +633,7 @@ public:
         bg_color = mix(uv.x() * COLOR1, uv.y() * COLOR2, c1 * c2);
 
         // To create the waves
-        float wave_width = 0.01f;
+        float wave_width/* = 0.01f*/;
         uv = -1.0f + 2.0f * uv;
         uv.y() += 0.1f;
         for (float i = 0.0f; i < 10.0f; i++) {                              // NOLINT
@@ -653,7 +653,7 @@ class ShadertoySeascapeFragmentShader : public ShadertoyFragmentShader {
 public:
     static const int NUM_STEPS = 8;
     static constexpr float PI = 3.1415f;
-    static constexpr float EPSILON = 1e-3f;
+    //static constexpr float EPSILON = 1e-3f;
     float EPSILON_NRM = 0.1f / iResolution.x();
 
     // sea
@@ -986,9 +986,9 @@ public:
         const auto& color = std::get<ColorAttachment>(fragment);
 
         if (depth > 0.0f && depth < 1.0f && depth < mDepth->at(x, y)) {
-            mFrame->at(x, y, 0) = color[0] <= 1.0f ? color[0] * 255.0f : 255;
-            mFrame->at(x, y, 1) = color[1] <= 1.0f ? color[1] * 255.0f : 255;
-            mFrame->at(x, y, 2) = color[2] <= 1.0f ? color[2] * 255.0f : 255;
+            mFrame->at(x, y, 0) = color[0] <= 1.0f ? static_cast<uint8_t>(color[0] * 255.0f) : 255;
+            mFrame->at(x, y, 1) = color[1] <= 1.0f ? static_cast<uint8_t>(color[1] * 255.0f) : 255;
+            mFrame->at(x, y, 2) = color[2] <= 1.0f ? static_cast<uint8_t>(color[2] * 255.0f) : 255;
 
             mDepth->at(x, y) = depth;
         }
@@ -1030,9 +1030,9 @@ public:
 
         const auto final = alphaBlend(dst, color);
 
-        mFrame->at(x, y, 0) = final[0] <= 1.0f ? final[0] * 255.0f : 255;
-        mFrame->at(x, y, 1) = final[1] <= 1.0f ? final[1] * 255.0f : 255;
-        mFrame->at(x, y, 2) = final[2] <= 1.0f ? final[2] * 255.0f : 255;
+        mFrame->at(x, y, 0) = final[0] <= 1.0f ? static_cast<uint8_t>(final[0] * 255.0f) : 255;
+        mFrame->at(x, y, 1) = final[1] <= 1.0f ? static_cast<uint8_t>(final[1] * 255.0f) : 255;
+        mFrame->at(x, y, 2) = final[2] <= 1.0f ? static_cast<uint8_t>(final[2] * 255.0f) : 255;
     }
 
     void clear() const {

@@ -194,6 +194,7 @@ inline PixelBuffer<uint8_t> loadPng(const std::string& filename) {
     assert(end_info);
 
     const bool ok = !setjmp(png_jmpbuf(png_ptr));  // NOLINT
+    (void)ok;
     assert(ok);
 
     png_init_io(png_ptr, ifs.getFile());
@@ -203,6 +204,8 @@ inline PixelBuffer<uint8_t> loadPng(const std::string& filename) {
     png_uint_32 W, H;
     int bit_depth, color_type, interlace_type;
     bool is_gray = false;
+    (void)is_gray;
+
     png_get_IHDR(png_ptr, info_ptr, &W, &H, &bit_depth, &color_type, &interlace_type, nullptr, nullptr);
 
     printf("%d x %d @ %d\n", W, H, bit_depth);
@@ -269,7 +272,7 @@ inline PixelBuffer<uint8_t> loadPng(const std::string& filename) {
 
     delete[] imgData;  // NOLINT
 
-    return std::move(pb);
+    return pb;
 }
 
 #endif /* IO_H_ */

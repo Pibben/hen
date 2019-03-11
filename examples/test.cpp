@@ -42,9 +42,6 @@ public:
     enum class Traits { COLOR_INDEX = 0 };
 
     OutType operator()(const InType& in) const {
-        const auto& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
-        // assert(pos[2] < 0.0);
-
         return OutType(0xff);
     }
 };
@@ -62,11 +59,6 @@ public:
             : mFrame(frame) {}
 
     void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
-        constexpr auto ColorAttachment = static_cast<int>(InTraits::COLOR_INDEX);
-
-        const auto& color = std::get<ColorAttachment>(fragment);
-
-        //printf("%d %d\n", x, y);
         assert(x >= 0 && x < mFrame->width());
         assert(y >= 0 && y < mFrame->height());
         mFrame->at(x, y) += 1;
@@ -178,6 +170,7 @@ static void testRasterization() {
             0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
+    (void)facit;
 
     assert(memcmp(facit, framebuffer.data(), width * height) == 0);
 #endif

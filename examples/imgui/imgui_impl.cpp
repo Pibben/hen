@@ -14,10 +14,10 @@
 #include "imgui/imgui.h"
 
 static VecLib::Vector4f vecFromInt32(uint32_t in) {
-    uint8_t a = (in >> 24) & 0xff;
-    uint8_t b = (in >> 16) & 0xff;
-    uint8_t g = (in >> 8) & 0xff;
-    uint8_t r = in & 0xff;
+    uint8_t a = static_cast<uint8_t>(in >> 24);
+    uint8_t b = static_cast<uint8_t>(in >> 16);
+    uint8_t g = static_cast<uint8_t>(in >> 8);
+    uint8_t r = static_cast<uint8_t>(in);
 
     return {r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f};
 }
@@ -51,7 +51,7 @@ public:
 
 class ImguiFragmentShader {
 private:
-    enum class InTraits { POSITION_INDEX = 0, TEXTURE_INDEX = 1, COLOR_INDEX = 2};
+    enum class InTraits { /*POSITION_INDEX = 0,*/ TEXTURE_INDEX = 1, COLOR_INDEX = 2};
 
     RGBATextureSampler<VecLib::Vector4f> mTextureSampler;
 
@@ -64,7 +64,6 @@ public:
     explicit ImguiFragmentShader(uint8_t* pixels, uint16_t width, uint16_t height) : mTextureSampler(pixels, width, height) {}
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector2f& tex = std::get<static_cast<int>(InTraits::TEXTURE_INDEX)>(in);
         const VecLib::Vector4f& color = std::get<static_cast<int>(InTraits::COLOR_INDEX)>(in);
 
@@ -114,7 +113,7 @@ int main() {
 
     AlphaRasterShader rasterShader(&framebuffer);
     ImguiVertexShader vertexShader(width, height);
-    ImguiFragmentShader fragmentShader(pixels, texWidth, texHeight);
+    ImguiFragmentShader fragmentShader(pixels, static_cast<uint16_t>(texWidth), static_cast<uint16_t>(texHeight));
 
     using Vertex = std::tuple<VecLib::Vector2f, VecLib::Vector2f, uint32_t>;
 
@@ -167,7 +166,7 @@ int main() {
             for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
                 const ImDrawCmd *pcmd = &cmd_list->CmdBuffer[cmd_i];
 
-                for (int c = 0; c < pcmd->ElemCount; c += 3) {
+                for (unsigned int c = 0; c < pcmd->ElemCount; c += 3) {
                     for (int v = 0; v < 3; ++v) {
                         const auto i = idx_buffer[c + v];
                         const auto &imv = vtx_buffer[i];

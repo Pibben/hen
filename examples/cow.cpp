@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "veclib.h"
 
+#if 0
 using PositionAndColor = std::tuple<VecLib::Vector4f, VecLib::Vector4f>;
 static std::vector<PositionAndColor> loadMeshColor(const std::string& filename, const VecLib::Vector4f& color) {
     std::vector<VecLib::Vector3f> vertices;
@@ -47,7 +48,7 @@ static std::vector<PositionAndUv> loadMeshUv(const std::string& filename) {
 
     return m;
 }
-
+#endif
 using PositionAndNormal = std::tuple<VecLib::Vector4f, VecLib::Vector3f>;
 static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename) {
     std::vector<VecLib::Vector3f> vertices;
@@ -71,6 +72,7 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
     return m;
 }
 
+#if 0
 using PositionNormalAndTangent = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector2f, VecLib::Vector4f>;
 static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& filename) {
     std::vector<VecLib::Vector3f> vertices;
@@ -155,7 +157,7 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
 
     return m;
 }
-
+#endif
 template <class Mesh, class VertexShader, class FragmentShader>
 static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
@@ -241,7 +243,7 @@ static void animateShadow(const Mesh& mesh, VertexGenShader& vertexGenShader, Fr
         }
     }
 }
-#endif
+
 static void texture() {
     TextureVertexShader vertexShader;
     TextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png");
@@ -251,7 +253,7 @@ static void texture() {
 
     animate(m, vertexShader, fragmentShader);
 }
-#if 0
+
 static void normalMap() {
     NormalMapVertexShader vertexShader(VecLib::Vector3f(100,100,100));
     NormalMapFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCowNorm.png");
@@ -269,7 +271,7 @@ static void color(const VecLib::Vector4f &color) {
 
     animate(m, vertexShader, fragmentShader);
 }
-#endif
+
 static void multiTexture() {
     TextureVertexShader vertexShader;
     MultiTextureFragmentShader fragmentShader("/home/per/code/hen/models/cow/colorOpacityCow.png",
@@ -306,7 +308,7 @@ static void equiRectangular() {
 
     animate(m, vertexShader, fragmentShader);
 }
-
+#endif
 static void cubeMap() {
     NormalViewVertexShader vertexShader;
     CubemapFragmentShader fragmentShader("/home/per/code/hen/cubemap.png");
