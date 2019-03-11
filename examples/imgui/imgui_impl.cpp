@@ -80,6 +80,29 @@ int main() {
 
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
+
+    io.KeyMap[ImGuiKey_Tab]         = static_cast<int>(cfw::Keys::TAB);
+    io.KeyMap[ImGuiKey_LeftArrow]   = static_cast<int>(cfw::Keys::ARROWLEFT);
+    io.KeyMap[ImGuiKey_RightArrow]  = static_cast<int>(cfw::Keys::ARROWRIGHT);
+    io.KeyMap[ImGuiKey_UpArrow]     = static_cast<int>(cfw::Keys::ARROWUP);
+    io.KeyMap[ImGuiKey_DownArrow]   = static_cast<int>(cfw::Keys::ARROWDOWN);
+    io.KeyMap[ImGuiKey_PageUp]      = static_cast<int>(cfw::Keys::PAGEUP);
+    io.KeyMap[ImGuiKey_PageDown]    = static_cast<int>(cfw::Keys::PAGEDOWN);
+    io.KeyMap[ImGuiKey_Home]        = static_cast<int>(cfw::Keys::HOME);
+    io.KeyMap[ImGuiKey_End]         = static_cast<int>(cfw::Keys::END);
+    io.KeyMap[ImGuiKey_Insert]      = static_cast<int>(cfw::Keys::INSERT);
+    io.KeyMap[ImGuiKey_Delete]      = static_cast<int>(cfw::Keys::_DELETE);
+    io.KeyMap[ImGuiKey_Backspace]   = static_cast<int>(cfw::Keys::BACKSPACE);
+    io.KeyMap[ImGuiKey_Space]       = static_cast<int>(cfw::Keys::SPACE);
+    io.KeyMap[ImGuiKey_Enter]       = static_cast<int>(cfw::Keys::ENTER);
+    io.KeyMap[ImGuiKey_Escape]      = static_cast<int>(cfw::Keys::ESC);
+    io.KeyMap[ImGuiKey_A]           = static_cast<int>(cfw::Keys::A);
+    io.KeyMap[ImGuiKey_C]           = static_cast<int>(cfw::Keys::C);
+    io.KeyMap[ImGuiKey_V]           = static_cast<int>(cfw::Keys::V);
+    io.KeyMap[ImGuiKey_X]           = static_cast<int>(cfw::Keys::X);
+    io.KeyMap[ImGuiKey_Y]           = static_cast<int>(cfw::Keys::Y);
+    io.KeyMap[ImGuiKey_Z]           = static_cast<int>(cfw::Keys::Z);
+
     io.DisplaySize = ImVec2(width, height);
 
     unsigned char* pixels;
@@ -102,6 +125,19 @@ int main() {
         io.MouseDown[0] = (keys & 1) != 0;
         io.MouseDown[1] = (keys & 2) != 0;
         io.MouseDown[2] = (keys & 4) != 0;
+    });
+
+    disp.setKeyCallback([&io](cfw::Keys key, bool pressed) {
+        io.KeysDown[static_cast<int>(key)] = pressed;
+
+        io.KeyCtrl  = (key == cfw::Keys::CTRLLEFT || key == cfw::Keys::CTRLRIGHT) && pressed;
+        io.KeyAlt   = key == cfw::Keys::ALT && pressed;
+        io.KeyShift = (key == cfw::Keys::SHIFTLEFT || key == cfw::Keys::SHIFTRIGHT) && pressed;
+    });
+
+    disp.setCharCallback([&io](const char* chars) {
+        assert(chars != nullptr);
+        io.AddInputCharactersUTF8(chars);
     });
 
     disp.setCloseCallback([&going]() { going = false; });
