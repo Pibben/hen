@@ -124,6 +124,7 @@ int main() {
         io.MouseDown[0] = (keys & 1) != 0;
         io.MouseDown[1] = (keys & 2) != 0;
         io.MouseDown[2] = (keys & 4) != 0;
+        io.MouseWheel = static_cast<float>(wheel) / 10.0f;
     });
 
     disp.setKeyCallback([&io](cfw::Keys key, bool pressed) {
