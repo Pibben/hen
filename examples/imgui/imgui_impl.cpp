@@ -172,21 +172,9 @@ int main() {
                         const auto i = idx_buffer[c + v];
                         const auto &imv = vtx_buffer[i];
 
-                        Vertex vertex;
-                        auto &pos = std::get<0>(vertex);
-                        auto &uv = std::get<1>(vertex);
-                        auto &col = std::get<2>(vertex);
-
-                        pos.x() = imv.pos.x;
-                        pos.y() = imv.pos.y;
-
-
-                        uv.x() = imv.uv.x;
-                        uv.y() = imv.uv.y;
-
-                        col = imv.col;
-
-                        verts.push_back(vertex);
+                        verts.push_back({{imv.pos.x, imv.pos.y},
+                                         {imv.uv.x, imv.uv.y},
+                                         imv.col});
                     }
                 }
 
