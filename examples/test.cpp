@@ -149,6 +149,9 @@ static void testRasterization() {
     verts.push_back(Vertex({ 9.5f, 9.0f}));
 
     renderer.render(verts, vertexShader, fragmentShader, rasterShader);
+
+    framebuffer.mirror();
+
 #if 0
     puts("{");
     for(int y = 0; y < height; ++y) {
@@ -160,7 +163,8 @@ static void testRasterization() {
     }
     puts("};");
 #else
-    uint8_t facit[] = {
+
+    uint8_t expected[] = {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
             0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0,
             0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0,
@@ -168,11 +172,11 @@ static void testRasterization() {
             0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0,
             0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
     };
-    (void)facit;
+    (void)expected;
 
-    assert(memcmp(facit, framebuffer.data(), width * height) == 0);
+    assert(memcmp(expected, framebuffer.data(), width * height) == 0);
 #endif
 }
 

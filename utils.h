@@ -218,6 +218,17 @@ public:
     constexpr uint16_t width() const { return mWidth; }
     constexpr uint16_t height() const { return mHeight; }
     void fill(T value) { std::fill(mData, mData + mWidth * mHeight * mDepth, value); };
+    void mirror() {
+        for (uint_fast16_t y = 0; y < mHeight / 2; ++y) {
+            for (uint_fast16_t x = 0; x < mWidth; ++x) {
+                for (uint_fast16_t z = 0; z < mDepth; ++z) {
+                    T tmp = at(x, y, z);
+                    at(x, y, z) = at(x, mHeight - y - 1, z);
+                    at(x, mHeight - y - 1, z) = tmp;
+                }
+            }
+        }
+    }
 };
 
 #endif /* UTILS_H_ */
