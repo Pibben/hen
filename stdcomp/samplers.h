@@ -25,11 +25,8 @@ public:
         const uint_fast16_t sizeX = mImg.width();
         const uint_fast16_t sizeY = mImg.height();
 
-        const int x = u * sizeX;
-        const int y = sizeY - v * sizeY;
-
-        assert(x >= 0 && x < (int)sizeX);
-        assert(y >= 0 && y < (int)sizeY);
+        const uint_fast16_t x = static_cast<uint_fast16_t>(        u * sizeX) % sizeX;  // Wrap mode repeat
+        const uint_fast16_t y = static_cast<uint_fast16_t>(sizeY - v * sizeY) % sizeY;  // Wrap mode repeat
 
         const float r = mImg(x, y, 0) / 255.0f;
         const float g = mImg(x, y, 1) / 255.0f;
@@ -39,6 +36,10 @@ public:
     }
 };
 
+static constexpr bool checkPow2(uint16_t n) {
+    return (n & (n - 1)) == 0;
+}
+
 template <class OutType>
 class RGBATextureSampler {
 private:
@@ -46,17 +47,17 @@ private:
 
 public:
     explicit RGBATextureSampler(const std::string& filename) : mImg(loadPng(filename)) {}
-    explicit RGBATextureSampler(uint8_t* pixels, uint16_t width, uint16_t height) : mImg(pixels, width, height, 4) {}
+    explicit RGBATextureSampler(uint8_t* pixels, uint16_t width, uint16_t height) : mImg(pixels, width, height, 4) {
+        assert(checkPow2(width));
+        assert(checkPow2(height));
+    }
 
     OutType get(float u, float v) const {
         const uint_fast16_t sizeX = mImg.width();
         const uint_fast16_t sizeY = mImg.height();
 
-        const int x = u * sizeX;
-        const int y = sizeY - v * sizeY;
-
-        assert(x >= 0 && x < (int)sizeX);
-        assert(y >= 0 && y < (int)sizeY);
+        const uint_fast16_t x = static_cast<uint_fast16_t>(        u * sizeX) & (sizeX - 1);  // Wrap mode repeat
+        const uint_fast16_t y = static_cast<uint_fast16_t>(sizeY - v * sizeY) & (sizeY - 1);  // Wrap mode repeat
 
         const float r = mImg(x, y, 0) / 255.0f;
         const float g = mImg(x, y, 1) / 255.0f;
@@ -78,11 +79,8 @@ public:
         const uint_fast16_t sizeX = mImg.width();
         const uint_fast16_t sizeY = mImg.height();
 
-        const int x = u * sizeX;
-        const int y = sizeY - v * sizeY;
-
-        assert(x >= 0 && x < (int)sizeX);
-        assert(y >= 0 && y < (int)sizeY);
+        const uint_fast16_t x = static_cast<uint_fast16_t>(        u * sizeX) % sizeX;  // Wrap mode repeat
+        const uint_fast16_t y = static_cast<uint_fast16_t>(sizeY - v * sizeY) % sizeY;  // Wrap mode repeat
 
         return static_cast<OutType>(mImg(x, y, 0)) / 255.0f;
     }
@@ -91,7 +89,7 @@ public:
 template <class OutType>
 class CubeSampler {
 private:
-    RGBATextureSampler<OutType> mTextureMap;
+    RGBTextureSampler<OutType> mTextureMap;
 
 public:
     explicit CubeSampler(const std::string& filename) : mTextureMap(filename) {}

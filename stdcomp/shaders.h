@@ -346,16 +346,16 @@ class CubemapFragmentShader {
 private:
     enum class InTraits { POSITION_INDEX = 0, NORMAL_INDEX = 1, VIEW_INDEX = 2 };
 
-    CubeSampler<VecLib::Vector4f> mCubeSampler;
+    CubeSampler<VecLib::Vector3f> mCubeSampler;
 
 public:
     using InType = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f>;
-    using OutType = std::tuple<VecLib::Vector4f, float>;
+    using OutType = std::tuple<VecLib::Vector3f, float>;
 
     enum class Traits { COLOR_INDEX = 0, DEPTH_INDEX = 1 };
 
     explicit CubemapFragmentShader(const std::string& filename)
-        : mCubeSampler(CubeSampler<VecLib::Vector4f>(filename)) {}
+        : mCubeSampler(CubeSampler<VecLib::Vector3f>(filename)) {}
 
     OutType operator()(const InType& in) const {
         const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
@@ -973,7 +973,7 @@ private:
     PixelBuffer<float>* mDepth;
 
 public:
-    using InType = std::tuple<VecLib::Vector4f, float>;
+    using InType = std::tuple<VecLib::Vector3f, float>;
 
     CImgColorRasterShader(PixelBuffer<unsigned char>* frame, PixelBuffer<float>* depth)
         : mFrame(frame), mDepth(depth) {
