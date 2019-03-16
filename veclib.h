@@ -190,6 +190,10 @@ public:
         m[2] += other[2];
     }
 
+    bool operator==(const Vector3& other) const {
+        return other[0] == m[0] && other[1] == m[1] && other[2] == m[2];
+    }
+
     Vector3<T> operator*(const Matrix3x3<T>& o) const { return Vector3<T>(dot(o[0]), dot(o[1]), dot(o[2])); }
 
     friend std::ostream& operator<<(std::ostream& os, const Vector3& v) {

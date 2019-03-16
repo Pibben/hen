@@ -158,8 +158,8 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
     return m;
 }
 #endif
-template <class Mesh, class VertexShader, class FragmentShader>
-static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader& fragmentShader) {
+template <class T, class VertexShader, class FragmentShader>
+static void animate(const std::vector<T>& vertices, std::vector<uint32_t> indices, VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
 
     vertexShader.modelViewMatrix() = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0});
@@ -189,7 +189,7 @@ static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader
 
         t.reset();
         rasterShader.clear();
-        renderer.render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
+        renderer.renderIndexed(vertices, indices, vertexShader, fragmentShader, rasterShader);
         float us = t.getUS();
         printf("%2.2f fps\n", 1.0 / (static_cast<double>(us) / 1000.0 / 1000.0));
 
@@ -315,8 +315,12 @@ static void cubeMap() {
     CubemapFragmentShader fragmentShader("/home/per/code/hen/cubemap.png");
 
     auto m = loadMeshNormal("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
+    std::vector<PositionAndNormal> verts;
+    std::vector<uint32_t> indices;
 
-    animate(m, vertexShader, fragmentShader);
+    indexify(m, verts, indices);
+
+    animate(verts, indices, vertexShader, fragmentShader);
 }
 #if 0
 static void shadow() {

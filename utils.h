@@ -12,6 +12,25 @@
 
 #include <chrono>
 
+template <class T>
+void indexify(const std::vector<T>& in, std::vector<T>& out, std::vector<uint32_t>& indices) {
+    for (size_t i = 0; i < in.size(); ++i) {
+        bool found = false;
+        for (size_t j = 0; j < out.size(); ++j) {
+            if (in[i] == out[j]) {
+                indices.push_back(j);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            indices.push_back(out.size());
+            out.push_back(in[i]);
+        }
+    }
+
+    assert(in.size() == indices.size());
+}
 struct EmptyUniform {};
 
 inline VecLib::Vector3f reflect(const VecLib::Vector3f& R, const VecLib::Vector3f& N) {
