@@ -49,7 +49,7 @@ static std::vector<PositionAndUv> loadMeshUv(const std::string& filename) {
     return m;
 }
 #endif
-using PositionAndNormal = std::tuple<VecLib::Vector4f, VecLib::Vector3f>;
+using PositionAndNormal = std::tuple<VecLib::Vector3f, VecLib::Vector3f>;
 static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename) {
     std::vector<VecLib::Vector3f> vertices;
     std::vector<VecLib::Vector2f> uvs;
@@ -65,7 +65,7 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
 
     for (const auto& f : faces) {
         for (int i = 0; i < 3; ++i) {
-            m.emplace_back(VecLib::Vector4f(vertices[f.coords[i]], 1.0), normals[f.coords[i]]);
+            m.emplace_back(VecLib::Vector3f(vertices[f.coords[i]]), normals[f.coords[i]]);
         }
     }
 
@@ -174,7 +174,7 @@ static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader
     PixelBuffer<uint8_t> framebuffer(width, height, 3);
     PixelBuffer<float> zbuffer(width, height);
 
-    VecLib::Matrix4f rotMatrix(rotateY(1 / 180.0 * M_PI));
+    VecLib::Matrix4f rotMatrix(rotateY(1.0f / 180.0f * (float)M_PI));
 
     CImgColorRasterShader rasterShader(&framebuffer, &zbuffer);
 

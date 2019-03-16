@@ -272,16 +272,16 @@ private:
     VecLib::Matrix4f mModelViewMatrix;
 
 public:
-    using InType = std::tuple<VecLib::Vector4f, VecLib::Vector3f>;
+    using InType = std::tuple<VecLib::Vector3f, VecLib::Vector3f>;
     using OutType = std::tuple<VecLib::Vector4f, VecLib::Vector3f, VecLib::Vector3f>;
 
     enum class Traits { POSITION_INDEX = 0, NORMAL_INDEX = 1, /*VIEW_INDEX = 2*/ };
 
     OutType operator()(const InType& in) const {
-        const VecLib::Vector4f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
+        const VecLib::Vector3f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
-        const VecLib::Vector4f P = mModelViewMatrix * pos;
+        const VecLib::Vector4f P = mModelViewMatrix * VecLib::Vector4(pos, 1.0f);
 
         const VecLib::Vector3f N = VecLib::Matrix3f(mModelViewMatrix) * normal;
         const VecLib::Vector3f V = P.xyz();
