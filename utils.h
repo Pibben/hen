@@ -31,7 +31,6 @@ void indexify(const std::vector<T>& in, std::vector<T>& out, std::vector<uint32_
 
     assert(in.size() == indices.size());
 }
-struct EmptyUniform {};
 
 inline VecLib::Vector3f reflect(const VecLib::Vector3f& R, const VecLib::Vector3f& N) {
     VecLib::Vector3f Rout = R - 2.0f * N.dot(R) * N;
@@ -41,7 +40,7 @@ inline VecLib::Vector3f reflect(const VecLib::Vector3f& R, const VecLib::Vector3
 
 inline VecLib::Matrix3f rotateY(float radians) {
     VecLib::Matrix3f m = VecLib::Matrix3f::Identity();
-    float sinTheta = std::sin(radians);  // TODO: sincos
+    float sinTheta = std::sin(radians);
     float cosTheta = std::cos(radians);
     m[0][0] = cosTheta;
     m[0][2] = sinTheta;
@@ -76,7 +75,7 @@ inline VecLib::Matrix4f proj(float left, float right, float bottom, float top, f
     m[2][2] = (near + far) / (near - far);
     m[2][3] = -1.0f;
 
-    m[3][2] = 2 * near * far / (near - far);
+    m[3][2] = 2.0f * near * far / (near - far);
 
     return m;
 }
