@@ -65,7 +65,7 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
 
     for (const auto& f : faces) {
         for (int i = 0; i < 3; ++i) {
-            m.emplace_back(VecLib::Vector3f(vertices[f.coords[i]]), normals[f.coords[i]]);
+            m.emplace_back(VecLib::Vector3f(vertices[f.coords[i]]), normals[f.normals[i]]);
         }
     }
 
