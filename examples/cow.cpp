@@ -188,6 +188,7 @@ static void animate(const Mesh& mesh, VertexShader& vertexShader, FragmentShader
         vertexShader.modelViewMatrix() *= rotMatrix;
 
         t.reset();
+        rasterShader.clear();
         renderer.render<typename Mesh::value_type>(mesh, vertexShader, fragmentShader, rasterShader);
         float us = t.getUS();
         printf("%2.2f fps\n", 1.0 / (static_cast<double>(us) / 1000.0 / 1000.0));

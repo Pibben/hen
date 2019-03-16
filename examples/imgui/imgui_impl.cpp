@@ -158,31 +158,36 @@ int main() {
         auto *data = ImGui::GetDrawData();
 
         std::vector<Vertex> verts;
+        std::vector<uint32_t> indices;
 
         for (int n = 0; n < data->CmdListsCount; n++) {
             const ImDrawList *cmd_list = data->CmdLists[n];
             const ImDrawVert *vtx_buffer = cmd_list->VtxBuffer.Data;
+
+            for (int v = 0; v < cmd_list->VtxBuffer.size(); ++v) {
+                const auto &imv = vtx_buffer[v];
+
+                verts.push_back({{imv.pos.x, imv.pos.y},
+                                 {imv.uv.x, imv.uv.y},
+                                 imv.col});
+            }
+
             const ImDrawIdx *idx_buffer = cmd_list->IdxBuffer.Data;
 
             for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
                 const ImDrawCmd *pcmd = &cmd_list->CmdBuffer[cmd_i];
 
-                for (unsigned int c = 0; c < pcmd->ElemCount; c += 3) {
-                    for (int v = 0; v < 3; ++v) {
-                        const auto i = idx_buffer[c + v];
-                        const auto &imv = vtx_buffer[i];
-
-                        verts.push_back({{imv.pos.x, imv.pos.y},
-                                         {imv.uv.x, imv.uv.y},
-                                         imv.col});
-                    }
+                for (unsigned int c = 0; c < pcmd->ElemCount; c++) {
+                    indices.push_back(idx_buffer[c]);
                 }
 
                 idx_buffer += pcmd->ElemCount;
             }
         }
 
-        renderer.render(verts, vertexShader, fragmentShader, rasterShader);
+        framebuffer.fill(0);
+
+        renderer.renderIndexed(verts, indices, vertexShader, fragmentShader, rasterShader);
 
         disp.render(framebuffer.data(), width, height);
         disp.paint();

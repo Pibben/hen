@@ -976,7 +976,9 @@ public:
     using InType = std::tuple<VecLib::Vector4f, float>;
 
     CImgColorRasterShader(PixelBuffer<unsigned char>* frame, PixelBuffer<float>* depth)
-        : mFrame(frame), mDepth(depth) {}
+        : mFrame(frame), mDepth(depth) {
+        clear();
+    }
 
     void operator()(const InType& fragment, unsigned int x, unsigned int y) const {
         constexpr auto ColorAttachment = static_cast<int>(InTraits::COLOR_INDEX);

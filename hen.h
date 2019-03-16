@@ -252,6 +252,36 @@ public:
         }
     }
 
+    template <class VertInType, class VertOutFragInType, class VertexShader>
+    void processVertices(const std::vector<VertInType>& in, const VertexShader& vertexShader,
+                         std::vector<VertOutFragInType>& immStore,
+                         uint_fast16_t width, uint_fast16_t height) {
+
+        // Vertex stage
+        std::transform(in.begin(), in.end(), std::back_inserter(immStore), vertexShader);  // TODO: Manual loop
+
+        // Now in clip space
+        // Perspective divide
+        constexpr auto POSITION_INDEX = static_cast<int>(VertexShader::Traits::POSITION_INDEX);
+
+        std::for_each(immStore.begin(), immStore.end(), [](VertOutFragInType& vert) {
+            auto& pos = std::get<POSITION_INDEX>(vert);
+            pos /= pos[3];
+        });
+
+        // Now in NDC
+
+        std::for_each(immStore.begin(), immStore.end(), [width, height](VertOutFragInType& vert) {
+            using ScreenPosType = typename std::tuple_element<POSITION_INDEX, VertOutFragInType>::type;
+            auto& pos = std::get<POSITION_INDEX>(vert);
+            pos = pos + ScreenPosType(1.0, 1.0, 1.0, 0.0);  // TODO: Fix
+            pos = pos / ScreenPosType(2.0, 2.0, 2.0, 1.0);
+            pos[0] *= width;
+            pos[1] *= height;
+        });
+
+    }
+
     template <class VertInType, class VertexShader, class FragmentShader, class RasterShader>
     void render(const std::vector<VertInType>& in, const VertexShader& vertexShader,
                 const FragmentShader& fragmentShader, const RasterShader& rasterShader) {
@@ -261,41 +291,58 @@ public:
 
         using VertOutFragInType = typename VertexShader::OutType;
         std::vector<VertOutFragInType> immStore;
+        immStore.reserve(in.size());
 
-        // Vertex stage
-        std::transform(in.begin(), in.end(), std::back_inserter(immStore), vertexShader);
-
-        // Now in clip space
-        // Perspective divide
-        constexpr auto POSITION_INDEX = static_cast<int>(VertexShader::Traits::POSITION_INDEX);
-        using ScreenPosType = typename std::tuple_element<POSITION_INDEX, VertOutFragInType>::type;
-
-        std::for_each(immStore.begin(), immStore.end(), [](VertOutFragInType& vert) {
-            auto& pos = std::get<POSITION_INDEX>(vert);
-            pos /= pos[3];
-        });
-
-        // Now in NDC
-
-        const unsigned int xres = rasterShader.getXResolution();
-        const unsigned int yres = rasterShader.getYResolution();
-        std::for_each(immStore.begin(), immStore.end(), [xres, yres](VertOutFragInType& vert) {
-            auto& pos = std::get<POSITION_INDEX>(vert);
-            pos = pos + ScreenPosType(1.0, 1.0, 1.0, 0.0);  // TODO: Fix
-            pos = pos / ScreenPosType(2.0, 2.0, 2.0, 1.0);
-            pos[0] *= xres;
-            pos[1] *= yres;
-        });
+        processVertices(in, vertexShader, immStore, rasterShader.getXResolution(), rasterShader.getYResolution());
 
         // Now in screen space
-
-        rasterShader.clear();
 
         for (size_t i = 0; i < immStore.size(); i += 3) {
             // Primitive assembly
             const auto& v1 = immStore.at(i + 0);
             const auto& v2 = immStore.at(i + 1);
             const auto& v3 = immStore.at(i + 2);
+
+            constexpr auto POSITION_INDEX = static_cast<int>(VertexShader::Traits::POSITION_INDEX);
+
+            const auto& p1 = std::get<POSITION_INDEX>(v1);
+            const auto& p2 = std::get<POSITION_INDEX>(v2);
+            const auto& p3 = std::get<POSITION_INDEX>(v3);
+
+            // Backface culling
+            if (mCullingEnabled && isBackface(p1, p2, p3)) {
+                continue;
+            }
+
+            // Rasterization
+            rasterizeTriangle<POSITION_INDEX>(v1, v2, v3, fragmentShader, rasterShader);
+        }
+    }
+
+    template <class VertInType, class VertexShader, class FragmentShader, class RasterShader>
+    void renderIndexed(const std::vector<VertInType>& in, const std::vector<uint32_t>& indices,
+                       const VertexShader& vertexShader, const FragmentShader& fragmentShader,
+                       const RasterShader& rasterShader) {
+        
+        static_assert(std::is_same<VertInType, typename VertexShader::InType>::value, "Error");
+        static_assert(std::is_same<typename VertexShader::OutType, typename FragmentShader::InType>::value, "Error");
+        static_assert(std::is_same<typename FragmentShader::OutType, typename RasterShader::InType>::value, "Error");
+
+        using VertOutFragInType = typename VertexShader::OutType;
+        std::vector<VertOutFragInType> immStore;
+        immStore.reserve(in.size());
+
+        processVertices(in, vertexShader, immStore, rasterShader.getXResolution(), rasterShader.getYResolution());
+
+        // Now in screen space
+
+        for (size_t i = 0; i < indices.size(); i += 3) {
+            // Primitive assembly
+            const auto& v1 = immStore.at(indices.at(i + 0));
+            const auto& v2 = immStore.at(indices.at(i + 1));
+            const auto& v3 = immStore.at(indices.at(i + 2));
+
+            constexpr auto POSITION_INDEX = static_cast<int>(VertexShader::Traits::POSITION_INDEX);
 
             const auto& p1 = std::get<POSITION_INDEX>(v1);
             const auto& p2 = std::get<POSITION_INDEX>(v2);
