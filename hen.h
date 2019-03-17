@@ -141,39 +141,39 @@ private:
         const uint16_t width  = rasterShader.getXResolution();
         const uint16_t height = rasterShader.getYResolution();
 
-        //                                          Flat side up              Flat side Down
-        const int yFirst         = yStep == 1 ? roundTowardsZero(p1[1]) :  roundTowardsZero(p1[1] - 1.0f);  // Flat side
-        const int yOneBeyondLast = yStep == 1 ? roundTowardsZero(p3[1]) : roundAwayFromZero(p3[1] - 1.0f); // Pointy side
+        //                                                  Flat side up              Flat side Down
+        const int yTriStart         = yStep == 1 ? roundTowardsZero(p1[1]) : roundAwayFromZero(p3[1]);
+        const int yTriOneBeyondLast = yStep == 1 ? roundTowardsZero(p3[1]) : roundTowardsZero(p1[1]);
 
-        const float yDistF = p3[1] - p1[1];
+        const uint_fast16_t yStart = static_cast<uint_fast16_t>(std::max(0, yTriStart));
+        const uint_fast16_t yEndE  = static_cast<uint_fast16_t>(std::min((int)height, yTriOneBeyondLast));
 
         TupleInterpolator<Vertex> inpl(v1, v3);
         TupleInterpolator<Vertex> inpr(v2, v3);
 
-        const float yCenter = yFirst + 0.5f;
+        const float yCenter = yStart + 0.5f;
+        const float yDistF = p3[1] - p1[1];
         float ypos = (yCenter - p1[1]) / yDistF;
-        const float ystep = yStep / yDistF;
+        const float ystep = 1.0f / yDistF;
 
-        for (int y = yFirst; yStep * (y - yOneBeyondLast) < 0; y += yStep) {
-            if (y >= 0 && y < height) {
-                Vertex vx0 = inpl.run(ypos);
-                Vertex vx1 = inpr.run(ypos);
+        for (uint_fast16_t y = yStart; y < yEndE; y++) {
+            Vertex vx0 = inpl.run(ypos);
+            Vertex vx1 = inpr.run(ypos);
 
-                TupleInterpolator<Vertex> inpx(vx0, vx1);
-                const auto &posBegin = std::get<PositionAttachment>(vx0);
-                const auto &posEnd = std::get<PositionAttachment>(vx1);
-                const auto xBegin = static_cast<uint_fast16_t >(std::max(0, roundTowardsZero(posBegin[0])));
-                const auto xEnd = static_cast<uint_fast16_t >(std::min(static_cast<int>(width), roundTowardsZero(posEnd[0])));
+            TupleInterpolator<Vertex> inpx(vx0, vx1);
+            const auto &posBegin = std::get<PositionAttachment>(vx0);
+            const auto &posEnd = std::get<PositionAttachment>(vx1);
+            const auto xBegin = static_cast<uint_fast16_t >(std::max(0, roundTowardsZero(posBegin[0])));
+            const auto xEnd = static_cast<uint_fast16_t >(std::min(static_cast<int>(width), roundTowardsZero(posEnd[0])));
 
-                const float xDistF = posEnd[0] - posBegin[0];
-                const float xCenter = xBegin + 0.5f;
-                float xpos = (xCenter - posBegin[0]) / xDistF;
-                const float xstep = 1.0f / xDistF;
+            const float xDistF = posEnd[0] - posBegin[0];
+            const float xCenter = xBegin + 0.5f;
+            float xpos = (xCenter - posBegin[0]) / xDistF;
+            const float xstep = 1.0f / xDistF;
 
-                for (uint_fast16_t x = xBegin; x < xEnd; ++x) {
-                    rasterizeFragment(inpx.run(xpos), fragmentShader, rasterShader, x, static_cast<uint32_t>(y));
-                    xpos += xstep;
-                }
+            for (uint_fast16_t x = xBegin; x < xEnd; ++x) {
+                rasterizeFragment(inpx.run(xpos), fragmentShader, rasterShader, x, y);
+                xpos += xstep;
             }
             ypos += ystep;
         }
