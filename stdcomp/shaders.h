@@ -585,7 +585,7 @@ protected:
 
 public:
     using InType = std::tuple<VecLib::Vector4f>;
-    using OutType = std::tuple<VecLib::Vector4f, float>;
+    using OutType = std::tuple<VecLib::Vector3f, float>;
 
     ShadertoyFragmentShader() : iResolution(640, 480) {}
 
@@ -605,7 +605,7 @@ public:
 
         mainImage(fragColor, fragCoord.xy());
 
-        return std::make_tuple(fragColor, 0.2f);
+        return std::make_tuple(fragColor.xyz(), 0.2f);
     }
 };
 
