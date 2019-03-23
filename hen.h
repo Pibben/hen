@@ -58,6 +58,17 @@ public:
     }
 };
 
+template <class Vertex>
+static auto barycentricInterpolation(const Vertex& v0, const Vertex& v1, const Vertex& v2, float w0, float w1, float w2) {
+    //assert(w0 + w1 + w2 == 1.0f);
+    Vertex v;
+
+    v = tupleAddScaled(v, v0, w0);
+    v = tupleAddScaled(v, v1, w1);
+    v = tupleAddScaled(v, v2, w2);
+    return v;
+}
+
 class Renderer {
 private:
     bool mCullingEnabled = true;
@@ -252,6 +263,66 @@ public:
         }
     }
 
+    template <int PositionAttachment, class Vertex, class FragmentShader, class RasterShader>
+    void rasterizeTriangleBarycentric(Vertex v1, Vertex v2, Vertex v3, const FragmentShader& fragmentShader,
+                           const RasterShader& rasterShader) {
+
+        auto orient2d = [](const VecLib::Vector4f& a, const VecLib::Vector4f& b, const VecLib::Vector2f& c)
+        {
+            return (b.x() - a.x()) * (c.y() - a.y()) - (b.y() - a.y()) * (c.x() - a.x());
+        };
+
+        auto isTopLeft = [](const VecLib::Vector4f& v1, const VecLib::Vector4f& v2) {
+            const bool isTop = v1.y() == v2.y() && v2.x() > v1.x();
+            const bool isLeft = v2.y() < v1.y();
+            return isTop || isLeft;
+        };
+
+        auto p1 = std::get<PositionAttachment>(v1);
+        auto p2 = std::get<PositionAttachment>(v2);
+        auto p3 = std::get<PositionAttachment>(v3);
+
+        if (isBackface(p1, p2, p3)) {
+            std::swap(p1, p2);
+            std::swap(v1, v2);
+        }
+
+        // Compute triangle bounding box
+        float minX = std::min(std::min(p1.x(), p2.x()), p3.x());
+        float minY = std::min(std::min(p1.y(), p2.y()), p3.y());
+        float maxX = std::max(std::max(p1.x(), p2.x()), p3.x());
+        float maxY = std::max(std::max(p1.y(), p2.y()), p3.y());
+
+        // Clip against screen bounds
+        minX = std::max(minX, 0.0f);
+        minY = std::max(minY, 0.0f);
+        maxX = std::min(maxX, static_cast<float>(rasterShader.getXResolution() - 1));
+        maxY = std::min(maxY, static_cast<float>(rasterShader.getYResolution() - 1));
+
+        const float area = orient2d(p1, p2, p3.xy());
+
+        // Rasterize
+        for (uint16_t y = minY; y <= maxY; y++) {
+            for (uint16_t x = minX; x <= maxX; x++) {
+                VecLib::Vector2f p(x + 0.5f, y + 0.5f);
+                // Determine barycentric coordinates
+                const float w0 = orient2d(p2, p3, p);
+                const float w1 = orient2d(p3, p1, p);
+                const float w2 = orient2d(p1, p2, p);
+
+                const bool a0 = isTopLeft(p2, p3) ? w0 >= 0.0f : w0 > 0.0f;
+                const bool a1 = isTopLeft(p3, p1) ? w1 >= 0.0f : w1 > 0.0f;
+                const bool a2 = isTopLeft(p1, p2) ? w2 >= 0.0f : w2 > 0.0f;
+
+                // If p is on or inside all edges, render pixel.
+                if (a0 && a1 && a2) {
+                    auto v = barycentricInterpolation(v1, v2, v3, w0 / area, w1 / area, w2 / area);
+                    rasterizeFragment(v, fragmentShader, rasterShader, x, y);
+                }
+            }
+        }
+    }
+
     template <class VertInType, class VertOutFragInType, class VertexShader>
     void processVertices(const std::vector<VertInType>& in, const VertexShader& vertexShader,
                          std::vector<VertOutFragInType>& immStore,
@@ -315,7 +386,7 @@ public:
             }
 
             // Rasterization
-            rasterizeTriangle<POSITION_INDEX>(v1, v2, v3, fragmentShader, rasterShader);
+            rasterizeTriangleBarycentric<POSITION_INDEX>(v1, v2, v3, fragmentShader, rasterShader);
         }
     }
 
@@ -354,7 +425,7 @@ public:
             }
 
             // Rasterization
-            rasterizeTriangle<POSITION_INDEX>(v1, v2, v3, fragmentShader, rasterShader);
+            rasterizeTriangleBarycentric<POSITION_INDEX>(v1, v2, v3, fragmentShader, rasterShader);
         }
     }
 

@@ -150,8 +150,6 @@ static void testRasterization() {
 
     renderer.render(verts, vertexShader, fragmentShader, rasterShader);
 
-    framebuffer.mirror();
-
 #if 0
     puts("{");
     for(int y = 0; y < height; ++y) {
@@ -163,6 +161,7 @@ static void testRasterization() {
     }
     puts("};");
 #else
+    framebuffer.mirror();
 
     uint8_t expected[] = {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
