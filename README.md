@@ -13,5 +13,8 @@ Header-only programmable C++14 software 3D renderer.
 * https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation
 * https://kitsunegames.com/post/development/2016/07/28/software-3d-rendering-in-javascript-pt2/
 
-* http://www.roylongbottom.org.uk/#anchorTestOGL
-* https://www.opengl.org/archives/resources/code/samples/more_samples/
+* https://bisqwit.iki.fi/jutut/kuvat/programming_examples/75000/
+* https://gitlab.com/geoff-nagy/no-fly-zone/
+* https://github.com/christian-reintges/canyon-racer
+* https://github.com/timskillman/raspberrypi
+* https://github.com/asylum2010/Asylum_Tutorials
