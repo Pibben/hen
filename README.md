@@ -12,3 +12,6 @@ Header-only programmable C++14 software 3D renderer.
 * https://fgiesen.wordpress.com/2013/02/17/optimizing-sw-occlusion-culling-index/
 * https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation
 * https://kitsunegames.com/post/development/2016/07/28/software-3d-rendering-in-javascript-pt2/
+
+* http://www.roylongbottom.org.uk/#anchorTestOGL
+* https://www.opengl.org/archives/resources/code/samples/more_samples/
