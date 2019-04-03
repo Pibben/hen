@@ -300,8 +300,8 @@ public:
         // Clip against screen bounds
         minX = std::max(minX, uint16_t(0));
         minY = std::max(minY, uint16_t(0));
-        maxX = std::min(maxX, rasterShader.getXResolution() - 1);
-        maxY = std::min(maxY, rasterShader.getYResolution() - 1);
+        maxX = std::min(maxX, static_cast<uint16_t>(rasterShader.getXResolution() - 1));
+        maxY = std::min(maxY, static_cast<uint16_t>(rasterShader.getYResolution() - 1));
 
         const float A01 = p1.y() - p2.y();
         const float B01 = p2.x() - p1.x();
