@@ -611,9 +611,9 @@ public:
 
 class ShadertoyWaveFragmentShader : public ShadertoyFragmentShader {
 public:
-    const vec3 COLOR1 = vec3(0.0, 0.0, 0.3);
-    const vec3 COLOR2 = vec3(0.5, 0.0, 0.0);
-    static constexpr float BLOCK_WIDTH = 0.01;
+    const vec3 COLOR1 = vec3(0.0f, 0.0f, 0.3f);
+    const vec3 COLOR2 = vec3(0.5f, 0.0f, 0.0f);
+    static constexpr float BLOCK_WIDTH = 0.01f;
 
     // https://www.shadertoy.com/view/4dsGzH
     void mainImage(vec4& fragColor, const vec2& fragCoord) const override {
@@ -740,7 +740,7 @@ public:
     }
 
     float map_detailed(vec3 p) const {
-        const mat2 octave_m = mat2(1.6f, 1.2f, -1.2f, 1.6);
+        const mat2 octave_m = mat2(1.6f, 1.2f, -1.2f, 1.6f);
         const float SEA_TIME = iGlobalTime * SEA_SPEED;
         float freq = SEA_FREQ;
         float amp = SEA_HEIGHT;
@@ -834,7 +834,7 @@ public:
         heightMapTracing(ori, dir, p);
         vec3 dist = p - ori;
         vec3 n = getNormal(p, dot(dist, dist) * EPSILON_NRM);
-        vec3 light = normalize(vec3(0.0f, 1.0f, 0.8));
+        vec3 light = normalize(vec3(0.0f, 1.0f, 0.8f));
 
         // color
         vec3 color = mix(getSkyColor(dir), getSeaColor(p, n, light, dir, dist),

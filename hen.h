@@ -415,7 +415,7 @@ public:
     }
 
     template <class VertInType, class VertexShader, class FragmentShader, class RasterShader>
-    void renderIndexed(const std::vector<VertInType>& in, const std::vector<uint32_t>& indices,
+    void renderIndexed(const std::vector<VertInType>& in, const std::vector<size_t>& indices,
                        const VertexShader& vertexShader, const FragmentShader& fragmentShader,
                        const RasterShader& rasterShader) {
         

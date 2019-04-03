@@ -61,7 +61,7 @@ static std::vector<PositionAndNormal> loadMeshNormal(const std::string& filename
     std::vector<Face> faces;
 
     loadObj(filename, &vertices, &uvs, &normals, &faces);
-    printf("Loaded %lu faces\n", faces.size());
+    printf("Loaded %zu faces\n", faces.size());
 
     assert(!faces.empty());
 
@@ -163,7 +163,7 @@ static std::vector<PositionNormalAndTangent> loadMeshTangent(const std::string& 
 }
 #endif
 template <class T, class VertexShader, class FragmentShader>
-static void animate(const std::vector<T>& vertices, std::vector<uint32_t> indices, VertexShader& vertexShader, FragmentShader& fragmentShader) {
+static void animate(const std::vector<T>& vertices, const std::vector<size_t>& indices, VertexShader& vertexShader, FragmentShader& fragmentShader) {
     vertexShader.projMatrix() = proj(-5, 5, -5, 5, 5, 30);
 
     vertexShader.modelViewMatrix() = lookAt({0, 7, 7}, {0, 0, 0}, {0, 1, 0});
@@ -320,7 +320,7 @@ static void cubeMap() {
 
     auto m = loadMeshNormal("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
     std::vector<PositionAndNormal> verts;
-    std::vector<uint32_t> indices;
+    std::vector<size_t> indices;
 
     indexify(m, verts, indices);
 

@@ -15,7 +15,7 @@
 #include <string>
 
 template <class T>
-void indexify(const std::vector<T>& in, std::vector<T>& out, std::vector<uint32_t>& indices) {
+void indexify(const std::vector<T>& in, std::vector<T>& out, std::vector<size_t>& indices) {
     for (size_t i = 0; i < in.size(); ++i) {
         bool found = false;
         for (size_t j = 0; j < out.size(); ++j) {
@@ -187,7 +187,7 @@ struct Timer<1> {
         auto now = std::chrono::steady_clock::now();
         auto diff = now - latest;
         latest = now;
-        return std::chrono::duration<double, std::micro>(diff).count();
+        return std::chrono::duration<float, std::micro>(diff).count();
     }
 
     void reset() { latest = std::chrono::steady_clock::now(); }
@@ -239,7 +239,7 @@ public:
     constexpr uint16_t height() const { return mHeight; }
     void fill(T value) { std::fill(mData, mData + mWidth * mHeight * mDepth, value); };
     void mirror() {
-        for (uint_fast16_t y = 0; y < mHeight / 2; ++y) {
+        for (uint_fast16_t y = 0; y < mHeight / 2u; ++y) {
             for (uint_fast16_t x = 0; x < mWidth; ++x) {
                 for (uint_fast16_t z = 0; z < mDepth; ++z) {
                     T tmp = at(x, y, z);

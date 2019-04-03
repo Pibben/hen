@@ -51,7 +51,7 @@ struct Face {
 inline Face parseFace(const std::string& str) {
     Face f{};
 
-    const int numberOfSlashes = std::count_if(str.begin(), str.end(), [](const auto& c) { return c == '/'; });
+    const int numberOfSlashes = static_cast<int>(std::count_if(str.begin(), str.end(), [](const auto& c) { return c == '/'; }));
 
     assert((numberOfSlashes % 3) == 0);
 

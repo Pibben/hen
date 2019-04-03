@@ -158,7 +158,7 @@ int main() {
         auto *data = ImGui::GetDrawData();
 
         std::vector<Vertex> verts;
-        std::vector<uint32_t> indices;
+        std::vector<size_t> indices;
 
         for (int n = 0; n < data->CmdListsCount; n++) {
             const ImDrawList *cmd_list = data->CmdLists[n];
