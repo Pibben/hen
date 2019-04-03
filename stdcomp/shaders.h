@@ -147,7 +147,7 @@ public:
         auto color = mTextureSampler.get(realTex[0], realTex[1]);
         auto ao = mAoSampler.get(realTex[0], realTex[1]);
 
-        return std::make_tuple(VecLib::Vector4(color * (ao + 0.5f)), pos[2]);
+        return std::make_tuple(VecLib::Vector4f(color * (ao + 0.5f)), pos[2]);
     }
 };
 
@@ -281,7 +281,7 @@ public:
         const VecLib::Vector3f& pos = std::get<static_cast<int>(InTraits::POSITION_INDEX)>(in);
         const VecLib::Vector3f& normal = std::get<static_cast<int>(InTraits::NORMAL_INDEX)>(in);
 
-        const VecLib::Vector4f P = mModelViewMatrix * VecLib::Vector4(pos, 1.0f);
+        const VecLib::Vector4f P = mModelViewMatrix * VecLib::Vector4f(pos, 1.0f);
 
         const VecLib::Vector3f N = VecLib::Matrix3f(mModelViewMatrix) * normal;
         const VecLib::Vector3f V = P.xyz();

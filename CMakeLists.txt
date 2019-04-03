@@ -5,15 +5,23 @@ set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_EXTENSIONS OFF)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
-add_compile_options("-march=native" "-fno-math-errno" "-Wall" -Wextra)
+if(NOT WIN32)
+    add_compile_options("-march=native" "-fno-math-errno" "-Wall" -Wextra)
+endif()
 
 add_library(hen_lib INTERFACE)
 
 target_include_directories(hen_lib INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
-find_package(PNG REQUIRED)
-include_directories(${PNG_INCLUDE_DIR})
-target_link_libraries(hen_lib INTERFACE ${PNG_LIBRARY})
+if(WIN32)
+    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    conan_basic_setup()
+    target_link_libraries(hen_lib INTERFACE ${CONAN_LIBS})
+else()
+    find_package(PNG REQUIRED)
+    include_directories(${PNG_INCLUDE_DIR})
+    target_link_libraries(hen_lib INTERFACE ${PNG_LIBRARY})
+endif()
 
 add_subdirectory(cfw)
 target_link_libraries(hen_lib INTERFACE cfw_lib)

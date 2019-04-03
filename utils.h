@@ -11,6 +11,8 @@
 #include "veclib.h"
 
 #include <chrono>
+#include <iostream>
+#include <string>
 
 template <class T>
 void indexify(const std::vector<T>& in, std::vector<T>& out, std::vector<uint32_t>& indices) {

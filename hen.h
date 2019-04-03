@@ -357,9 +357,8 @@ public:
 
         // Now in clip space
         // Perspective divide
-        constexpr auto POSITION_INDEX = static_cast<int>(VertexShader::Traits::POSITION_INDEX);
-
         std::for_each(immStore.begin(), immStore.end(), [](VertOutFragInType& vert) {
+	    constexpr auto POSITION_INDEX = static_cast<int>(VertexShader::Traits::POSITION_INDEX);
             auto& pos = std::get<POSITION_INDEX>(vert);
             pos /= pos[3];
         });
@@ -367,6 +366,7 @@ public:
         // Now in NDC
 
         std::for_each(immStore.begin(), immStore.end(), [width, height](VertOutFragInType& vert) {
+	    constexpr auto POSITION_INDEX = static_cast<int>(VertexShader::Traits::POSITION_INDEX);
             using ScreenPosType = typename std::tuple_element<POSITION_INDEX, VertOutFragInType>::type;
             auto& pos = std::get<POSITION_INDEX>(vert);
             pos = pos + ScreenPosType(1.0, 1.0, 1.0, 0.0);  // TODO: Fix

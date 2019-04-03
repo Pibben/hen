@@ -1,0 +1,6 @@
+[requires]
+libpng/1.6.36@bincrafters/stable
+boost/1.69.0@conan/stable
+
+[generators]
+cmake

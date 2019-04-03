@@ -1,4 +1,8 @@
 
+#define _USE_MATH_DEFINES 1
+#include <cmath>
+#undef _USE_MATH_DEFINES
+
 #include "cfw/cfw.h"
 #include "hen.h"
 #include "io.h"
