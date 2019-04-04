@@ -152,7 +152,7 @@ inline void loadObj(const std::string& filename, std::vector<VecLib::Vector3f>* 
 class FileWrapper {
 public:
     explicit FileWrapper(const std::string& filename) {
-        mFile = fopen(filename.c_str(), "rbe");  // NOLINT
+        mFile = fopen(filename.c_str(), "rb");  // NOLINT
     }
     ~FileWrapper() {
         if (mFile != nullptr) {
@@ -164,7 +164,7 @@ public:
     FileWrapper& operator=(const FileWrapper&) = delete;
     FileWrapper& operator=(FileWrapper&&) = delete;
 
-    size_t read(char* ptr, size_t size) { return fread(ptr, 1, size, mFile); }
+    size_t read(char* ptr, size_t size) { return fread(ptr, 1, size, mFile); }  // TODO: Handle short reads
 
     FILE* getFile() { return mFile; }
 

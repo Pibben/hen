@@ -316,9 +316,9 @@ static void equiRectangular() {
 #endif
 static void cubeMap() {
     NormalViewVertexShader vertexShader;
-    CubemapFragmentShader fragmentShader("/home/per/code/hen/cubemap.png");
+    CubemapFragmentShader fragmentShader("cubemap.png");
 
-    auto m = loadMeshNormal("/home/per/code/hen/models/cow/cowTM08New00RTime02-tri-norm.obj");
+    auto m = loadMeshNormal("models/cow/cowTM08New00RTime02-tri-norm.obj");
     std::vector<PositionAndNormal> verts;
     std::vector<size_t> indices;
 
