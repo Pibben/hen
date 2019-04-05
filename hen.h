@@ -29,14 +29,35 @@ inline std::tuple<Tp...> mytransform(const std::tuple<Tp...>& t1, const std::tup
     return mytransformHelper(t1, t2, f, std::index_sequence_for<Tp...>{});
 }
 
+template <typename... Tp, typename Func, std::size_t... Idx>
+std::tuple<Tp...> mytransformHelper2(const std::tuple<Tp...>& t1, Func&& f,
+                                    std::index_sequence<Idx...> /*unused*/) {
+    return std::tuple<Tp...>((f(std::get<Idx>(t1)))...);
+}
+
+template <typename FuncT, typename... Tp>
+inline std::tuple<Tp...> mytransform2(const std::tuple<Tp...>& t1, FuncT f) {
+    return mytransformHelper2(t1, f, std::index_sequence_for<Tp...>{});
+}
+
 template <class Tuple>
 Tuple tupleDiff(const Tuple& a, const Tuple& b) {
     return mytransform(a, b, [](auto ta, auto tb) { return ta - tb; });
 }
 
 template <class Tuple>
+Tuple tupleAdd(const Tuple& a, const Tuple& b) {
+    return mytransform(a, b, [](auto ta, auto tb) { return ta + tb; });
+}
+
+template <class Tuple>
 Tuple tupleAddScaled(const Tuple& a, const Tuple& b, float s) {
     return mytransform(a, b, [s](auto ta, auto tb) { return ta + tb * s; });
+}
+
+template <class Tuple>
+Tuple tupleScale(const Tuple& a, float s) {
+    return mytransform2(a, [s](auto ta) { return ta * s; });
 }
 
 template <class Type>
@@ -281,6 +302,29 @@ public:
             return isTop || isLeft;
         };
 
+        auto solve = [](const Vertex& v1, const Vertex& v2, const Vertex& v3, Vertex& dx, Vertex& dy, Vertex& c) {
+            const auto& p1 = std::get<PositionAttachment>(v1);
+            const auto& p2 = std::get<PositionAttachment>(v2);
+            const auto& p3 = std::get<PositionAttachment>(v3);
+
+            const auto q1 = p3 - p1;
+            const auto q2 = p3 - p2;
+
+            const Vertex f1 = tupleDiff(v3, v1);
+            const Vertex f2 = tupleDiff(v3, v2);
+
+            // Solve
+            //  dx * q1.x + dy * q1.y = f1
+            //  dx * q2.x + dy * q2.y = f2
+
+            const float denum = q1.x() * q2.y() - q2.x() * q1.y();
+            dx = tupleScale(tupleDiff(tupleScale(f2, q1.y()), tupleScale(f1, q2.y())), 1.0f / denum);
+            dy = tupleScale(tupleDiff(tupleScale(f2, q1.x()), tupleScale(f1, q2.x())), 1.0f / denum);
+
+            //c = v1 - dx * p1.x() - dy * p1.y();
+            c = tupleDiff(tupleDiff(v1, tupleScale(dx, p1.x())), tupleScale(dy, p1.y()));
+        };
+
         auto p1 = std::get<PositionAttachment>(v1);
         auto p2 = std::get<PositionAttachment>(v2);
         auto p3 = std::get<PositionAttachment>(v3);
@@ -317,11 +361,20 @@ public:
 
         const float area = orient2d(p1, p2, p3.xy());
 
+        Vertex dx;
+        Vertex dy;
+        Vertex c;
+
+        solve(v1, v2, v3, dx, dy, c);
+
+        auto v_row = barycentricInterpolation(v1, v2, v3, w0_row / area, w1_row / area, w2_row / area);  // TODO: Use dx, dy, c
+
         // Rasterize
         for (uint16_t y = minY; y <= maxY; y++) {
             float w0 = w0_row;
             float w1 = w1_row;
             float w2 = w2_row;
+            auto v = v_row;
 
             for (uint16_t x = minX; x <= maxX; x++) {
                 // Determine barycentric coordinates
@@ -332,18 +385,21 @@ public:
 
                 // If p is on or inside all edges, render pixel.
                 if (a0 && a1 && a2) {
-                    auto v = barycentricInterpolation(v1, v2, v3, w0 / area, w1 / area, w2 / area);
                     rasterizeFragment(v, fragmentShader, rasterShader, x, y);
                 }
 
                 w0 += A12;
                 w1 += A20;
                 w2 += A01;
+
+                v = tupleDiff(v, dx);  // TODO: Why diff?
             }
 
             w0_row += B12;
             w1_row += B20;
             w2_row += B01;
+
+            v_row = tupleAdd(v_row, dy);
         }
     }
 
