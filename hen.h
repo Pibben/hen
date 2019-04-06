@@ -60,6 +60,21 @@ Tuple tupleScale(const Tuple& a, float s) {
     return mytransform2(a, [s](auto ta) { return ta * s; });
 }
 
+template <typename... Tp>
+std::tuple<Tp...> operator+(const std::tuple<Tp...>& a, const std::tuple<Tp...>& b) {
+    return mytransform(a, b, [](auto ta, auto tb) { return ta + tb; });
+}
+
+template <typename... Tp>
+std::tuple<Tp...> operator-(const std::tuple<Tp...>& a, const std::tuple<Tp...>& b) {
+    return mytransform(a, b, [](auto ta, auto tb) { return ta - tb; });
+}
+
+template <typename... Tp>
+std::tuple<Tp...> operator*(const std::tuple<Tp...>& a, float s) {
+    return mytransform2(a, [s](auto ta) { return ta * s; });
+}
+
 template <class Type>
 class TupleInterpolator {
     Type mStart;
@@ -310,19 +325,19 @@ public:
             const auto q1 = p3 - p1;
             const auto q2 = p3 - p2;
 
-            const Vertex f1 = tupleDiff(v3, v1);
-            const Vertex f2 = tupleDiff(v3, v2);
+            const Vertex f1 = v3 - v1;
+            const Vertex f2 = v3 - v2,
 
             // Solve
             //  dx * q1.x + dy * q1.y = f1
             //  dx * q2.x + dy * q2.y = f2
 
-            const float denum = q1.x() * q2.y() - q2.x() * q1.y();
-            dx = tupleScale(tupleDiff(tupleScale(f2, q1.y()), tupleScale(f1, q2.y())), 1.0f / denum);
-            dy = tupleScale(tupleDiff(tupleScale(f2, q1.x()), tupleScale(f1, q2.x())), 1.0f / denum);
+            const float denumInv = 1.0f / (q1.x() * q2.y() - q2.x() * q1.y());
+            dx = (f2 * q1.y() - f1 * q2.y()) * denumInv;
+            dy = (f2 * q1.x() - f1 * q2.x()) * denumInv;
 
-            //c = v1 - dx * p1.x() - dy * p1.y();
-            c = tupleDiff(tupleDiff(v1, tupleScale(dx, p1.x())), tupleScale(dy, p1.y()));
+            c = v1 - dx * p1.x() - dy * p1.y();
+            //c = tupleDiff(tupleDiff(v1, tupleScale(dx, p1.x())), tupleScale(dy, p1.y()));
         };
 
         auto p1 = std::get<PositionAttachment>(v1);
