@@ -157,10 +157,11 @@ int main() {
 
         auto *data = ImGui::GetDrawData();
 
-        std::vector<Vertex> verts;
-        std::vector<size_t> indices;
+        framebuffer.fill(0);
 
         for (int n = 0; n < data->CmdListsCount; n++) {
+            std::vector<Vertex> verts;
+            std::vector<size_t> indices;
             const ImDrawList *cmd_list = data->CmdLists[n];
             const ImDrawVert *vtx_buffer = cmd_list->VtxBuffer.Data;
 
@@ -183,11 +184,9 @@ int main() {
 
                 idx_buffer += pcmd->ElemCount;
             }
+
+            renderer.renderIndexed(verts, indices, vertexShader, fragmentShader, rasterShader);
         }
-
-        framebuffer.fill(0);
-
-        renderer.renderIndexed(verts, indices, vertexShader, fragmentShader, rasterShader);
 
         disp.render(framebuffer.data(), width, height);
         disp.paint();

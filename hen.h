@@ -326,7 +326,7 @@ public:
             const auto q2 = p3 - p2;
 
             const Vertex f1 = v3 - v1;
-            const Vertex f2 = v3 - v2,
+            const Vertex f2 = v3 - v2;
 
             // Solve
             //  dx * q1.x + dy * q1.y = f1
