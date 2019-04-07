@@ -351,16 +351,25 @@ public:
 
         // Compute triangle bounding box
         // TODO: Take top-left rule into account
-        uint16_t minX = static_cast<uint16_t>(std::min(std::min(p1.x(), p2.x()), p3.x()));
-        uint16_t minY = static_cast<uint16_t>(std::min(std::min(p1.y(), p2.y()), p3.y()));
-        uint16_t maxX = static_cast<uint16_t>(std::max(std::max(p1.x(), p2.x()), p3.x()));
-        uint16_t maxY = static_cast<uint16_t>(std::max(std::max(p1.y(), p2.y()), p3.y()));
+        const float minXf = std::min(std::min(p1.x(), p2.x()), p3.x());
+        const float minYf = std::min(std::min(p1.y(), p2.y()), p3.y());
+        const float maxXf = std::max(std::max(p1.x(), p2.x()), p3.x());
+        const float maxYf = std::max(std::max(p1.y(), p2.y()), p3.y());
+
+        // Cull triangles outside viewport
+        if (maxXf < 0.0f || maxYf < 0.0f) {
+            return;
+        }
+
+        if (minXf > static_cast<float>(rasterShader.getXResolution()) || minYf > static_cast<float>(rasterShader.getYResolution())) {
+            return;
+        }
 
         // Clip against screen bounds
-        minX = std::max(minX, uint16_t(0));
-        minY = std::max(minY, uint16_t(0));
-        maxX = std::min(maxX, static_cast<uint16_t>(rasterShader.getXResolution() - 1));
-        maxY = std::min(maxY, static_cast<uint16_t>(rasterShader.getYResolution() - 1));
+        const uint16_t minX = static_cast<uint16_t>(std::max(minXf, 0.0f));
+        const uint16_t minY = static_cast<uint16_t>(std::max(minYf, 0.0f));
+        const uint16_t maxX = static_cast<uint16_t>(std::min(maxXf, static_cast<float>(rasterShader.getXResolution() - 1)));
+        const uint16_t maxY = static_cast<uint16_t>(std::min(maxYf, static_cast<float>(rasterShader.getYResolution() - 1)));
 
         const float A01 = p1.y() - p2.y();
         const float B01 = p2.x() - p1.x();
