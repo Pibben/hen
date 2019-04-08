@@ -305,10 +305,7 @@ public:
 
         auto orient2d = [](const VecLib::Vector4f& a, const VecLib::Vector4f& b, const VecLib::Vector2f& p)
         {
-            const float A01 = a.y() - b.y();
-            const float B01 = b.x() - a.x();
-            const float C01 = a.x() * b.y() - a.y() * b.x();
-            return A01 * p.x() + B01 * p.y() + C01;
+            return (b.x() - a.x()) * (p.y() - a.y()) - (b.y() - a.y()) * (p.x() - a.x());
         };
 
         auto isTopLeft = [](const VecLib::Vector4f& v1, const VecLib::Vector4f& v2) {
