@@ -22,3 +22,5 @@ Header-only programmable C++14 software 3D renderer.
 
 
 * http://cdn.octo-dev.co.uk/publications/3dr_techreport.pdf
+
+* https://bisqwit.iki.fi/jutut/kuvat/programming_examples/polytut/
