@@ -31,3 +31,5 @@ Header-only programmable C++14 software 3D renderer.
 * https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-practical-implementation
 * https://github.com/Zielon/CPURasterizer
 * https://web.archive.org/web/20120203152754/http://software.intel.com/en-us/articles/rasterization-on-larrabee/
+
+* https://github.com/ssloy/tinyrenderer
